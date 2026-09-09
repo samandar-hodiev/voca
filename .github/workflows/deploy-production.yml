@@ -1,0 +1,14 @@
+# Deploy to production — ARCHITECTURE.md §23.2, §24.4
+# Trigger: git tag backend-vX.Y.Z or manual dispatch. Requires reviewer approval through a
+# protected GitHub Environment.
+#
+# Steps:
+#   1. resolve the image tagged with the commit SHA
+#   2. review the pending migration set — migrations must be forward-compatible so old and
+#      new instances can run side by side during the rollout
+#   3. run migrations
+#   4. deploy the image (rolling)
+#   5. smoke test GET /readyz
+#   6. roll back by redeploying the previous SHA on failure
+#
+# Secrets come from the production GitHub Environment and are never printed to logs.

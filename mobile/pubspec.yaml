@@ -1,0 +1,30 @@
+# PLACEHOLDER — generate the real project with `flutter create` at implementation step 5
+# (ARCHITECTURE.md 37), which also produces the android/ and ios/ platform folders that are
+# deliberately absent from this skeleton.
+#
+#   name: voca
+#   description: AI-powered English pronunciation coach.
+#   publish_to: none
+#
+# Planned dependencies (ARCHITECTURE.md 4.3 - 4.6):
+#   flutter_riverpod / riverpod_annotation   state management and dependency injection
+#   go_router                                navigation, deep links, route guards
+#   dio                                      HTTP client with interceptors
+#   flutter_secure_storage                   tokens in Keychain / Keystore
+#   drift or isar                            local cache for content and progress
+#   shared_preferences                       non-secret flags
+#   record                                   audio capture to the fixed spec
+#   just_audio                               reference pronunciation playback
+#   permission_handler                       microphone permission
+#   sign_in_with_apple, google_sign_in       authentication
+#   purchases_flutter                        RevenueCat SDK
+#   firebase_core, firebase_messaging        push notifications
+#   firebase_analytics or posthog_flutter    analytics (behind our own port)
+#   sentry_flutter                           crash and error reporting
+#   intl + flutter_localizations             Uzbek localization
+#
+#   dev_dependencies: flutter_test, integration_test, flutter_lints, mocktail,
+#                     build_runner, riverpod_generator, golden_toolkit
+#
+# Flavors dev / staging / prod must use DISTINCT bundle IDs so all three can be installed on
+# one device (ARCHITECTURE.md 25.1).

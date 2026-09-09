@@ -1,0 +1,16 @@
+# Backend CI — ARCHITECTURE.md §23.2
+# Triggers: pull_request and push to main, paths: backend/**
+#
+# Pipeline:
+#   1. gofmt -l                       fail if any file is unformatted
+#   2. go vet
+#   3. golangci-lint run              includes the depguard import rules from §31.3
+#   4. govulncheck
+#   5. sqlc diff                      fail if generated code is stale
+#   6. go test ./... -race -cover     unit + service + handler tests
+#   7. integration tests              postgres service container, migrations applied
+#   8. go build
+#   9. docker build + push, tagged with the commit SHA (main only)
+#
+# Environment: SPEECH_PROVIDER=mock, PAYMENT_PROVIDER=mock, ANALYTICS_PROVIDER=noop.
+# CI must never call a real external provider: builds stay free, deterministic, offline.

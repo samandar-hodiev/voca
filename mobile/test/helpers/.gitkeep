@@ -1,0 +1,1 @@
+# Fakes, fixtures, and Riverpod provider overrides. Tests override the repository provider with a fake so the whole widget tree runs without a network.

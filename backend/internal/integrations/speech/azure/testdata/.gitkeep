@@ -1,0 +1,1 @@
+# Recorded Azure responses used as GOLDEN FILES for mapper_test.go — include edge cases: omitted phonemes, insertions, empty recognition, partial results, provider warnings.

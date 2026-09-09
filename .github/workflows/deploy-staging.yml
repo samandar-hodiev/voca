@@ -1,0 +1,11 @@
+# Deploy to staging — ARCHITECTURE.md §23.2, §25.1
+# Trigger: successful backend-ci run on main (automatic, no approval).
+#
+# Steps:
+#   1. resolve the image tagged with the commit SHA
+#   2. run database migrations against the staging database
+#   3. deploy the image (rolling, zero-downtime)
+#   4. smoke test GET /readyz
+#   5. roll back to the previous SHA if the smoke test fails
+#
+# Staging must always reflect main.

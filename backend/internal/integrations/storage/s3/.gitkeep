@@ -1,0 +1,1 @@
+# FUTURE AudioStore implementation. Requires: explicit user consent, an audio_key column on pronunciation_attempts, and a retention policy. Enabled by AUDIO_RETENTION_ENABLED=true. The seam exists so this needs no pipeline restructuring — ARCHITECTURE.md 12.3.

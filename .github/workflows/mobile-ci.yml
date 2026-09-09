@@ -1,0 +1,12 @@
+# Mobile CI — ARCHITECTURE.md §23.2
+# Triggers: pull_request and push to main, paths: mobile/**
+#
+# Pipeline:
+#   1. dart format --set-exit-if-changed
+#   2. flutter analyze --fatal-infos
+#   3. flutter test --coverage                    unit + widget + golden tests
+#   4. flutter build appbundle --flavor staging   ubuntu-latest
+#   5. flutter build ipa --flavor staging         macos-latest, signed from secrets
+#
+# Signing certificates and provisioning profiles come from GitHub Environment secrets.
+# Distribution to TestFlight and Play internal testing is handled by Fastlane.

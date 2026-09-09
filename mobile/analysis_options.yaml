@@ -1,0 +1,12 @@
+# Dart static analysis — enforced in CI with `flutter analyze --fatal-infos`.
+#
+# Intended: include package:flutter_lints, plus strict language settings
+# (strict-casts, strict-inference, strict-raw-types).
+#
+# THE IMPORTANT PART — import boundary rules that keep the architecture honest
+# (ARCHITECTURE.md 31.1, 31.3):
+#   1. lib/features/*/domain/** must NOT import flutter, dio, or any JSON codec
+#   2. lib/features/*/presentation/** must NOT import that feature's data/**
+#   3. lib/core/** must NOT import lib/features/**
+#
+# Rules that live only in a document decay, so these are checked by the analyzer.

@@ -1,0 +1,12 @@
+# Local development stack — ARCHITECTURE.md §25.1
+#
+# Services:
+#   postgres   PostgreSQL with a persistent volume
+#   api        backend built from infra/docker/backend.Dockerfile
+#   redis      DEFINED BUT DISABLED by default (compose profile: optional)
+#
+# Redis is intentionally not in the default stack: MVP runs CACHE_DRIVER=memory
+# (§20, ADR-010). Enable the profile only when working on Redis-backed behaviour.
+#
+# Local defaults: SPEECH_PROVIDER=mock, PAYMENT_PROVIDER=mock, ANALYTICS_PROVIDER=noop,
+# so a developer needs no vendor credentials to run the app.

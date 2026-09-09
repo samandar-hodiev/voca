@@ -1,0 +1,1 @@
+# Per-feature tests mirroring lib/features. Because domain is pure Dart with no Flutter imports, most app logic is testable without a widget tree (ARCHITECTURE.md 22.2).

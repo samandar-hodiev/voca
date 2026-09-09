@@ -1,0 +1,1 @@
+# FUTURE second SpeechProvider implementation. Same shape as azure/. Adding it must require NO change to the pronunciation service, scoring, feedback, persistence, API, or the app — ARCHITECTURE.md 7.3.

@@ -1,0 +1,6 @@
+# Integration test dependencies — ARCHITECTURE.md §22.1
+#
+# A throwaway PostgreSQL instance for repository and integration tests, on a separate port
+# and volume from the development stack so tests never touch dev data.
+#
+# Used by CI and by `make test`. External providers are always mocked in tests.

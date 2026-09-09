@@ -1,0 +1,10 @@
+# sqlc configuration — ARCHITECTURE.md 5.6, 28.
+#
+# Intended settings:
+#   engine: postgresql
+#   queries: ./queries
+#   schema:  ./migrations
+#   gen.go:  package sqlc, out internal/database/sqlc, sql_package pgx/v5
+#   emit_pointers_for_null_types: true, so nullable columns are unambiguous in Go
+#
+# CI runs `sqlc diff` and fails if generated code is stale.

@@ -1,0 +1,40 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- secrets: never commit ---
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+
+# --- Go ---
+backend/bin/
+backend/tmp/
+*.test
+*.out
+coverage.out
+
+# --- Flutter / Dart ---
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/coverage/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml

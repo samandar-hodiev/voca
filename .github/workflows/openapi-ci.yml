@@ -1,0 +1,11 @@
+# OpenAPI contract CI — ARCHITECTURE.md §11.3, §22.3
+# Triggers: pull_request touching docs/api/openapi.yaml, backend/**, or mobile/**
+#
+# Pipeline:
+#   1. validate docs/api/openapi.yaml against the OpenAPI 3.1 schema
+#   2. lint the spec (naming, required fields, documented error responses)
+#   3. regenerate the Dart client models
+#   4. fail if the committed generated client differs from the regenerated one
+#
+# Purpose: make app/server contract drift a build failure rather than a production bug on
+# a device that cannot be hotfixed.

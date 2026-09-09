@@ -1,0 +1,21 @@
+# PLACEHOLDER — the OpenAPI 3.1 contract, to be authored at implementation step 0
+# (ARCHITECTURE.md 37) BEFORE any endpoint is built.
+#
+# Freezing this contract is the point of the review step the architecture document precedes,
+# which is why it is deliberately not written yet.
+#
+# It becomes the single source of truth for request and response shapes: CI validates it,
+# generates the Dart client models, and fails the build if the committed client is stale.
+# That makes app/server drift a build failure rather than a production bug on a device that
+# cannot be hotfixed.
+#
+# Content to transcribe from ARCHITECTURE.md 11.2 and 30:
+#   openapi: 3.1.0, info, servers (dev / staging / production)
+#   security schemes: bearerAuth (JWT), and webhook signature for the RevenueCat endpoint
+#   shared components: the success envelope, the error envelope, cursor pagination,
+#                      and the full error-code enum from 19.2
+#   paths, grouped: auth, users, words, practice, pronunciation, progress, subscriptions,
+#                   notifications, system
+#
+# Rules: snake_case fields, ISO-8601 UTC times, every endpoint documents its error codes,
+# and v1 stays ADDITIVE-ONLY once frozen (ADR-009).

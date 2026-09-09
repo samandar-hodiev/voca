@@ -1,0 +1,1 @@
+# RESERVED — created at Stage 3 (ARCHITECTURE.md 21.3, 33). Same Docker image as cmd/api, different entrypoint, consuming a Redis-backed queue. Do NOT create for MVP.

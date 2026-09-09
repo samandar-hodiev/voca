@@ -1,0 +1,17 @@
+# golangci-lint configuration — ARCHITECTURE.md 23.2, 31.3.
+#
+# Standard linters: errcheck, govet, staticcheck, ineffassign, unused, gosec, revive.
+#
+# THE IMPORTANT PART — depguard rules that mechanically enforce the architecture, because
+# rules that live only in a document decay:
+#
+#   1. vendor SDK imports (Azure, RevenueCat, Firebase) are allowed ONLY under
+#      internal/integrations/**
+#   2. gin imports are forbidden in service.go files — services must not know about
+#      transport
+#   3. pgx and database/sql imports are forbidden in handler.go files — handlers must not
+#      know about storage
+#   4. internal/shared and pkg must not import any business module
+#
+# A pull request importing a vendor package outside internal/integrations is rejected on
+# that basis alone.
