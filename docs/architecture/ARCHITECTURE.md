@@ -1,9 +1,14 @@
 # Voca — Architecture Specification
 
-**Product:** Voca, an AI-powered English pronunciation coach for mobile.
-**Status:** Proposed — awaiting review and freeze. No production code is written yet.
+**Product:** Voca, an AI-powered English pronunciation coach.
+**Applications:** Flutter mobile (iOS, Android), Next.js admin dashboard, Go backend.
+**Status:** Product architecture proposed, awaiting freeze. A thin slice of the backend
+(server, configuration, middleware, and the GitHub-to-Telegram developer webhook) is
+implemented and running; every product module is still a scaffold. Section 46 states
+exactly what is implemented, what is only documented, and what is planned.
 **Document owner:** Lead architect.
-**Version:** 1.0 (pre-freeze draft)
+**Version:** 1.1 — adds the admin dashboard, RBAC, the AI provider port, and the hybrid
+content pipeline.
 
 ---
 
@@ -19,11 +24,11 @@ The process this document belongs to is:
 Design (this document)  ->  Review  ->  Freeze  ->  Implement module by module
 ```
 
-Nothing in `mobile/` or `backend/` should be written until the **Architecture Freeze Checklist**
-at the end of this document has been reviewed and approved. Every major decision below states
+No product feature in `mobile/`, `admin/`, or `backend/` should be written until the
+**Architecture Freeze Checklist** at the end of this document has been reviewed and approved. Every major decision below states
 *why* it was made, because a decision without a reason cannot be revisited safely later.
 
-Two rules govern the whole design:
+Three rules govern the whole design:
 
 1. **Anything supplied by a third party is behind an interface we own.** Azure, RevenueCat,
    Firebase, and any future replacement sit behind our own contracts. Business logic never
@@ -31,8 +36,15 @@ Two rules govern the whole design:
 2. **Do the simple thing now, but leave the seam.** We ship a modular monolith, no Redis, no
    queue, no Kubernetes. Every place where we expect future pressure gets an explicit boundary
    today so the future change is an *addition*, not a rewrite.
+3. **One brain, several faces.** Mobile and admin are both clients. All business logic lives in
+   the Go backend, written once. Neither client touches the database, and no rule is ever
+   implemented twice.
 
 ---
+
+> **Section numbers are stable.** Roughly a hundred source files under `backend/` and
+> `mobile/` cite sections of this document by number in their header comments. Add new
+> sections at the end; never renumber existing ones.
 
 ## Table of contents
 
@@ -75,14 +87,24 @@ Two rules govern the whole design:
 | 35 | [MVP vs Future Components](#35-mvp-vs-future-components) |
 | 36 | [Technical Risks](#36-technical-risks) |
 | 37 | [Recommended Implementation Order](#37-recommended-implementation-order) |
+| 38 | [Admin Dashboard Architecture](#38-admin-dashboard-architecture) |
+| 39 | [Authorization and RBAC](#39-authorization-and-rbac) |
+| 40 | [AI Provider Architecture](#40-ai-provider-architecture) |
+| 41 | [Hybrid Content Architecture](#41-hybrid-content-architecture) |
+| 42 | [Recommendation Architecture](#42-recommendation-architecture) |
+| 43 | [Data Ownership](#43-data-ownership) |
+| 44 | [Design System Boundary](#44-design-system-boundary) |
+| 45 | [Three-Application Workflow](#45-three-application-workflow) |
+| 46 | [Implemented, Documented, Planned](#46-implemented-documented-planned) |
 | — | [Architecture Freeze Checklist](#architecture-freeze-checklist) |
 
 ---
 
 ## 1. Executive Architecture Summary
 
-Voca is a Flutter mobile client talking over a versioned REST API to a single Go service backed
-by PostgreSQL. The Go service is a **modular monolith**: one deployable binary, but internally
+Voca is **two clients and one backend**: a Flutter mobile app for learners and a Next.js
+admin dashboard for the owner, both talking over the same versioned REST API to a single Go
+service backed by PostgreSQL. The Go service is a **modular monolith**: one deployable binary, but internally
 split into independent modules (`auth`, `user`, `word`, `practice`, `pronunciation`, `progress`,
 `subscription`, `notification`, `analytics`) that communicate only through explicit service
 interfaces. Pronunciation assessment is performed by Microsoft Azure Speech, reached through a
@@ -132,7 +154,8 @@ limits, premium access).
 | Free learner | Signed in, limited daily assessments | Yes |
 | Premium learner | Active subscription, expanded/unlimited assessments and advanced feedback | Yes |
 | System (scheduler) | Runs streak rollover, reminders, aggregation | Minimal in MVP |
-| Content editor | Curates words, categories, phonetic data | Via seed scripts in MVP; admin tool later |
+| Content editor | Curates words and categories, reviews AI-generated candidates | Via seed scripts in MVP; admin dashboard later |
+| Owner / admin | Operates the product through the admin dashboard: content moderation, user inspection, analytics, system health | Dashboard is designed, not built |
 
 ### 2.3 Product concepts mapped to code
 
@@ -170,11 +193,13 @@ shows the exact change required to lift each.
 ### 3.1 Plain view
 
 ```
-                        Flutter app (iOS / Android)
-                                   |
-                         HTTPS, JWT, /api/v1
-                                   |
-                                   v
+      Flutter app (iOS / Android)          Next.js admin dashboard (web)
+                 |                                      |
+      HTTPS, JWT, /api/v1                HTTPS, admin session, /api/v1/admin
+                 |                                      |
+                 +-------------------+------------------+
+                                     |
+                                     v
                       +------------------------+
                       |   Go API (Gin)         |
                       |   modular monolith     |
@@ -202,8 +227,9 @@ shows the exact change required to lift each.
 
 ```mermaid
 flowchart TB
-    subgraph Client
-      FL["Flutter app<br/>iOS + Android"]
+    subgraph Clients
+      FL["Flutter app<br/>iOS + Android<br/>learners"]
+      AD["Next.js admin<br/>web<br/>owner + admins"]
     end
 
     subgraph Edge
@@ -213,7 +239,7 @@ flowchart TB
     subgraph API["Go modular monolith (single binary)"]
       MW["Middleware:<br/>request-id, logging, recovery,<br/>CORS, auth, rate limit"]
       MOD["Modules:<br/>auth · user · word · practice ·<br/>pronunciation · progress ·<br/>subscription · notification · analytics"]
-      PORTS["Ports (interfaces we own):<br/>SpeechProvider · PaymentProvider ·<br/>AnalyticsProvider · NotificationProvider ·<br/>CacheStore"]
+      PORTS["Ports (interfaces we own):<br/>SpeechProvider · AIProvider · PaymentProvider ·<br/>AnalyticsProvider · NotificationProvider ·<br/>CacheStore · AudioStore"]
     end
 
     subgraph Data
@@ -223,16 +249,20 @@ flowchart TB
 
     subgraph External
       AZ["Azure Speech<br/>Pronunciation Assessment"]
+      LLM["AI provider<br/>content + recommendations"]
       RC["RevenueCat"]
       ST["App Store / Google Play"]
       FB["FCM / APNs"]
       AN["Analytics provider"]
     end
 
-    FL -->|HTTPS /api/v1 + JWT| TLS --> MW --> MOD --> PORTS
+    FL -->|HTTPS /api/v1 + JWT| TLS
+    AD -->|HTTPS /api/v1/admin + session| TLS
+    TLS --> MW --> MOD --> PORTS
     MOD --> PG
     PORTS -.optional.-> RD
     PORTS --> AZ
+    PORTS --> LLM
     PORTS --> RC --> ST
     PORTS --> FB
     PORTS --> AN
@@ -2101,10 +2131,11 @@ voca/
 │       └── deploy-production.yml
 ├── backend/                  # Go modular monolith (section 28)
 ├── mobile/                   # Flutter application (section 27)
+├── admin/                    # Next.js admin dashboard (section 38)
 ├── docs/
 │   ├── architecture/
-│   │   ├── ARCHITECTURE.md   # this document
-│   │   └── adr/              # ADR-001 … ADR-011 (section 32)
+│   │   ├── ARCHITECTURE.md   # this document, the canonical architecture
+│   │   └── adr/              # ADR-001 … ADR-016 (section 32)
 │   ├── api/
 │   │   └── openapi.yaml      # the frozen API contract (authored at implementation start)
 │   ├── database/
@@ -2112,6 +2143,8 @@ voca/
 │   ├── product/
 │   │   ├── events.md         # analytics event catalogue
 │   │   └── metrics.md        # metric definitions
+│   ├── design/               # shared design language: tokens, type, accessibility
+│   ├── ux/                   # user journeys and flows for both clients
 │   └── runbooks/
 │       ├── incident-response.md
 │       ├── restore-from-backup.md
@@ -2140,10 +2173,13 @@ voca/
 | `.github/workflows` | All automation. Nothing is run manually that CI could run |
 | `backend/` | The Go service; self-contained, own module, own tests |
 | `mobile/` | The Flutter app; self-contained, own tests |
+| `admin/` | The Next.js admin dashboard; self-contained, own tests. Talks only to the API |
 | `docs/architecture` | Design authority: this document plus decision records |
 | `docs/api` | The contract both sides build against |
 | `docs/database` | Schema documentation and ERD |
 | `docs/product` | Event and metric definitions, so analytics stays consistent |
+| `docs/design` | The design language shared by both clients: tokens and principles, never code |
+| `docs/ux` | Journeys and flows, agreed before any screen is built |
 | `docs/runbooks` | What to do at 3am — written before launch, not after the first incident |
 | `infra/` | Everything about running the system; no application code |
 | `scripts/` | Developer ergonomics; a new developer should be productive with one command |
@@ -2453,6 +2489,33 @@ Compact reference; full contracts in section 11.
 | system | GET | `/readyz` | public |
 | system | GET | `/api/v1/config` | user |
 
+**Admin surface** (section 38.5). Every route additionally requires an admin or owner role,
+enforced by backend middleware.
+
+| Group | Method | Path | Auth |
+|-------|--------|------|------|
+| admin auth | POST | `/api/v1/admin/auth/login` | public, rate limited |
+| admin auth | POST | `/api/v1/admin/auth/refresh` | admin session |
+| admin auth | POST | `/api/v1/admin/auth/logout` | admin session |
+| admin dashboard | GET | `/api/v1/admin/dashboard/summary` | admin |
+| admin users | GET | `/api/v1/admin/users` | admin |
+| admin users | GET | `/api/v1/admin/users/{id}` | admin |
+| admin content | GET/POST | `/api/v1/admin/content/words` | admin |
+| admin content | PATCH/DELETE | `/api/v1/admin/content/words/{id}` | admin |
+| admin content | GET/POST | `/api/v1/admin/content/categories` | admin |
+| admin content | GET | `/api/v1/admin/content/moderation` | admin |
+| admin content | POST | `/api/v1/admin/content/moderation/{id}/approve` | admin |
+| admin content | POST | `/api/v1/admin/content/moderation/{id}/reject` | admin |
+| admin content | POST | `/api/v1/admin/content/generate` | owner |
+| admin analytics | GET | `/api/v1/admin/analytics/overview` | admin |
+| admin analytics | GET | `/api/v1/admin/analytics/pronunciation` | admin |
+| admin analytics | GET | `/api/v1/admin/analytics/phonemes` | admin |
+| admin subscriptions | GET | `/api/v1/admin/subscriptions` | admin |
+| admin notifications | GET/POST | `/api/v1/admin/notifications/campaigns` | owner |
+| admin system | GET | `/api/v1/admin/system/health` | admin |
+| admin system | GET | `/api/v1/admin/system/providers` | owner |
+| admin system | GET | `/api/v1/admin/system/errors` | admin |
+
 Future groups slot in without disturbing these: `/api/v1/challenges`, `/api/v1/achievements`,
 `/api/v1/leaderboard`, `/api/v1/conversations`.
 
@@ -2502,7 +2565,33 @@ flowchart LR
 | any module -> `internal/shared`, `pkg` | `internal/shared` or `pkg` -> any module |
 | module A -> module B's exported service interface | module A -> module B's repository, models, or tables |
 
-### 31.3 Enforcement
+### 31.3 Admin
+
+| Allowed | Forbidden |
+|---------|-----------|
+| `app` (routes) -> `features` | `app` -> `services` directly, bypassing a feature |
+| feature component -> that feature's `hooks` and `api.ts` | component -> `fetch` directly |
+| feature `api.ts` -> `services/apiClient` | any file -> a database driver or connection string |
+| feature A -> feature B's `index.ts` | feature A -> a file deep inside feature B |
+| any feature -> `lib`, `types`, `config` | `lib` or `components/ui` -> any feature |
+| `components/ui` -> design tokens | `components/ui` -> business logic or API calls |
+
+### 31.4 Across applications
+
+The rules that keep three applications from collapsing into one tangle:
+
+| Allowed | Forbidden |
+|---------|-----------|
+| mobile -> backend REST API | mobile -> PostgreSQL, or mobile -> admin |
+| admin -> backend REST API | admin -> PostgreSQL, or admin -> mobile |
+| both clients -> the shared design **tokens** in `docs/design` | either client -> the other's UI components |
+| both clients -> `docs/api/openapi.yaml` as the contract | either client -> a business rule of its own |
+
+There is no shared code package between mobile and admin, and none is planned. Dart and
+TypeScript sharing UI would produce an abstraction that fits neither. What they share is a
+contract (OpenAPI) and a design language (tokens), both of which are documents.
+
+### 31.5 Enforcement
 
 Rules that live only in a document decay. These are enforced mechanically:
 
@@ -2513,6 +2602,8 @@ Rules that live only in a document decay. These are enforced mechanically:
   keeps `presentation` out of `data`.
 - Pull request review checks the cross-module rule (section 5.5), which is the one a linter cannot
   fully express.
+- The admin has no database client in `package.json`. A dependency review catches any attempt to
+  add one, which is the single most important boundary in section 31.4.
 - Circular dependencies are impossible between packages in Go by construction; where two modules
   appear to need each other, the resolution is a shared type in `internal/shared`, an interface
   owned by the consumer, or an event — never a mutual import.
@@ -2537,6 +2628,11 @@ rationale, and consequences. The table is the index; the files are the authority
 | [ADR-009](adr/ADR-009-api-versioning.md) | URL path versioning `/api/v1` | Header or query versioning, no versioning | Mobile clients cannot be force-updated; old versions must keep working |
 | [ADR-010](adr/ADR-010-redis-optional.md) | Redis designed for, not deployed at MVP | Redis from day one; never | Avoids an unnecessary component while keeping the seam through `CacheStore` |
 | [ADR-011](adr/ADR-011-no-microservices-initially.md) | No microservices, no Kubernetes, no Kafka at MVP | Service-per-domain now | Operational cost and debugging pain vastly exceed benefit before real scale |
+| [ADR-012](adr/ADR-012-monorepo-three-applications.md) | One repository holding mobile, admin and backend | Three repositories | The API contract, its server and both clients change together; one commit keeps them honest |
+| [ADR-013](adr/ADR-013-nextjs-for-admin.md) | Next.js with TypeScript and Tailwind for the admin | Flutter Web, plain React SPA, server-rendered Go templates | A data-dense internal web tool is a solved problem in React; Flutter Web is the wrong tool here |
+| [ADR-014](adr/ADR-014-admin-uses-backend-api-only.md) | Admin reaches data only through `/api/v1/admin` | Direct database access from the admin | A second data path means a second implementation of every rule, and the two drift |
+| [ADR-015](adr/ADR-015-ai-provider-abstraction.md) | A separate `AIProvider` port beside `SpeechProvider` | One combined provider interface; direct OpenAI calls | Assessment and generation are different capabilities with different vendors and failure modes |
+| [ADR-016](adr/ADR-016-hybrid-content-pipeline.md) | Curated content plus reviewed AI candidates | Fully curated; fully AI-generated at request time | A language model is not a database; unreviewed generated content cannot be a product guarantee |
 
 ---
 
@@ -2731,6 +2827,585 @@ starts at step 8**, which is the single most important scheduling decision in th
 
 ---
 
+## 38. Admin Dashboard Architecture
+
+### 38.1 What it is
+
+A Next.js web application used by the owner and a small number of admins to operate Voca:
+moderate content, inspect learners, read analytics, and watch system health. It is a
+**separate application**, not a second front end grafted onto the mobile codebase.
+
+Stack: Next.js with the App Router, TypeScript, Tailwind CSS. Reasoning in
+[ADR-013](adr/ADR-013-nextjs-for-admin.md).
+
+### 38.2 Why not Flutter Web
+
+Reusing Flutter would have been the obvious way to share code, and it is the wrong call.
+The admin is a data-dense internal tool: wide tables, filters, charts, keyboard navigation,
+copy and paste, deep links, printing and text selection. Flutter Web renders to a
+canvas and fights every one of those. React with Tailwind does them natively. The two
+applications also have unrelated release cycles, and nothing about a moderation queue
+resembles a pronunciation practice screen, so there was little real code to share anyway.
+
+### 38.3 Structure
+
+```
+admin/
+├── src/
+│   ├── app/           Next.js App Router; routes map onto features
+│   ├── components/
+│   │   ├── ui/        design-system primitives: button, table, card, dialog
+│   │   └── layout/    shell: sidebar, header, page frame
+│   ├── features/      one folder per capability, see 38.5
+│   │   └── <feature>/
+│   │       ├── api.ts       the only place this feature calls the network
+│   │       ├── types.ts     generated from openapi.yaml where possible
+│   │       ├── index.ts     the feature's public surface
+│   │       ├── components/  UI used only by this feature
+│   │       └── hooks/       data fetching and local state for this feature
+│   ├── hooks/         cross-feature hooks
+│   ├── lib/           pure helpers: formatting, permission display logic
+│   ├── services/      apiClient, authService
+│   ├── types/         shared API envelope types
+│   └── config/        typed environment access
+└── public/
+```
+
+The shape deliberately echoes the mobile app: features are isolated, each has one entry
+point, and cross-feature imports go through `index.ts`. Adding a capability is a new folder
+plus a route. Removing one is deleting a folder plus a route.
+
+Note what is **not** mirrored: there is no `data`/`domain`/`presentation` split. The mobile
+app needs it because it holds real domain logic and offline state. The admin holds neither.
+Imposing three layers on a screen that fetches a table and renders it would be ceremony,
+not architecture.
+
+### 38.4 The boundary that matters most
+
+```mermaid
+flowchart LR
+    A["Next.js admin"] -->|"HTTPS /api/v1/admin<br/>session cookie or bearer"| B["Go backend"]
+    B --> C["Admin middleware:<br/>authenticate, then RequireRole"]
+    C --> D["Service / use case<br/>ALL business rules live here"]
+    D --> E["Repository / provider ports"]
+    E --> F[("PostgreSQL")]
+    E --> G["Azure Speech · AI provider ·<br/>RevenueCat · FCM"]
+    A -.->|FORBIDDEN| F
+    A -.->|FORBIDDEN: no rule reimplemented| D
+```
+
+Three rules, none of them negotiable:
+
+1. **The admin never connects to PostgreSQL.** No driver, no connection string, no
+   migration runner. Data arrives over the API. A second data path would mean every
+   constraint, cascade and audit rule existing twice, and the two would diverge quietly.
+2. **The admin holds no business logic.** Scoring policy, entitlement, quota, moderation
+   rules and recommendation logic live in Go services. The admin formats and displays what
+   the backend computes.
+3. **The admin holds no secrets.** Anything prefixed `NEXT_PUBLIC_` is compiled into the
+   browser bundle and readable by anyone who opens developer tools. Only the API base URL
+   and environment name go there. Azure keys, AI provider keys and the RevenueCat secret
+   remain server-side, exactly as they do for mobile (section 18.2).
+
+### 38.5 Capabilities and their backing modules
+
+| Admin feature | Reads from | Backend module |
+|---------------|-----------|----------------|
+| dashboard | aggregate counters across domains | new `admin` module composing others |
+| users | learner accounts, progress, entitlement | `user`, `progress`, `subscription` |
+| content | words, categories, CEFR levels, moderation queue | `word`, new `content moderation` |
+| pronunciation | score distributions, phoneme weakness across the base | `pronunciation`, `progress` |
+| analytics | retention, funnels, conversion | `analytics` plus database aggregates |
+| subscriptions | subscription state, trials, churn, billing events | `subscription` |
+| notifications | campaigns and delivery status | `notification` |
+| system | API health, error rates, provider usage, latency, cost | `analytics`, provider metrics |
+
+The backend gains one new module, `internal/admin`, whose job is **composition and
+authorization**, not new business logic. It calls the existing module services through
+their exported interfaces, exactly as any other module must (section 5.5). It does not
+reach into their repositories or tables.
+
+That constraint is what stops the admin from becoming a back door around the module
+boundaries the whole architecture depends on.
+
+### 38.6 Contract and drift
+
+`docs/api/openapi.yaml` is the shared contract. TypeScript types in each feature's
+`types.ts` are generated from it, so a renamed backend field breaks the admin build rather
+than a production screen. This is the same protection the mobile client gets (section 22.3),
+applied to a second consumer.
+
+### 38.7 Deliberately absent
+
+No UI, no pages, no charts, no tables, no forms. No `package.json`, `tsconfig.json`,
+`next.config.js` or Tailwind config, because `create-next-app` generates them; hand-writing
+config files that tooling owns is how `backend/go.mod` was broken once already. The scaffold
+under `admin/src` is structure and commentary only. See `admin/README.md`.
+
+---
+
+## 39. Authorization and RBAC
+
+### 39.1 Two populations, deliberately separate
+
+Learners and admins are different populations with different risk profiles, and conflating
+them is a classic way to create a privilege-escalation bug.
+
+| | Learners | Admins |
+|---|---|---|
+| Identity source | Sign in with Apple, Google | Email and password, invite-only |
+| Table | `users` | `admin_users` (separate) |
+| Credential | Short access JWT plus rotating refresh token | Admin session, shorter lifetime |
+| Second factor | No | Required for `owner`, recommended for `admin` |
+| Self-registration | Yes | **Never.** Admins are created by an existing owner |
+| Surface | `/api/v1/*` | `/api/v1/admin/*` |
+
+Keeping `admin_users` separate from `users` means no learner row can ever acquire a
+privileged role through a bug in the sign-up path, because there is no column to set. It
+also keeps account deletion simple: deleting a learner cannot orphan an admin.
+
+### 39.2 Roles
+
+| Role | Can do |
+|------|--------|
+| `user` | The mobile product. Never appears on admin routes |
+| `admin` | Read operational data, moderate content, inspect learners |
+| `owner` | Everything `admin` can, plus destructive and costly actions: trigger AI generation, send notification campaigns, manage admin accounts, view provider cost |
+
+Roles are stored, not inferred, and the set is deliberately tiny. Fine-grained permissions
+are a plausible later need; a `permissions` table keyed by role is the extension point, and
+adding it does not change any call site because handlers ask "may this actor do X", not
+"is this actor an owner".
+
+### 39.3 Where each check lives
+
+```mermaid
+sequenceDiagram
+    participant AD as Admin browser
+    participant MW as Backend middleware
+    participant SV as Admin service
+    participant DB as PostgreSQL
+
+    AD->>MW: POST /api/v1/admin/content/generate
+    MW->>MW: 1. authenticate session -> admin_user_id
+    MW->>MW: 2. RequireRole("owner")
+    alt wrong role
+        MW-->>AD: 403 FORBIDDEN
+    else authorized
+        MW->>SV: call with admin identity in context
+        SV->>SV: 3. business rules and any resource-level check
+        SV->>DB: 4. write, plus an audit record
+        SV-->>AD: 200
+    end
+```
+
+| Layer | Responsibility |
+|-------|----------------|
+| Admin frontend route guard | **Cosmetic only.** Hides navigation the actor cannot use |
+| Backend authentication middleware | Validates the session, puts the admin identity in context |
+| Backend `RequireRole` middleware | Coarse role gate per route group |
+| Backend service | Business rules, resource-level checks, audit trail |
+
+**A hidden button is not an access control.** The browser is under the user's control; the
+frontend guard exists so an admin is not shown actions that would fail. Every privileged
+request is authorized again server-side. This mirrors the entitlement rule for mobile
+(section 9.4): the client's view of its own permissions is a hint, never the authority.
+
+### 39.4 Auditing
+
+Privileged actions are recorded in `admin_audit_log`: who, what, which resource, when, and
+the request ID. Content approval, rejection, publication, notification campaigns and admin
+account changes all leave a trail. This is not optional for a system where one person can
+change what thousands of learners see.
+
+---
+
+## 40. AI Provider Architecture
+
+### 40.1 Two capabilities, two ports
+
+Section 7 defines `SpeechProvider` for pronunciation assessment. Generation and
+recommendation are a **different capability**: different vendors, different cost model,
+different latency, different failure behaviour, and different consequences when wrong. They
+get their own port.
+
+```
+Pronunciation service  ->  SpeechProvider  ->  Azure Speech
+Content service        ->  AIProvider      ->  GPT-class model
+Recommendation service ->  AIProvider      ->  GPT-class model
+```
+
+Combining them into one interface would force every implementation to answer calls it has
+no business answering. Reasoning in [ADR-015](adr/ADR-015-ai-provider-abstraction.md).
+
+### 40.2 The port
+
+```
+type AIProvider interface {
+    Name() string
+    GenerateContent(ctx context.Context, req ContentRequest) (ContentCandidates, error)
+    SuggestPractice(ctx context.Context, req PracticeContext) (PracticeSuggestions, error)
+}
+```
+
+`ContentRequest`, `ContentCandidates`, `PracticeContext` and `PracticeSuggestions` are our
+types, phrased in the product's language: CEFR level, category, target phonemes, weak
+sounds. No vendor concept appears in the signature, no prompt text leaks out of the adapter,
+and no caller knows which model answered.
+
+Adapters live in `internal/integrations/ai/<vendor>/`, alongside a `mock` implementation, so
+tests and CI never spend money and never depend on the network. Selection is by
+configuration (`AI_PROVIDER`), the same mechanism as every other provider (section 7.3).
+
+### 40.3 Rules specific to generative AI
+
+These matter more than for speech assessment, because a language model fails differently:
+it produces confident, well-formed, wrong output.
+
+| Rule | Why |
+|------|-----|
+| Output is a **candidate**, never published content | A model cannot be trusted to define what a learner is taught (section 41) |
+| Every response is schema-validated before use | Models return malformed or hallucinated structure; validation happens in the adapter |
+| Generation is never on the learner request path | It is slow and costly; it runs as an admin-triggered or background job |
+| Cost and token usage are recorded per call | Spend must be visible in the admin before it becomes a surprise |
+| Prompts are versioned, like `scoring_version` | Output changes when a prompt changes; old records must stay interpretable |
+| No personal data in a prompt | Learner audio, email and identifiers never leave our system for generation |
+
+### 40.4 Not implemented
+
+None of this exists in code. There is no AI adapter, no generation endpoint and no prompt.
+This section defines the shape so that adding it later is an adapter plus a service, not a
+rework of the content model.
+
+---
+
+## 41. Hybrid Content Architecture
+
+### 41.1 The principle
+
+**A language model is not a database.** Generating a word list at request time would make
+the product non-deterministic, unreviewable, slow, expensive, and impossible to guarantee.
+Content the learner sees is owned by our database.
+
+AI is used to *propose* content. People decide what becomes real.
+
+```mermaid
+flowchart TB
+    C["Curated content<br/>seeded and hand-written"] --> R[("Content repository<br/>PostgreSQL")]
+    A["AIProvider<br/>generated candidates"] --> V["Automatic validation:<br/>schema, duplicates, phonetics,<br/>CEFR plausibility, banned terms"]
+    V -->|fails| X["Rejected, with reason recorded"]
+    V -->|passes| M["Moderation queue<br/>status: pending"]
+    M --> H["Human review in admin:<br/>edit · approve · reject"]
+    H -->|approved| P["status: published"]
+    P --> R
+    H -->|rejected| X
+    R --> RE["Recommendation engine"]
+    RE --> U["Learner practice"]
+```
+
+### 41.2 Content lifecycle
+
+Every content row carries a status, and only one status is ever served to learners:
+
+| Status | Meaning | Served to learners |
+|--------|---------|--------------------|
+| `draft` | Being written or just generated | No |
+| `pending_review` | Awaiting human moderation | No |
+| `approved` | Passed review, not yet live | No |
+| `published` | Live | **Yes** |
+| `rejected` | Refused, with a recorded reason | No |
+| `unpublished` | Withdrawn after being live | No |
+
+`words.is_active` (section 10.2) remains the mechanism for withdrawing content without
+orphaning a learner's history. Status and activity are separate concerns: status is
+editorial, activity is operational.
+
+### 41.3 Provenance
+
+Generated rows record where they came from: which provider, which model, which prompt
+version, when, and which admin approved them. Two reasons. If a model turns out to produce
+subtly wrong phonetics, we need to find every row it touched. And an approval with no name
+attached is not accountability.
+
+### 41.4 What the admin can do
+
+Review the queue, edit a candidate before approving, approve, reject with a reason, publish,
+and unpublish. Triggering generation is an `owner` action because it costs money.
+
+### 41.5 Not implemented
+
+No moderation tables, no statuses, no generation. The MVP path remains seed scripts
+(section 13.4). This section exists so the seed schema is designed with the status column
+it will need, rather than being migrated under pressure later.
+
+---
+
+## 42. Recommendation Architecture
+
+### 42.1 Position
+
+Section 13.2 defines `PracticeSelector`, the interface that decides what a learner practises.
+MVP uses a simple strategy: level filter, exclude recently mastered, prefer common words.
+Personalization is a **new implementation of that same interface**, which is precisely why
+the interface exists.
+
+```mermaid
+flowchart LR
+    subgraph Signals["Signals, all already captured"]
+      S1["CEFR level and difficulty"]
+      S2["practice history"]
+      S3["pronunciation scores"]
+      S4["weak phonemes"]
+      S5["mastered words"]
+      S6["recent activity and streak"]
+      S7["learning goals"]
+    end
+    Signals --> RS["RecommendationService"]
+    RS -->|"optional, for novel suggestions"| AI["AIProvider"]
+    RS --> PS["PracticeSelector implementation"]
+    PS --> CR[("Content repository<br/>published content only")]
+    CR --> SESS["Practice session"]
+```
+
+### 42.2 Why the signals already exist
+
+Every input above is captured from the first attempt the product ever records:
+`phoneme_results` for weak sounds, `pronunciation_attempts` for scores, `daily_progress` and
+`streaks` for activity, `practice_items` for history, `user_preferences` for goals and level.
+
+This was a deliberate decision at MVP (sections 15.1, 35): analysis features are worthless
+without history, and history cannot be created retroactively. The recommendation engine is
+late to ship and its data starts on day one.
+
+### 42.3 The rule about AI here
+
+The recommendation engine may consult `AIProvider` for ordering or novel suggestions, but it
+**selects only from published content in our database**. The model never invents a word for
+a learner to practise, because that word would have no audio, no verified phonetics, no
+CEFR rating and no review.
+
+### 42.4 Not implemented
+
+`PracticeSelector` exists as a documented interface with a comment-only stub. No
+personalization, no adaptive difficulty, no AI involvement in selection.
+
+---
+
+## 43. Data Ownership
+
+### 43.1 The single owner
+
+**PostgreSQL, reached only through the Go backend, owns all product data.** Neither client
+stores anything authoritative. Mobile keeps a cache for offline browsing (section 4.5); the
+admin keeps nothing beyond ephemeral query results.
+
+### 43.2 Ownership map
+
+| Domain | Owner module | Tables | Status |
+|--------|--------------|--------|--------|
+| Identity and sessions | `auth` | `users`, refresh tokens | designed |
+| Profiles and preferences | `user` | `profiles`, `user_preferences` | designed |
+| Content | `word` | `categories`, `words` | designed |
+| Practice | `practice` | `practice_sessions`, `practice_items` | designed |
+| Assessment | `pronunciation` | `pronunciation_attempts`, `phoneme_results`, `feedback` | designed |
+| Progress | `progress` | `daily_progress`, `streaks` | designed |
+| Monetization | `subscription` | `subscriptions`, `subscription_events` | designed |
+| Devices | `notification` | `devices` | designed |
+| Admin identity | `admin` | `admin_users`, `roles` | **new, designed** |
+| Audit trail | `admin` | `admin_audit_log` | **new, designed** |
+| Content moderation | `word` | `content_moderation`, status columns | **new, designed** |
+| AI generation records | `word` | `ai_generations` with provider, model, prompt version, cost | **new, designed** |
+| Product events | `analytics` | none; forwarded to the provider | designed |
+
+The four rows marked new are additions implied by the admin and the content pipeline. They
+are documented here, **not migrated**. No schema change was made during this task.
+
+### 43.3 Rules
+
+- One module owns a table. Another module reads it only through the owner's service
+  interface (section 5.5). The admin is not an exception to this.
+- Derived data is computed, not stored, until query cost proves otherwise. Weak sounds and
+  recommendations are computed (sections 15.5, 6.3).
+- Raw vendor payloads are stored in exactly one place, `subscription_events`, for billing
+  audit (section 10.6). Nothing else stores a vendor response.
+- User audio is not stored at all (section 12.3).
+
+---
+
+## 44. Design System Boundary
+
+### 44.1 Shared language, separate implementations
+
+```mermaid
+flowchart TB
+    DL["Voca design language<br/>docs/design<br/>tokens · type scale · spacing ·<br/>radius · semantic colour · a11y rules"]
+    DL --> FL["Flutter implementation<br/>mobile/lib/core/theme"]
+    DL --> AD["React implementation<br/>admin/src/components/ui + Tailwind"]
+    FL -.->|no shared components| AD
+```
+
+### 44.2 What is shared and what is not
+
+| Shared | Not shared |
+|--------|------------|
+| Colour tokens and their semantic roles | Widgets and components |
+| Type scale and hierarchy | Layout code |
+| Spacing, radius, elevation scales | Animation implementations |
+| Score bands, defined server-side | Anything platform-specific |
+| Accessibility rules: contrast, target size | |
+
+### 44.3 Why no shared component library
+
+A Flutter widget and a React component share a name and nothing else: different rendering
+model, different layout system, different event model, different accessibility APIs. A
+library abstract enough to serve both would be harder to use than either. What genuinely
+must not diverge is the *language*, and a language is best expressed as documented tokens.
+
+Score bands deserve emphasis: they are defined **server-side** (section 6.4) precisely so a
+score never reads as "good" in the mobile app and "poor" in the admin.
+
+---
+
+## 45. Three-Application Workflow
+
+### 45.1 Local development
+
+Each application runs independently against the same backend.
+
+```
+backend   cd backend && make run          # :8082, or PORT
+mobile    flutter run --flavor dev        # points at the local API
+admin     cd admin && npm run dev         # :3000, points at the local API
+```
+
+Only the backend needs infrastructure. Both clients need only a reachable API, so a
+front-end developer never runs PostgreSQL.
+
+### 45.2 Environment variables by application
+
+Secrets live in exactly one place: the backend. This is the rule that section 18.2 states
+for mobile, extended to the admin.
+
+| Application | Holds | Never holds |
+|-------------|-------|-------------|
+| Backend | Every secret: database URL, JWT secret, Azure key, AI key, RevenueCat secret, FCM credentials | — |
+| Mobile | API base URL, environment, public client IDs, RevenueCat **public** SDK key | Any server secret |
+| Admin | `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_APP_ENV` | Any server secret |
+
+`NEXT_PUBLIC_` deserves a warning of its own: Next.js compiles those values into the browser
+bundle. They are public in the strict sense. A key placed there is a published key.
+
+Environments stay separated as in section 25: development, staging and production never
+share a database or a secret, and each application has its own build configuration per
+environment.
+
+### 45.3 CI
+
+The existing path-filtered workflows extend naturally. `backend-ci.yml` and `mobile-ci.yml`
+already trigger on their own paths; `admin-ci.yml` follows the same pattern with formatting,
+type checking, linting, tests and a production build. `openapi-ci.yml` grows a second
+consumer: it regenerates the admin's types as well as the Dart client, so a contract change
+breaks the build rather than a screen.
+
+### 45.4 Deployment
+
+```mermaid
+flowchart TB
+    subgraph Stores
+      AS["App Store"]
+      PS["Google Play"]
+    end
+    subgraph Platform["Managed container platform"]
+      API["Go API container<br/>1-2 instances"]
+    end
+    subgraph Static["Static hosting / CDN"]
+      ADM["Next.js admin"]
+    end
+    subgraph Managed
+      PG[("PostgreSQL<br/>backups + PITR")]
+      RD[("Redis — Stage 2")]
+    end
+    subgraph Ext["External"]
+      AZ["Azure Speech"]
+      AI["AI provider"]
+      RC["RevenueCat"]
+      FCM["FCM"]
+    end
+    MOB["Flutter app"] --> AS & PS
+    AS & PS -.-> API
+    ADM --> API
+    API --> PG
+    API -.-> RD
+    API --> AZ & AI & RC & FCM
+```
+
+The admin is a separate deployment unit from the API, which is deliberate: it is a static or
+edge-rendered bundle with a different release cadence and different scaling. It adds no
+operational burden to the backend, and taking it offline cannot affect learners.
+
+Recommendation from section 24.3 is unchanged: a managed container platform for the API plus
+managed PostgreSQL. The admin deploys to the same provider's static hosting or any CDN.
+
+### 45.5 Admin access control at the edge
+
+The admin is an internal tool with a small user base and privileged capability. Beyond
+authentication it should sit behind at least one network-level restriction: a non-obvious
+hostname is not one. IP allow-listing or platform access control is preferred. This is
+defence in depth, not a replacement for section 39.
+
+---
+
+## 46. Implemented, Documented, Planned
+
+The single most misleading thing an architecture document can do is describe intentions in
+the present tense. This section is the honest inventory.
+
+### 46.1 Implemented and verified
+
+| Component | Evidence |
+|-----------|----------|
+| Go module, builds and tests clean | `go build ./...`, `go vet`, `gofmt`, `go test ./...` pass |
+| Configuration from environment, with `.env` support | `internal/config` |
+| HTTP server, graceful shutdown, router | `internal/server` |
+| Middleware: request ID, structured logging, panic recovery | `internal/middleware` |
+| Standard response envelope | `internal/shared/httpx` |
+| `GET /health` | returns 200 with `{"status":"ok"}` |
+| `POST /api/v1/webhooks/github` with HMAC-SHA256 verification | `internal/devhook`, 25 tests |
+| Telegram notification adapter behind a port | `internal/integrations/telegram` |
+
+The webhook and Telegram pieces are **developer tooling**, not product (section 5.5.1).
+
+### 46.2 Documented, with a scaffold but no logic
+
+Every product module under `backend/internal` (`auth`, `user`, `word`, `practice`,
+`pronunciation`, `progress`, `subscription`, `notification`, `analytics`) is a comment-only
+skeleton. Every Flutter feature under `mobile/lib/features` is a comment-only skeleton. The
+entire `admin/src` tree is a comment-only skeleton with no Next.js project initialized.
+
+Zero lines of product logic exist in any of the three applications.
+
+### 46.3 Documented only, no scaffold
+
+Admin backend module and `admin_users`, roles and audit tables. `AIProvider` port and any
+adapter. Content moderation statuses and tables. AI generation records. Personalized
+recommendation. Every admin API route in section 30. Redis, background job queue, object
+storage for audio.
+
+### 46.4 Planned, deliberately deferred
+
+Sections 33 and 35 remain authoritative: microservices, Kubernetes, message brokers, read
+replicas, partitioning, leaderboards, achievements and social features are all out of scope
+until their stated triggers are met.
+
+### 46.5 Database reality
+
+**No migration has been written and no schema exists.** Sections 10 and 43 describe an
+intended schema. The four admin-related table groups in section 43.2 are additions to that
+intent, not changes to a live database. Nothing was migrated during the work that produced
+this version of the document.
+
+---
+
 ## Architecture Freeze Checklist
 
 Review and approve each item before writing production code. An unchecked box is a decision that is
@@ -2806,10 +3481,33 @@ still open, and open decisions are far cheaper to close now than after implement
 - [ ] Analytics provider chosen and the event catalogue in section 16.3 approved
 - [ ] Metric definitions in section 16.4 agreed, so launch numbers are not argued about afterwards
 
+### Admin dashboard and RBAC
+
+- [ ] Next.js with TypeScript and Tailwind approved for the admin ([ADR-013](adr/ADR-013-nextjs-for-admin.md))
+- [ ] Accepted: the admin reaches data ONLY through `/api/v1/admin`, never PostgreSQL ([ADR-014](adr/ADR-014-admin-uses-backend-api-only.md))
+- [ ] Accepted: no business logic and no secrets in the admin frontend
+- [ ] Role set frozen for now: `user`, `admin`, `owner`; which actions require `owner` agreed
+- [ ] Separate `admin_users` table accepted, with no self-registration and second factor for `owner`
+- [ ] Audit trail scope agreed: which privileged actions must leave a record
+- [ ] Network-level restriction for the admin decided (IP allow-list or platform access control)
+- [ ] Admin API surface in section 30 reviewed for completeness
+
+### AI and content
+
+- [ ] Separate `AIProvider` port accepted alongside `SpeechProvider` ([ADR-015](adr/ADR-015-ai-provider-abstraction.md))
+- [ ] Hybrid pipeline accepted: AI proposes, humans approve, database owns ([ADR-016](adr/ADR-016-hybrid-content-pipeline.md))
+- [ ] Content status set frozen: draft, pending_review, approved, published, rejected, unpublished
+- [ ] Agreed: generated content is never served before human approval
+- [ ] Agreed: generation never runs on the learner request path, and never receives personal data
+- [ ] AI provider chosen, with cost per generation understood and a spending cap decided
+- [ ] Provenance fields agreed: provider, model, prompt version, approver
+
 ### Process
 
+- [ ] Monorepo holding three applications accepted ([ADR-012](adr/ADR-012-monorepo-three-applications.md))
 - [ ] Monorepo and trunk-based branching accepted
-- [ ] CI gates agreed, including "CI never calls a real provider"
+- [ ] CI gates agreed, including "CI never calls a real provider" and "CI never calls a real AI model"
+- [ ] `admin-ci.yml` scope agreed, and OpenAPI type generation extended to the admin
 - [ ] Test expectations accepted, especially the five highest-value backend test suites in section 22.1
 - [ ] Implementation order in section 37 accepted, or resequenced deliberately
 - [ ] Owner assigned per module

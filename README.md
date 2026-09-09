@@ -1,7 +1,15 @@
 # Voca — English Pronunciation Coach
 
-AI-powered English pronunciation coaching for mobile. First UI language: Uzbek.
-First learning language: English (en-US).
+AI-powered English pronunciation coaching. First UI language: Uzbek. First learning
+language: English (en-US).
+
+The product is three applications sharing one repository:
+
+| Application | Stack | Audience |
+|-------------|-------|----------|
+| `mobile/` | Flutter, iOS and Android | learners |
+| `admin/` | Next.js, TypeScript, Tailwind | owner and admins |
+| `backend/` | Go, Gin, PostgreSQL | serves both, owns all business logic |
 
 ## Current state
 
@@ -35,11 +43,14 @@ Implementation begins only after the **Architecture Freeze Checklist** at the en
 | Path | Purpose |
 |------|---------|
 | `mobile/` | Flutter app (feature-based Clean Architecture) — ARCHITECTURE.md §4, §27 |
+| `admin/` | Next.js admin dashboard — ARCHITECTURE.md §38. Scaffold only, not initialized |
 | `backend/` | Go modular monolith (Gin + PostgreSQL) — ARCHITECTURE.md §5, §28 |
 | `docs/architecture/` | The architecture specification and decision records |
 | `docs/api/` | OpenAPI contract, the shared source of truth for both sides |
 | `docs/database/` | Schema notes and ERD |
 | `docs/product/` | Analytics event catalogue and metric definitions |
+| `docs/design/` | The design language shared by both clients: tokens and principles, never code |
+| `docs/ux/` | User journeys and flows, agreed before any screen is built |
 | `docs/runbooks/` | Operational procedures |
 | `infra/` | Docker, compose files, deployment config |
 | `scripts/` | Developer convenience commands |
@@ -74,7 +85,12 @@ default.
 
 ## Rules that hold everywhere
 
-- No secrets in the mobile app. Ever. Azure and RevenueCat keys are backend-only.
+- No secrets in either client. Ever. Azure, AI and RevenueCat keys are backend-only.
+  Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is public.
+- Neither client touches PostgreSQL. Both go through the REST API.
+- No business rule is implemented twice. It lives in a Go service or it does not exist.
 - No vendor SDK outside `backend/internal/integrations/`.
-- No SQL in HTTP handlers; no business logic in handlers or widgets.
-- The backend is the only authority on subscription entitlement.
+- No SQL in HTTP handlers; no business logic in handlers, widgets or React components.
+- The backend is the only authority on subscription entitlement and on admin authorization.
+  A hidden button is not an access control.
+- Mobile and admin share design tokens and an API contract. They never share UI code.
