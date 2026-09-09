@@ -430,6 +430,22 @@ Practical consequence: on the day `pronunciation` becomes its own service, its c
 `subscription.Service` are already the only coupling, and they become HTTP or gRPC calls behind
 the same interface. Nothing else in the module changes.
 
+### 5.5.1 `devhook` — an out-of-band module
+
+`internal/devhook` receives GitHub push events and forwards them to Telegram for the
+development team. It is **developer tooling, not product**, and is recorded here so the
+module list stays truthful.
+
+It is deliberately its own module rather than an addition to `notification`, because that
+module is about push notifications to *learners*. `devhook` shares no data, no table, and
+no service with any product module, so it can be removed by deleting one folder and one
+route line.
+
+It follows the standard rules exactly: thin handler, logic in the service, an outbound
+port (`devhook.Notifier`) owned by the consumer, and the vendor adapter isolated in
+`internal/integrations/telegram`. Its endpoint is authenticated by HMAC signature rather
+than a JWT, the same pattern the RevenueCat webhook uses (section 9.5).
+
 ### 5.6 Technology choices inside the backend
 
 | Concern | Choice | Why |
@@ -2431,6 +2447,8 @@ Compact reference; full contracts in section 11.
 | notifications | PUT | `/api/v1/notifications/devices` | user |
 | notifications | DELETE | `/api/v1/notifications/devices/{token}` | user |
 | notifications | PUT | `/api/v1/notifications/preferences` | user |
+| devhook | POST | `/api/v1/webhooks/github` | GitHub HMAC signature |
+| system | GET | `/health` | public |
 | system | GET | `/healthz` | public |
 | system | GET | `/readyz` | public |
 | system | GET | `/api/v1/config` | user |

@@ -5,12 +5,21 @@ First learning language: English (en-US).
 
 ## Current state
 
-**Architecture is designed. Implementation has not started.**
+**Architecture is designed. Implementation has started at the edges only.**
 
-This repository currently contains the architecture specification and an empty
-structural skeleton. Every source file is a placeholder holding only a comment that
-states what belongs in it and which dependency rules apply. There is no logic yet, by
-design.
+The repository holds the architecture specification plus a structural skeleton in which
+most source files are still placeholders carrying only a comment about what belongs in
+them.
+
+What is actually implemented and running:
+
+- the HTTP server, configuration, middleware and the standard response envelope
+- `GET /health`
+- `POST /api/v1/webhooks/github` — GitHub push events, HMAC-SHA256 verified, forwarded
+  to Telegram (`internal/devhook` + `internal/integrations/telegram`)
+
+Everything in the learning product itself (auth, content, practice, pronunciation,
+progress, subscriptions) is still a placeholder.
 
 The process is:
 
@@ -35,6 +44,27 @@ Implementation begins only after the **Architecture Freeze Checklist** at the en
 | `infra/` | Docker, compose files, deployment config |
 | `scripts/` | Developer convenience commands |
 | `.github/workflows/` | CI/CD pipelines |
+
+## Running the backend locally
+
+```
+cd backend
+cp .env.example .env      # then fill in GITHUB_WEBHOOK_SECRET and the Telegram values
+go mod tidy
+go test ./...
+go run ./cmd/api
+```
+
+The server listens on `PORT`, defaulting to **8082**.
+
+```
+curl http://localhost:8082/health
+```
+
+Without `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` the service still runs and logs the
+notification it would have sent, so no vendor credentials are needed for development.
+Without `GITHUB_WEBHOOK_SECRET` every webhook request is rejected, which is the safe
+default.
 
 ## Start here
 
