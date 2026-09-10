@@ -13,6 +13,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/config"
 	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
+	emailbrevo "github.com/samandar-hodiev/voca/backend/internal/integrations/email/brevo"
 	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
@@ -44,8 +45,8 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 
 	// Email provider selection, most capable first (ARCHITECTURE.md 18.4).
 	//
-	//   Resend configured  -> real delivery over HTTPS, which works on networks that
-	//                         block the SMTP ports
+	//   Brevo configured   -> real delivery over HTTPS, sender address only
+	//   Resend configured  -> real delivery over HTTPS, verified domain
 	//   SMTP configured    -> real delivery to a real inbox
 	//   EMAIL_VIA_TELEGRAM -> posted to the development chat (never production)
 	//   EMAIL_OUTBOX_DIR   -> written to disk for a developer to read (never production)
@@ -53,6 +54,18 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 	//                         and never reveals the code
 	var emailProvider auth.EmailProvider = emaillog.New(log)
 	switch {
+	case cfg.BrevoConfigured():
+		sender, err := emailbrevo.New(emailbrevo.Config{
+			APIKey:   cfg.BrevoAPIKey,
+			From:     cfg.BrevoFrom,
+			FromName: cfg.BrevoFromName,
+		}, log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		emailProvider = sender
+		log.Info("email_provider_selected", slog.String("provider", "brevo"))
+
 	case cfg.ResendConfigured():
 		sender, err := emailresend.New(emailresend.Config{
 			APIKey:   cfg.ResendAPIKey,
@@ -106,7 +119,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 
 	default:
 		log.Warn("email_delivery_unavailable",
-			slog.String("hint", "set RESEND_API_KEY and RESEND_FROM, or SMTP_HOST and SMTP_FROM"))
+			slog.String("hint", "set BREVO_API_KEY and BREVO_FROM, or RESEND_API_KEY and RESEND_FROM"))
 	}
 
 	// Google sign-in verifies tokens against Google's keys. With no client ID configured

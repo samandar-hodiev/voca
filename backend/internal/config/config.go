@@ -45,6 +45,12 @@ type Config struct {
 	TelegramBotToken string
 	TelegramChatID   string
 
+	// Brevo delivers real email over HTTPS and needs only a verified sender address,
+	// not a verified domain, so it can be used before the product owns one.
+	BrevoAPIKey   string
+	BrevoFrom     string
+	BrevoFromName string
+
 	// Resend delivers real email over HTTPS. Preferred over SMTP because ports 587 and
 	// 465 are blocked on many networks, while 443 is always open.
 	ResendAPIKey   string
@@ -109,6 +115,9 @@ func Load() (Config, error) {
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
+		BrevoAPIKey:         strings.TrimSpace(os.Getenv("BREVO_API_KEY")),
+		BrevoFrom:           strings.TrimSpace(os.Getenv("BREVO_FROM")),
+		BrevoFromName:       getEnv("BREVO_FROM_NAME", "Voca"),
 		ResendAPIKey:        strings.TrimSpace(os.Getenv("RESEND_API_KEY")),
 		ResendFrom:          strings.TrimSpace(os.Getenv("RESEND_FROM")),
 		ResendFromName:      getEnv("RESEND_FROM_NAME", "Voca"),
@@ -148,6 +157,11 @@ func (c Config) validate() error {
 // being spelled slightly differently at each call site.
 func (c Config) IsProduction() bool {
 	return strings.EqualFold(strings.TrimSpace(c.AppEnv), "production")
+}
+
+// BrevoConfigured reports whether the Brevo HTTP mail API can be used.
+func (c Config) BrevoConfigured() bool {
+	return c.BrevoAPIKey != "" && c.BrevoFrom != ""
 }
 
 // ResendConfigured reports whether the HTTP mail API can be used.

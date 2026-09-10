@@ -366,8 +366,22 @@ Provider selection, most capable first:
 
 | Configuration | Provider | Where the code goes |
 |---|---|---|
+| `BREVO_API_KEY` + `BREVO_FROM` | brevo | a real inbox, over HTTPS |
 | `RESEND_API_KEY` + `RESEND_FROM` | resend | a real inbox, over HTTPS |
 | `SMTP_HOST` + `SMTP_FROM` | smtp | a real inbox, if the ports are open |
 | `EMAIL_VIA_TELEGRAM=true` | telegram-dev | the development chat |
 | `EMAIL_OUTBOX_DIR` | outbox | a file, readable with `make code` |
 | none | log | nowhere |
+
+### Choosing between the two HTTP providers
+
+They differ in what the sender has to own, not in anything technical.
+
+| | Brevo | Resend |
+|---|---|---|
+| To send to anyone | verified sender ADDRESS | verified DOMAIN |
+| Before you own a domain | works | only sends to the account owner |
+| Free tier | 300 messages a day | 3,000 a month |
+
+Brevo is the one to start with while the product has no domain. Resend is the better
+long-term home once `voca.uz` or similar exists and can be verified.
