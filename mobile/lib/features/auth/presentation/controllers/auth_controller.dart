@@ -86,6 +86,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<bool> continueAsGuest() => _run(() => _repo.continueAsGuest(_answers));
 
+  Future<bool> signInWithGoogle(String idToken, {String first = '', String last = ''}) =>
+      _run(() => _repo.signInWithGoogle(idToken,
+          firstName: first, lastName: last, answers: _answers));
+
   Future<bool> forgotPassword(String email) =>
       _run(() => _repo.forgotPassword(email), email: email);
 

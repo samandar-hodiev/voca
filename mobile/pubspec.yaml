@@ -29,6 +29,10 @@ dependencies:
   # Non-secret local flags: whether onboarding has been completed, last selected tab.
   shared_preferences: ^2.3.3
 
+  # Google sign-in. The button stays disabled until the backend reports a configured
+  # OAuth client, so the package is never exercised without one.
+  google_sign_in: ^6.2.2
+
   # Tokens only: Keychain on iOS, EncryptedSharedPreferences on Android.
   # Nothing else belongs here, and nothing here belongs anywhere else
   # (ARCHITECTURE.md 4.5, 18.2).

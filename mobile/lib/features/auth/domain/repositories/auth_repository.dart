@@ -42,6 +42,15 @@ abstract interface class AuthRepository {
   Future<Result<AuthSession>> login(String email, String password);
   Future<Result<AuthSession>> continueAsGuest(OnboardingAnswers? answers);
 
+  /// Signs in with a Google identity token. The token is verified SERVER-SIDE; the app
+  /// only forwards what Google gave it.
+  Future<Result<AuthSession>> signInWithGoogle(
+    String idToken, {
+    String firstName,
+    String lastName,
+    OnboardingAnswers? answers,
+  });
+
   Future<Result<void>> forgotPassword(String email);
   Future<Result<void>> verifyPasswordCode(String email, String code);
   Future<Result<AuthSession>> resetPassword(String email, String password);

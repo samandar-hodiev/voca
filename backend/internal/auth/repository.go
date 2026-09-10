@@ -27,6 +27,7 @@ type Repository interface {
 	UserByEmail(ctx context.Context, email string) (User, error)
 	UserByID(ctx context.Context, id uuid.UUID) (User, error)
 	PasswordHash(ctx context.Context, userID uuid.UUID) (string, error)
+	LinkGoogleAccount(ctx context.Context, userID uuid.UUID, subject string) error
 	SetPasswordHash(ctx context.Context, email, hash string) error
 	TouchLastLogin(ctx context.Context, userID uuid.UUID) error
 
@@ -363,6 +364,23 @@ func (r *repository) RevokeAllForUser(ctx context.Context, userID uuid.UUID) err
 		 WHERE user_id = $1 AND revoked_at IS NULL`, userID)
 	if err != nil {
 		return fmt.Errorf("auth: revoke user tokens: %w", err)
+	}
+	return nil
+}
+
+// LinkGoogleAccount records the Google subject on an existing account.
+//
+// Called when someone who signed up by email later uses Google: the same person, so the
+// same row, rather than a second account holding half their history.
+func (r *repository) LinkGoogleAccount(ctx context.Context, userID uuid.UUID, subject string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users
+		 SET external_auth_id = COALESCE(external_auth_id, $2),
+		     email_verified   = true,
+		     updated_at       = now()
+		 WHERE id = $1`, userID, subject)
+	if err != nil {
+		return fmt.Errorf("auth: link google account: %w", err)
 	}
 	return nil
 }

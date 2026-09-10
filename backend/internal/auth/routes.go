@@ -18,6 +18,7 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler, requireAuth gin.HandlerFunc
 		a.POST("/register", h.Register)
 		a.POST("/login", h.Login)
 		a.POST("/guest", h.Guest)
+		a.POST("/google", h.Google)
 
 		a.POST("/refresh", h.Refresh)
 		a.POST("/logout", h.Logout)

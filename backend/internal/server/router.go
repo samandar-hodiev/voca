@@ -25,8 +25,18 @@ type Dependencies struct {
 	CORS           middleware.CORSConfig
 	DevhookHandler *devhook.Handler
 	AuthHandler    *auth.Handler
+	Capabilities   Capabilities
 	RequireAuth    gin.HandlerFunc
 	DB             *database.Pool
+}
+
+// Capabilities tells the client which optional sign-in methods actually work.
+//
+// The app reads this at startup and disables what is unavailable, so a button that cannot
+// succeed is never offered.
+type Capabilities struct {
+	GoogleSignIn bool `json:"google_sign_in"`
+	AppleSignIn  bool `json:"apple_sign_in"`
 }
 
 // NewRouter builds the HTTP router.
@@ -51,6 +61,11 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	v1 := r.Group("/api/v1")
 	devhook.RegisterRoutes(v1, deps.DevhookHandler)
 	auth.RegisterRoutes(v1, deps.AuthHandler, deps.RequireAuth)
+
+	// Remote configuration: feature availability the client cannot know on its own.
+	v1.GET("/config", func(c *gin.Context) {
+		httpx.OK(c, http.StatusOK, gin.H{"capabilities": deps.Capabilities})
+	})
 
 	return r
 }

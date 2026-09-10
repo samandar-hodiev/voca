@@ -40,6 +40,18 @@ type guestRequest struct {
 	DailyGoalWords *int    `json:"daily_goal_words"`
 }
 
+type googleSignInRequest struct {
+	IDToken string `json:"id_token" binding:"required"`
+
+	// The setup answers, so a first-time Google user keeps what they chose before the
+	// account existed.
+	CEFRLevel      *string `json:"cefr_level"`
+	LearningGoal   *string `json:"learning_goal"`
+	DailyGoalWords *int    `json:"daily_goal_words"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+}
+
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }

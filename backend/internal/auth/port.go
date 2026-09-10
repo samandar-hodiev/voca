@@ -30,3 +30,20 @@ type EmailProvider interface {
 	Name() string
 	Send(ctx context.Context, msg EmailMessage) error
 }
+
+// GoogleIdentity is what a verified Google token tells us about a person.
+type GoogleIdentity struct {
+	Subject       string
+	Email         string
+	EmailVerified bool
+}
+
+// GoogleTokenVerifier checks an ID token issued by Google.
+//
+// The port is owned here, not by the vendor package, so the service never imports a
+// Google type and a test never needs the network (ARCHITECTURE.md 7.1, ADR-006).
+type GoogleTokenVerifier interface {
+	// Verify returns the identity behind idToken, or an error if it is not a valid token
+	// issued to this application.
+	Verify(ctx context.Context, idToken string) (GoogleIdentity, error)
+}

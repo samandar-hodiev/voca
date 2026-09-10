@@ -33,12 +33,23 @@ type Config struct {
 	JWTSecret    string
 	JWTAccessTTL time.Duration
 
+	// GoogleClientIDs are the OAuth audiences this backend accepts, one per platform.
+	// Empty means Google sign-in is unavailable, and the app is told so rather than
+	// shown a button that cannot work.
+	GoogleClientIDs []string
+
 	// GitHubWebhookSecret verifies X-Hub-Signature-256 on incoming webhooks.
 	GitHubWebhookSecret string
 
 	// Telegram delivery credentials. Both are required for delivery to work.
 	TelegramBotToken string
 	TelegramChatID   string
+
+	// EmailOutboxDir turns on the local mail catcher outside production: every message
+	// the service sends is written there as a file so a developer can read a
+	// verification code without mail credentials. Empty keeps the log provider, which
+	// never reveals a code. Ignored entirely in production.
+	EmailOutboxDir string
 
 	// CORSAllowedOrigins lists browser origins permitted to call this API. Empty means
 	// no cross-origin request is allowed, which is the safe default for a deployment
@@ -66,16 +77,19 @@ func Load() (Config, error) {
 	loadDotEnv("backend/.env")
 
 	cfg := Config{
-		AppEnv:              getEnv("APP_ENV", defaultAppEnv),
-		Port:                getEnv("PORT", defaultPort),
-		LogLevel:            getEnv("LOG_LEVEL", defaultLogLevel),
-		DatabaseURL:         getEnv("DATABASE_URL", defaultDatabaseURL),
-		DatabaseMaxConns:    int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
-		JWTSecret:           os.Getenv("JWT_SECRET"),
-		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
+		AppEnv:           getEnv("APP_ENV", defaultAppEnv),
+		Port:             getEnv("PORT", defaultPort),
+		LogLevel:         getEnv("LOG_LEVEL", defaultLogLevel),
+		DatabaseURL:      getEnv("DATABASE_URL", defaultDatabaseURL),
+		DatabaseMaxConns: int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
+		JWTSecret:        os.Getenv("JWT_SECRET"),
+		JWTAccessTTL:     getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
+		GoogleClientIDs: splitAndTrim(os.Getenv("GOOGLE_IOS_CLIENT_ID") + "," +
+			os.Getenv("GOOGLE_ANDROID_CLIENT_ID") + "," + os.Getenv("GOOGLE_WEB_CLIENT_ID")),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
+		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
 		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
 
@@ -96,6 +110,21 @@ func (c Config) validate() error {
 		return errors.New("config: JWT_SECRET must not be empty")
 	}
 	return nil
+}
+
+// IsProduction reports whether this process is serving real people.
+//
+// Development-only behaviour is gated on it, so the check lives in one place instead of
+// being spelled slightly differently at each call site.
+func (c Config) IsProduction() bool {
+	return strings.EqualFold(strings.TrimSpace(c.AppEnv), "production")
+}
+
+// EmailOutboxEnabled reports whether the local mail catcher should be used.
+//
+// Production can never enable it, whatever the environment says.
+func (c Config) EmailOutboxEnabled() bool {
+	return !c.IsProduction() && c.EmailOutboxDir != ""
 }
 
 // TelegramConfigured reports whether notifications can actually be delivered.

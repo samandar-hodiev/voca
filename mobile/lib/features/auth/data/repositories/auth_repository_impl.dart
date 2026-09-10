@@ -138,6 +138,24 @@ class AuthRepositoryImpl implements AuthRepository {
       });
 
   @override
+  Future<Result<AuthSession>> signInWithGoogle(
+    String idToken, {
+    String firstName = '',
+    String lastName = '',
+    OnboardingAnswers? answers,
+  }) =>
+      _guard(() async {
+        final session = SessionDto.fromJson(await _remote.google({
+          'id_token': idToken,
+          if (firstName.isNotEmpty) 'first_name': firstName,
+          if (lastName.isNotEmpty) 'last_name': lastName,
+          ..._answersJson(answers),
+        })).toDomain();
+        await _persist(session);
+        return session;
+      });
+
+  @override
   Future<Result<void>> forgotPassword(String email) =>
       _guard(() => _remote.forgotPassword(email));
 

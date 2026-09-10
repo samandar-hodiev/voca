@@ -117,6 +117,24 @@ func (h *Handler) Guest(c *gin.Context) {
 	httpx.OK(c, http.StatusCreated, toSessionResponse(session))
 }
 
+// Google handles POST /auth/google.
+func (h *Handler) Google(c *gin.Context) {
+	req, ok := bind[googleSignInRequest](c)
+	if !ok {
+		return
+	}
+	session, err := h.svc.SignInWithGoogle(c.Request.Context(), req.IDToken, RegisterInput{
+		FirstName: req.FirstName, LastName: req.LastName,
+		CEFRLevel: req.CEFRLevel, LearningGoal: req.LearningGoal,
+		DailyGoalWords: req.DailyGoalWords,
+	})
+	if err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, toSessionResponse(session))
+}
+
 // Refresh handles POST /auth/refresh.
 func (h *Handler) Refresh(c *gin.Context) {
 	req, ok := bind[refreshRequest](c)

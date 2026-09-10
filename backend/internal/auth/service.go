@@ -54,14 +54,19 @@ type Service struct {
 	repo   Repository
 	issuer *jwt.Issuer
 	email  EmailProvider
+	google GoogleTokenVerifier
 	policy Policy
 	log    *slog.Logger
 }
 
-// NewService builds the service.
+// NewService builds the service. A nil google verifier is allowed: Google sign-in then
+// reports itself unavailable rather than the service refusing to start.
 func NewService(repo Repository, issuer *jwt.Issuer, emailProvider EmailProvider,
-	policy Policy, log *slog.Logger) *Service {
-	return &Service{repo: repo, issuer: issuer, email: emailProvider, policy: policy, log: log}
+	google GoogleTokenVerifier, policy Policy, log *slog.Logger) *Service {
+	return &Service{
+		repo: repo, issuer: issuer, email: emailProvider,
+		google: google, policy: policy, log: log,
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -569,4 +574,103 @@ func validateLevelAndGoal(level, goal *string) error {
 		return apperr.Validation("Unknown learning goal.")
 	}
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Google sign-in
+// ---------------------------------------------------------------------------
+
+// SignInWithGoogle verifies a Google identity token and returns a session, creating the
+// account on first use.
+//
+// The token is checked SERVER-SIDE. The app forwards what Google gave it; only this
+// backend decides whether that is genuine (ARCHITECTURE.md 8.1).
+func (s *Service) SignInWithGoogle(ctx context.Context, idToken string,
+	in RegisterInput) (Session, error) {
+
+	if s.google == nil {
+		return Session{}, apperr.New(apperr.CodeProviderUnavailable,
+			http.StatusServiceUnavailable, "Google sign-in is not available.")
+	}
+	if err := validateLevelAndGoal(in.CEFRLevel, in.LearningGoal); err != nil {
+		return Session{}, err
+	}
+
+	identity, err := s.google.Verify(ctx, idToken)
+	if err != nil {
+		// The reason is logged, never returned: telling a caller why a token was refused
+		// helps them craft one that is accepted.
+		s.log.Warn("google_token_rejected", slog.String("error", err.Error()))
+		return Session{}, apperr.New(apperr.CodeInvalidCredentials,
+			http.StatusUnauthorized, "Google sign-in failed. Please try again.")
+	}
+
+	// An unverified address from Google is refused. Accepting it would let someone claim
+	// an address they do not control and then take over the matching Voca account.
+	if identity.Email == "" || !identity.EmailVerified {
+		return Session{}, apperr.New(apperr.CodeEmailNotVerified, http.StatusForbidden,
+			"Your Google account has no verified email address.")
+	}
+
+	email := strings.ToLower(identity.Email)
+
+	// Returning user, matched on the address rather than only on the Google subject: a
+	// person who signed up by email and later taps Google is the same person, and
+	// creating a second account would split their practice history in two.
+	if user, err := s.repo.UserByEmail(ctx, email); err == nil {
+		if err := s.repo.LinkGoogleAccount(ctx, user.ID, identity.Subject); err != nil {
+			return Session{}, apperr.Internal(err)
+		}
+		if err := s.repo.TouchLastLogin(ctx, user.ID); err != nil {
+			s.log.Warn("last_login_not_recorded", slog.String("error", err.Error()))
+		}
+		user.EmailVerified = true
+		return s.newSession(ctx, user, nil)
+	} else if !errors.Is(err, ErrNotFound) {
+		return Session{}, apperr.Internal(err)
+	}
+
+	// First time: create the account, its profile and its preferences together.
+	user, err := s.repo.CreateUserTx(ctx, func(tx pgx.Tx) (User, error) {
+		var u User
+		if err := tx.QueryRow(ctx,
+			`INSERT INTO users (auth_provider, external_auth_id, email, email_verified)
+			 VALUES ('google', $1, $2, true)
+			 RETURNING `+userColumns, identity.Subject, email).
+			Scan(&u.ID, &u.Provider, &u.ExternalAuthID, &u.Email,
+				&u.EmailVerified, &u.Status, &u.CreatedAt); err != nil {
+			return User{}, fmt.Errorf("auth: insert google user: %w", err)
+		}
+
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO profiles (user_id, first_name, last_name)
+			 VALUES ($1, $2, $3)`,
+			u.ID, nullOrValue(in.FirstName), nullOrValue(in.LastName)); err != nil {
+			return User{}, fmt.Errorf("auth: insert google profile: %w", err)
+		}
+
+		daily := 10
+		if in.DailyGoalWords != nil {
+			daily = *in.DailyGoalWords
+		}
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO user_preferences
+			   (user_id, cefr_level, learning_goal, daily_goal_words, onboarding_completed_at)
+			 VALUES ($1, $2, $3, $4, now())`,
+			u.ID, in.CEFRLevel, in.LearningGoal, daily); err != nil {
+			return User{}, fmt.Errorf("auth: insert google preferences: %w", err)
+		}
+		return u, nil
+	})
+	if err != nil {
+		return Session{}, apperr.Internal(err)
+	}
+	return s.newSession(ctx, user, nil)
+}
+
+func nullOrValue(v string) *string {
+	if strings.TrimSpace(v) == "" {
+		return nil
+	}
+	return &v
 }

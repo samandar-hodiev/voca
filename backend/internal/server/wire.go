@@ -14,6 +14,8 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
+	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
+	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
 	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
@@ -37,12 +39,33 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		return Dependencies{}, err
 	}
 
-	// Email: the development provider until a real one is configured. It reports that a
-	// message would have been sent and never logs the code.
-	emailProvider := emaillog.New(log)
+	// Email provider selection. The log provider is the default because it can never
+	// reveal a code. Outside production, setting EMAIL_OUTBOX_DIR swaps in a local mail
+	// catcher so a developer can finish a signup without mail credentials; production
+	// cannot reach that branch (ARCHITECTURE.md 18.4).
+	var emailProvider auth.EmailProvider = emaillog.New(log)
+	if cfg.EmailOutboxEnabled() {
+		box, err := emailoutbox.New(cfg.EmailOutboxDir, cfg.IsProduction(), log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		emailProvider = box
+		log.Warn("email_outbox_enabled",
+			slog.String("dir", cfg.EmailOutboxDir),
+			slog.String("hint", "development only: messages are written to disk, not sent"))
+	}
+
+	// Google sign-in verifies tokens against Google's keys. With no client ID configured
+	// it fails closed, and the app reads that from /api/v1/config to disable the button.
+	googleVerifier := googleauth.New(cfg.GoogleClientIDs)
+	if !googleVerifier.Configured() {
+		log.Warn("google_signin_unavailable",
+			slog.String("hint", "set GOOGLE_IOS_CLIENT_ID or GOOGLE_ANDROID_CLIENT_ID"))
+	}
 
 	authService := auth.NewService(
-		auth.NewRepository(pool.Pool), issuer, emailProvider, auth.DefaultPolicy(), log)
+		auth.NewRepository(pool.Pool), issuer, emailProvider,
+		googleVerifier, auth.DefaultPolicy(), log)
 
 	// Provider selection happens here and nowhere else. Without Telegram credentials the
 	// service still runs and logs what it would have sent, so local development and CI
@@ -66,6 +89,11 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		AuthHandler:    auth.NewHandler(authService),
 		RequireAuth:    middleware.RequireAuth(jwtVerifier{issuer}),
 		DB:             pool,
+		Capabilities: Capabilities{
+			GoogleSignIn: googleVerifier.Configured(),
+			// Apple needs an Apple Developer configuration that does not exist yet.
+			AppleSignIn: false,
+		},
 	}, nil
 }
 

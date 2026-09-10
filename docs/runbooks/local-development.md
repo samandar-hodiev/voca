@@ -95,3 +95,29 @@ flutter emulators --create
 ```
 
 Android does not codesign, so it is immune to the iCloud problem above.
+
+## Reading a verification code during development
+
+Signup and password reset both send a six-digit code by email. There are no mail
+credentials on a development machine, and the default `log` email provider deliberately
+never prints the code, so by default a signup cannot be completed by hand.
+
+Set `EMAIL_OUTBOX_DIR` in `backend/.env` to turn on a local mail catcher:
+
+```
+EMAIL_OUTBOX_DIR=tmp/mail
+```
+
+Every message the backend sends is then written to that directory as a plain text file
+instead of being delivered. Read the newest one:
+
+```sh
+cat "$(ls -t backend/tmp/mail/*signup_code* | head -1)"
+```
+
+The directory is gitignored, created `0700`, and each message is written `0600`.
+
+The provider refuses to start when `APP_ENV=production`, so a deployment that forgets to
+configure a real email provider fails at startup instead of quietly writing customer
+verification codes to a server disk. The code still never reaches a log line, an HTTP
+response, or a terminal.

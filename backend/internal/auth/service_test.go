@@ -33,6 +33,10 @@ type fakeRepo struct {
 	codeHashes    map[uuid.UUID]string
 	refresh       map[string]refreshRow
 	createErr     error
+
+	// Set by a test to say which address the next created account should carry, since
+	// the fake cannot run the real INSERT.
+	nextEmail string
 }
 
 type refreshRow struct {
@@ -89,6 +93,13 @@ func (f *fakeRepo) CreateUserTx(ctx context.Context, fn func(tx pgx.Tx) (User, e
 	// pgx.Tx, so it records the account directly; what the tests here care about is the
 	// service's decisions, not the SQL.
 	u := User{ID: uuid.New(), Provider: ProviderEmail, Status: "active", CreatedAt: time.Now()}
+	if f.nextEmail != "" {
+		e := f.nextEmail
+		u.Email = &e
+		u.EmailVerified = true
+		f.users[e] = u
+		f.nextEmail = ""
+	}
 	return u, nil
 }
 
@@ -127,6 +138,17 @@ func (f *fakeRepo) SetPasswordHash(_ context.Context, email, hash string) error 
 }
 
 func (f *fakeRepo) TouchLastLogin(context.Context, uuid.UUID) error { return nil }
+
+func (f *fakeRepo) LinkGoogleAccount(_ context.Context, id uuid.UUID, subject string) error {
+	for email, u := range f.users {
+		if u.ID == id {
+			u.ExternalAuthID = &subject
+			u.EmailVerified = true
+			f.users[email] = u
+		}
+	}
+	return nil
+}
 
 func (f *fakeRepo) Preferences(_ context.Context, id uuid.UUID) (Preferences, error) {
 	p, ok := f.prefs[id]
@@ -276,10 +298,33 @@ func (f *fakeEmail) Last() (EmailMessage, bool) {
 }
 
 // ---------------------------------------------------------------------------
+// Fake Google verifier
+// ---------------------------------------------------------------------------
+
+type fakeGoogle struct {
+	identity GoogleIdentity
+	err      error
+}
+
+func (f *fakeGoogle) Verify(context.Context, string) (GoogleIdentity, error) {
+	if f.err != nil {
+		return GoogleIdentity{}, f.err
+	}
+	return f.identity, nil
+}
+
+// ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------
 
 func newService(t *testing.T) (*Service, *fakeRepo, *fakeEmail) {
+	t.Helper()
+	svc, repo, mail, _ := newServiceWithGoogle(t, nil)
+	return svc, repo, mail
+}
+
+func newServiceWithGoogle(t *testing.T, google GoogleTokenVerifier) (
+	*Service, *fakeRepo, *fakeEmail, *fakeGoogle) {
 	t.Helper()
 	repo := newFakeRepo()
 	mail := &fakeEmail{}
@@ -288,7 +333,8 @@ func newService(t *testing.T) (*Service, *fakeRepo, *fakeEmail) {
 		t.Fatalf("issuer: %v", err)
 	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewService(repo, issuer, mail, DefaultPolicy(), log), repo, mail
+	fake, _ := google.(*fakeGoogle)
+	return NewService(repo, issuer, mail, google, DefaultPolicy(), log), repo, mail, fake
 }
 
 func codeOf(t *testing.T, err error) apperr.Code {
@@ -751,5 +797,80 @@ func TestVerificationCodeIsNeverReturnedToTheCaller(t *testing.T) {
 	}
 	if len(code) != DefaultPolicy().CodeLength || strings.ContainsAny(code, "abcdefABCDEF") {
 		t.Errorf("code = %q, want %d digits", code, DefaultPolicy().CodeLength)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Google sign-in
+// ---------------------------------------------------------------------------
+
+func TestSignInWithGoogle_CreatesAnAccountOnFirstUse(t *testing.T) {
+	google := &fakeGoogle{identity: GoogleIdentity{
+		Subject: "google-subject-1", Email: "new@voca.dev", EmailVerified: true,
+	}}
+	svc, repo, _, _ := newServiceWithGoogle(t, google)
+	repo.nextEmail = "new@voca.dev"
+
+	session, err := svc.SignInWithGoogle(context.Background(), "any-token", RegisterInput{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if session.AccessToken == "" {
+		t.Error("Google sign-in must establish a session")
+	}
+}
+
+// Someone who signed up by email and later taps Google is the same person. Creating a
+// second account would split their practice history in two.
+func TestSignInWithGoogle_LinksToAnExistingEmailAccount(t *testing.T) {
+	google := &fakeGoogle{identity: GoogleIdentity{
+		Subject: "google-subject-1", Email: "a@voca.dev", EmailVerified: true,
+	}}
+	svc, repo, _, _ := newServiceWithGoogle(t, google)
+	existing := repo.addUser("a@voca.dev", "password123")
+
+	session, err := svc.SignInWithGoogle(context.Background(), "any-token", RegisterInput{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if session.User.ID != existing.ID {
+		t.Error("Google must sign in to the existing account, not create a second one")
+	}
+	if repo.users["a@voca.dev"].ExternalAuthID == nil {
+		t.Error("the Google subject must be linked to the account")
+	}
+}
+
+// An unverified Google address would let someone claim an address they do not control.
+func TestSignInWithGoogle_RefusesAnUnverifiedAddress(t *testing.T) {
+	google := &fakeGoogle{identity: GoogleIdentity{
+		Subject: "s", Email: "a@voca.dev", EmailVerified: false,
+	}}
+	svc, _, _, _ := newServiceWithGoogle(t, google)
+
+	_, err := svc.SignInWithGoogle(context.Background(), "any-token", RegisterInput{})
+	if codeOf(t, err) != apperr.CodeEmailNotVerified {
+		t.Fatalf("got %s, want ACCOUNT_NOT_VERIFIED", codeOf(t, err))
+	}
+}
+
+func TestSignInWithGoogle_RejectsABadToken(t *testing.T) {
+	google := &fakeGoogle{err: errors.New("token rejected")}
+	svc, _, _, _ := newServiceWithGoogle(t, google)
+
+	_, err := svc.SignInWithGoogle(context.Background(), "forged", RegisterInput{})
+	if codeOf(t, err) != apperr.CodeInvalidCredentials {
+		t.Fatalf("got %s, want INVALID_CREDENTIALS", codeOf(t, err))
+	}
+}
+
+// With no verifier configured the endpoint reports itself unavailable rather than
+// pretending to work.
+func TestSignInWithGoogle_UnavailableWhenNotConfigured(t *testing.T) {
+	svc, _, _ := newService(t)
+
+	_, err := svc.SignInWithGoogle(context.Background(), "any-token", RegisterInput{})
+	if codeOf(t, err) != apperr.CodeProviderUnavailable {
+		t.Fatalf("got %s, want PROVIDER_UNAVAILABLE", codeOf(t, err))
 	}
 }

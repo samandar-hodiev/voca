@@ -36,6 +36,11 @@ class AuthRemoteDataSource {
     return res.data!['data'] as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> google(Map<String, dynamic> body) async {
+    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/google', data: body);
+    return res.data!['data'] as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> refresh(String refreshToken) async {
     final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/refresh',
         data: {'refresh_token': refreshToken});
