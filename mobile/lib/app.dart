@@ -25,11 +25,11 @@ class VocaApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(appConfigProvider);
-
     return MaterialApp.router(
       title: 'Voca',
-      debugShowCheckedModeBanner: !config.isProd,
+      // The corner ribbon only says "this is a debug build", which the people looking at
+      // the app already know and nobody outside the team benefits from seeing.
+      debugShowCheckedModeBanner: false,
       routerConfig: ref.watch(routerProvider),
 
       theme: VocaTheme.light(),

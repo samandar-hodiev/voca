@@ -61,6 +61,10 @@ type Config struct {
 	SMTPFrom     string
 	SMTPFromName string
 
+	// EmailViaTelegram sends development mail to the Telegram chat instead of writing it
+	// to disk. It reuses the notification credentials and is ignored in production.
+	EmailViaTelegram bool
+
 	// EmailOutboxDir turns on the local mail catcher outside production: every message
 	// the service sends is written there as a file so a developer can read a
 	// verification code without mail credentials. Empty keeps the log provider, which
@@ -114,6 +118,7 @@ func Load() (Config, error) {
 		SMTPPassword:        os.Getenv("SMTP_PASSWORD"),
 		SMTPFrom:            strings.TrimSpace(os.Getenv("SMTP_FROM")),
 		SMTPFromName:        strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
+		EmailViaTelegram:    getEnvBool("EMAIL_VIA_TELEGRAM", false),
 		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
 		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
@@ -156,6 +161,13 @@ func (c Config) ResendConfigured() bool {
 // relay on a private network may not require authentication.
 func (c Config) SMTPConfigured() bool {
 	return c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPPort > 0
+}
+
+// EmailTelegramEnabled reports whether development mail goes to the Telegram chat.
+//
+// Production can never enable it, whatever the environment says.
+func (c Config) EmailTelegramEnabled() bool {
+	return !c.IsProduction() && c.EmailViaTelegram && c.TelegramConfigured()
 }
 
 // EmailOutboxEnabled reports whether the local mail catcher should be used.
@@ -229,6 +241,16 @@ func splitAndTrim(v string) []string {
 		}
 	}
 	return out
+}
+
+// getEnvBool reads a boolean setting. Anything that is not a recognised true value is
+// false, so a typo disables a feature rather than silently enabling it.
+func getEnvBool(key string, fallback bool) bool {
+	raw := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	if raw == "" {
+		return fallback
+	}
+	return raw == "1" || raw == "true" || raw == "yes" || raw == "on"
 }
 
 // getEnvInt reads an integer setting, falling back when unset or unparseable.

@@ -341,3 +341,33 @@ Provider selection is most capable first, so setting the key is all that is need
 | `SMTP_HOST` + `SMTP_FROM` | smtp | a real inbox, if the ports are open |
 | `EMAIL_OUTBOX_DIR` only | outbox | a file, readable with `make code` |
 | none of the above | log | nowhere |
+
+## Getting the code onto the phone when SMTP is blocked
+
+The outbox works but lives on the developer's disk, which means leaving the phone to read
+a terminal. On a network that blocks the SMTP ports and with no mail API key yet, the
+development bot is the fastest way to close that gap:
+
+```
+EMAIL_VIA_TELEGRAM=true
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
+```
+
+Every message the backend would have emailed is posted to that chat instead, with the
+intended recipient named at the top so it is never mistaken for the reader's own code.
+Telegram's API is HTTPS on 443, which is open where 587 and 465 are not.
+
+This is development only. The provider refuses to start when `APP_ENV=production`,
+because a deployment that reached it would be sending every customer's verification code
+to one person's chat. Real delivery is `RESEND_API_KEY`.
+
+Provider selection, most capable first:
+
+| Configuration | Provider | Where the code goes |
+|---|---|---|
+| `RESEND_API_KEY` + `RESEND_FROM` | resend | a real inbox, over HTTPS |
+| `SMTP_HOST` + `SMTP_FROM` | smtp | a real inbox, if the ports are open |
+| `EMAIL_VIA_TELEGRAM=true` | telegram-dev | the development chat |
+| `EMAIL_OUTBOX_DIR` | outbox | a file, readable with `make code` |
+| none | log | nowhere |
