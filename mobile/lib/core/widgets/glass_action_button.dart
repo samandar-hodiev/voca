@@ -71,10 +71,10 @@ class _GlassActionButtonState extends State<GlassActionButton> {
     // thickens it, which is what a pane of glass does when you push a finger against it.
     // Disabled goes thinner still: less present, without disappearing.
     final double fillAlpha = !_enabled
-        ? 0.34
+        ? 0.20
         : _pressed
-            ? 0.58
-            : 0.34;
+            ? 0.42
+            : 0.20;
     final tint = glass.tint.withValues(alpha: fillAlpha);
 
     final surface = GlassSurface(

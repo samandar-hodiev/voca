@@ -5,9 +5,14 @@
 /// once:
 ///
 /// 1. **The fill is genuinely translucent.** An 80%-opaque white is a white card with
-///    extra steps. The tint sits near 65%: transparent enough that the liquid field below
-///    reads through it, opaque enough that dark body text on top still clears its
+///    extra steps. The tint sits near half: transparent enough that the liquid field
+///    below reads through it, opaque enough that dark body text on top still clears its
 ///    contrast requirement.
+///
+///    A warning that cost a redesign: [BoxDecoration] ignores `color` as soon as
+///    `gradient` is set. Painting the tint and the highlight in one decoration silently
+///    drops the tint, which is why the fill and the highlight are two stacked layers in
+///    [GlassSurface] rather than one.
 /// 2. **The edge catches light.** Real glass has a bright rim where light enters and a
 ///    dimmer one where it leaves. A single flat border line does not read as glass; the
 ///    gradient border is what gives the surface its edge.
@@ -57,7 +62,7 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   final List<BoxShadow> shadows;
 
   static const light = VocaGlass(
-    tint: Color(0xA6FFFFFF),
+    tint: Color(0x59FFFFFF),
     highlight: Color(0x66FFFFFF),
     borderTop: Color(0xB3FFFFFF),
     borderBottom: Color(0x1F5B5BF7),

@@ -64,37 +64,49 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: LiquidBackground(
-        intensity: 0.8,
+        intensity: 1.0,
         child: SafeArea(
-          child: PageContainer(
-            child: Column(
-              children: [
-                // Skip stays available on every slide, including the last, so the way out
-                // never moves.
-                Align(
+          // The page inset is applied to the header and the footer, but NOT around the
+          // PageView. A padded viewport makes the next slide appear from inside the page
+          // rather than from the edge of the screen, and it leaves adjacent slides
+          // touching mid-swipe because each one fills the viewport exactly. The PageView
+          // therefore runs edge to edge and each slide carries its own inset, which also
+          // opens a gutter of twice that inset between neighbours.
+          child: Column(
+            children: [
+              // Skip stays available on every slide, including the last, so the way out
+              // never moves.
+              PageContainer(
+                child: Align(
                   alignment: Alignment.centerRight,
                   child: VocaTextButton(
                     label: 'O‘tkazib yuborish',
                     onPressed: _finish,
                   ),
                 ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _controller,
-                    itemCount: onboardingSlides.length,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    itemBuilder: (context, i) => _Slide(index: i),
-                  ),
+              ),
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  itemCount: onboardingSlides.length,
+                  onPageChanged: (i) => setState(() => _index = i),
+                  itemBuilder: (context, i) => _Slide(index: i),
                 ),
-                PageIndicator(count: onboardingSlides.length, index: _index),
-                const SizedBox(height: VocaSpacing.xl),
-                PrimaryButton(
-                  label: _isLast ? 'Boshlash' : 'Keyingi',
-                  onPressed: _next,
+              ),
+              PageContainer(
+                child: Column(
+                  children: [
+                    PageIndicator(count: onboardingSlides.length, index: _index),
+                    const SizedBox(height: VocaSpacing.xl),
+                    PrimaryButton(
+                      label: _isLast ? 'Boshlash' : 'Keyingi',
+                      onPressed: _next,
+                    ),
+                    const SizedBox(height: VocaSpacing.lg),
+                  ],
                 ),
-                const SizedBox(height: VocaSpacing.lg),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -113,28 +125,32 @@ class _Slide extends StatelessWidget {
     final colors = context.vocaColors;
     final text = context.vocaText;
 
-    return Center(
-      child: SingleChildScrollView(
-        child: GlassCard(
-          padding: const EdgeInsets.symmetric(
-            horizontal: VocaSpacing.xl,
-            vertical: VocaSpacing.xxl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                slide.title,
-                style: text.headline.copyWith(color: colors.textPrimary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: VocaSpacing.sm),
-              Text(
-                slide.body,
-                style: text.body.copyWith(color: colors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ],
+    // The inset lives here rather than around the PageView, so the card keeps its margin
+    // from the screen edge while the slide itself still spans the full width.
+    return PageContainer(
+      child: Center(
+        child: SingleChildScrollView(
+          child: GlassCard(
+            padding: const EdgeInsets.symmetric(
+              horizontal: VocaSpacing.xl,
+              vertical: VocaSpacing.xxl,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  slide.title,
+                  style: text.headline.copyWith(color: colors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: VocaSpacing.sm),
+                Text(
+                  slide.body,
+                  style: text.body.copyWith(color: colors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       ),

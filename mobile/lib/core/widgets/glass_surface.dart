@@ -59,20 +59,30 @@ class GlassSurface extends StatelessWidget {
 
     // The pane itself: translucent fill, then a highlight that fades down the surface so
     // the top face reads as lit.
+    //
+    // These are two stacked decorations on purpose. BoxDecoration ignores `color` the
+    // moment a `gradient` is set, so painting both in one decoration silently drops the
+    // tint and leaves only the white highlight — which is exactly how a glass surface
+    // ends up looking like a plain pale card, and how a coloured button loses its colour.
     Widget pane = DecoratedBox(
       decoration: BoxDecoration(
         color: tint ?? glass.tint,
         borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [glass.highlight, Colors.transparent],
-          stops: const [0, 0.55],
-        ),
       ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-        child: child,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [glass.highlight, Colors.transparent],
+            stops: const [0, 0.55],
+          ),
+        ),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+          child: child,
+        ),
       ),
     );
 

@@ -3,6 +3,11 @@
 /// Used by every setup screen. Selection is shown three ways at once, not one: a filled
 /// check mark, a coloured border, and a tinted surface. Relying on colour alone would
 /// leave the state invisible to someone who cannot distinguish it.
+///
+/// The pane is a real [GlassSurface], not a rounded box with a pale fill. A flat fill on
+/// a light page is a white card whatever the token is called; the blur, the lit top face
+/// and the gradient rim are what make it read as glass, and the tint is thin enough that
+/// the liquid field behind shows through it.
 library;
 
 import 'package:flutter/material.dart';
@@ -14,6 +19,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'app_badge.dart';
+import 'glass_surface.dart';
 
 class SelectionCard extends StatelessWidget {
   const SelectionCard({
@@ -52,23 +58,25 @@ class SelectionCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: VocaMotion.respectReducedMotion(context, VocaMotion.quick),
-          curve: VocaMotion.standardCurve,
-          constraints: const BoxConstraints(minHeight: 64),
-          padding: const EdgeInsets.symmetric(
-            horizontal: VocaSpacing.md,
-            vertical: VocaSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? colors.primaryMuted : glass.tint,
-            borderRadius: radius,
-            border: Border.all(
-              color: selected ? colors.primary : glass.borderBottom,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Row(
+        child: Stack(
+          children: [
+            GlassSurface(
+              borderRadius: radius,
+              // Selected thickens the pane and pulls it toward the brand colour, so the
+              // choice reads even before the check mark is noticed.
+              // Barely there on purpose. A fill heavy enough to hide the field behind it
+              // is a white card, whatever it is called. Selection is carried by the ring
+              // and the check mark, so the selected pane only has to shift hue.
+              tint: selected
+                  ? colors.primary.withValues(alpha: 0.16)
+                  : glass.tint.withValues(alpha: 0.18),
+              padding: const EdgeInsets.symmetric(
+                horizontal: VocaSpacing.md,
+                vertical: VocaSpacing.sm,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Row(
             children: [
               if (leading != null) ...[
                 Container(
@@ -123,8 +131,26 @@ class SelectionCard extends StatelessWidget {
                 opacity: selected ? 1 : 0,
                 child: Icon(Icons.check_circle_rounded, color: colors.primary, size: 22),
               ),
-            ],
-          ),
+                  ],
+                ),
+              ),
+            ),
+
+            // The selected ring is painted over the pane rather than replacing its rim.
+            // The gradient rim is what makes the surface glass; a solid border swapped in
+            // its place would flatten the selected card back into a plain box.
+            if (selected)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: radius,
+                      border: Border.all(color: colors.primary, width: 2),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

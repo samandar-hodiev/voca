@@ -18,6 +18,7 @@ import '../theme/app_motion.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'glass_surface.dart';
 
 enum _Emphasis { primary, secondary, text }
 
@@ -43,13 +44,13 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _VocaButton(
-        label: label,
-        onPressed: onPressed,
-        isLoading: isLoading,
-        icon: icon,
-        expand: expand,
-        emphasis: _Emphasis.primary,
-      );
+    label: label,
+    onPressed: onPressed,
+    isLoading: isLoading,
+    icon: icon,
+    expand: expand,
+    emphasis: _Emphasis.primary,
+  );
 }
 
 /// Outlined button. A real but secondary choice.
@@ -71,13 +72,13 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _VocaButton(
-        label: label,
-        onPressed: onPressed,
-        isLoading: isLoading,
-        icon: icon,
-        expand: expand,
-        emphasis: _Emphasis.secondary,
-      );
+    label: label,
+    onPressed: onPressed,
+    isLoading: isLoading,
+    icon: icon,
+    expand: expand,
+    emphasis: _Emphasis.secondary,
+  );
 }
 
 /// Text button. Lowest emphasis: dismiss, skip, learn more.
@@ -95,12 +96,12 @@ class VocaTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _VocaButton(
-        label: label,
-        onPressed: onPressed,
-        icon: icon,
-        expand: false,
-        emphasis: _Emphasis.text,
-      );
+    label: label,
+    onPressed: onPressed,
+    icon: icon,
+    expand: false,
+    emphasis: _Emphasis.text,
+  );
 }
 
 /// Icon-only button.
@@ -185,7 +186,10 @@ class _VocaButtonState extends State<_VocaButton> {
         ? SizedBox(
             height: 20,
             width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2.2, color: foreground),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.2,
+              color: foreground,
+            ),
           )
         : Row(
             mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
@@ -215,24 +219,50 @@ class _VocaButtonState extends State<_VocaButton> {
         onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
         onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
         onTap: _enabled ? widget.onPressed : null,
-        child: AnimatedContainer(
-          duration: VocaMotion.respectReducedMotion(context, VocaMotion.instant),
-          curve: VocaMotion.standardCurve,
-          // 48 is the accessible minimum touch target on both platforms.
-          constraints: const BoxConstraints(minHeight: 48),
-          width: widget.expand ? double.infinity : null,
-          padding: const EdgeInsets.symmetric(
-            horizontal: VocaSpacing.lg,
-            vertical: VocaSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: VocaRadius.mediumAll,
-            border: border == null ? null : Border.all(color: border),
-          ),
-          alignment: Alignment.center,
-          child: content,
-        ),
+        child: widget.emphasis == _Emphasis.primary
+            // The primary action keeps its brand colour but is rendered as glass: the
+            // colour becomes the tint of a real pane, so it picks up the backdrop blur, a
+            // lit top face and a gradient rim instead of being a flat rectangle of ink.
+            // The tint stays near-opaque, because white text on a see-through fill would
+            // lose its contrast over a pale liquid field.
+            ? SizedBox(
+                width: widget.expand ? double.infinity : null,
+                child: GlassSurface(
+                  borderRadius: VocaRadius.mediumAll,
+                  tint: background.withValues(alpha: _enabled ? 0.92 : 1),
+                  showShadow: _enabled && !_pressed,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VocaSpacing.lg,
+                    vertical: VocaSpacing.sm,
+                  ),
+                  child: ConstrainedBox(
+                    // 48 is the accessible minimum touch target on both platforms.
+                    constraints: const BoxConstraints(minHeight: 32),
+                    child: Align(alignment: Alignment.center, child: content),
+                  ),
+                ),
+              )
+            : AnimatedContainer(
+                duration: VocaMotion.respectReducedMotion(
+                  context,
+                  VocaMotion.instant,
+                ),
+                curve: VocaMotion.standardCurve,
+                // 48 is the accessible minimum touch target on both platforms.
+                constraints: const BoxConstraints(minHeight: 48),
+                width: widget.expand ? double.infinity : null,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VocaSpacing.lg,
+                  vertical: VocaSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius: VocaRadius.mediumAll,
+                  border: border == null ? null : Border.all(color: border),
+                ),
+                alignment: Alignment.center,
+                child: content,
+              ),
       ),
     );
   }
@@ -242,27 +272,31 @@ class _VocaButtonState extends State<_VocaButton> {
     if (!_enabled) {
       return switch (widget.emphasis) {
         _Emphasis.primary => (colors.border, colors.textDisabled, null),
-        _Emphasis.secondary => (Colors.transparent, colors.textDisabled, colors.border),
+        _Emphasis.secondary => (
+          Colors.transparent,
+          colors.textDisabled,
+          colors.border,
+        ),
         _Emphasis.text => (Colors.transparent, colors.textDisabled, null),
       };
     }
 
     return switch (widget.emphasis) {
       _Emphasis.primary => (
-          _pressed ? colors.primaryPressed : colors.primary,
-          colors.onPrimary,
-          null,
-        ),
+        _pressed ? colors.primaryPressed : colors.primary,
+        colors.onPrimary,
+        null,
+      ),
       _Emphasis.secondary => (
-          _pressed ? colors.primaryMuted : Colors.transparent,
-          colors.primary,
-          colors.borderStrong,
-        ),
+        _pressed ? colors.primaryMuted : Colors.transparent,
+        colors.primary,
+        colors.borderStrong,
+      ),
       _Emphasis.text => (
-          _pressed ? colors.primaryMuted : Colors.transparent,
-          colors.primary,
-          null,
-        ),
+        _pressed ? colors.primaryMuted : Colors.transparent,
+        colors.primary,
+        null,
+      ),
     };
   }
 }
