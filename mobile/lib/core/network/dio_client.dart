@@ -12,11 +12,17 @@ import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
 import '../config/flavor.dart';
+import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/request_id_interceptor.dart';
 
 abstract final class DioClient {
-  static Dio create(AppConfig config, {required String appVersion, required String platform}) {
+  static Dio create(
+    AppConfig config, {
+    required String appVersion,
+    required String platform,
+    SessionTokens? session,
+  }) {
     final dio = Dio(
       BaseOptions(
         baseUrl: config.apiBaseUrl,
@@ -34,10 +40,10 @@ abstract final class DioClient {
 
     dio.interceptors.addAll([
       RequestIdInterceptor(appVersion: appVersion, platform: platform),
+      // Logging runs BEFORE the auth interceptor so it never sees an Authorization
+      // header, and it redacts one anyway.
       LoggingInterceptor(enabled: config.flavor.isDebugFriendly),
-      // Authentication and refresh interceptors are added here when authentication is
-      // built. Their placement in the chain matters: they must run after logging so a
-      // token never reaches a log line.
+      if (session != null) AuthInterceptor(session, dio),
     ]);
 
     return dio;

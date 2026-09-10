@@ -10,6 +10,7 @@ import 'package:voca/core/config/app_config.dart';
 import 'package:voca/core/config/flavor.dart';
 import 'package:voca/core/di/providers.dart';
 import 'package:voca/core/storage/key_value_store.dart';
+import 'package:voca/core/storage/secure_storage.dart';
 
 /// Returns the widget to pump and the container, so a test can read providers directly.
 ///
@@ -18,8 +19,18 @@ import 'package:voca/core/storage/key_value_store.dart';
 (Widget, ProviderContainer) buildApp({
   Flavor flavor = Flavor.dev,
   bool onboardingCompleted = false,
+  bool signedIn = false,
   KeyValueStore? store,
 }) {
+  // A stored session is what the startup state machine checks, so seeding the tokens is
+  // how a test says "this person is already signed in".
+  final secure = InMemorySecureStore();
+  if (signedIn) {
+    secure.write('auth.access_token.v1', 'test-access');
+    secure.write('auth.refresh_token.v1', 'test-refresh');
+    secure.write('auth.user_id.v1', 'test-user');
+  }
+
   final container = ProviderContainer(
     overrides: [
       appConfigProvider.overrideWithValue(AppConfig.forFlavor(flavor)),
@@ -30,6 +41,7 @@ import 'package:voca/core/storage/key_value_store.dart';
               if (onboardingCompleted) 'onboarding.completed.v1': true,
             }),
       ),
+      secureStoreProvider.overrideWithValue(secure),
     ],
   );
 

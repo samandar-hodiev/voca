@@ -15,6 +15,41 @@ abstract final class Routes {
   static const onboarding = '/onboarding';
   static const onboardingName = 'onboarding';
 
+  /// First-run setup, after onboarding and before an account exists.
+  static const level = '/setup/level';
+  static const levelName = 'level';
+
+  static const goal = '/setup/goal';
+  static const goalName = 'goal';
+
+  static const dailyGoal = '/setup/daily-goal';
+  static const dailyGoalName = 'dailyGoal';
+
+  /// Authentication.
+  static const authEntry = '/auth';
+  static const authEntryName = 'authEntry';
+
+  static const emailSignUp = '/auth/email';
+  static const emailSignUpName = 'emailSignUp';
+
+  static const emailVerify = '/auth/email/verify';
+  static const emailVerifyName = 'emailVerify';
+
+  static const createProfile = '/auth/profile';
+  static const createProfileName = 'createProfile';
+
+  static const login = '/auth/login';
+  static const loginName = 'login';
+
+  static const forgotPassword = '/auth/forgot';
+  static const forgotPasswordName = 'forgotPassword';
+
+  static const forgotVerify = '/auth/forgot/verify';
+  static const forgotVerifyName = 'forgotVerify';
+
+  static const newPassword = '/auth/forgot/password';
+  static const newPasswordName = 'newPassword';
+
   // Product routes. Declared so the shell can prove navigation works and so deep links
   // have stable targets. Their screens are placeholders; the real ones arrive with their
   // features (ARCHITECTURE.md 37).

@@ -27,8 +27,12 @@ dependencies:
   intl: ^0.20.2
 
   # Non-secret local flags: whether onboarding has been completed, last selected tab.
-  # Tokens never go here; those belong in secure storage (ARCHITECTURE.md 4.5).
   shared_preferences: ^2.3.3
+
+  # Tokens only: Keychain on iOS, EncryptedSharedPreferences on Android.
+  # Nothing else belongs here, and nothing here belongs anywhere else
+  # (ARCHITECTURE.md 4.5, 18.2).
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
@@ -36,7 +40,6 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 # Dependencies deliberately NOT added yet, each arriving with the feature that needs it:
-#   flutter_secure_storage   with authentication
 #   record, just_audio       with pronunciation practice
 #   purchases_flutter        with subscriptions
 #   firebase_*               with notifications and analytics

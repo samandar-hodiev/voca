@@ -1,35 +1,43 @@
-/// Startup work performed while the splash screen is visible, and the decision about
-/// where to go next.
+/// Startup: what work happens while the splash is visible, and where the app goes next.
 ///
-/// The splash covers real initialization rather than delaying the app for effect. It also
-/// enforces a minimum visible duration: without one the screen would flash for a few
-/// frames on a fast device, which reads as a glitch rather than as a considered opening.
+/// The decision lives here rather than in a widget, so it can be tested without a screen
+/// and changed without touching one (task requirement, startup state machine).
 ///
-/// This is the seam for anything that genuinely belongs at startup. Each new step is an
-/// awaited call here, and nothing else changes (ARCHITECTURE.md 4.3).
+///     onboarding not done  ->  onboarding
+///     onboarding done, no session  ->  auth entry
+///     onboarding done, session     ->  home
+///
+/// The splash is shown on EVERY launch. Only the destination changes.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/di/providers.dart';
 import '../../../../routing/routes.dart';
 import '../../../onboarding/presentation/controllers/onboarding_controller.dart';
 
 /// How long the splash stays up at minimum.
-const splashMinimumDuration = Duration(milliseconds: 1400);
-
-/// Resolves to the route the app should open once startup work is done.
 ///
-/// The splash itself is shown on EVERY launch; only the destination changes. Onboarding
-/// is a first-run experience, so once it has been completed or skipped the app goes
-/// straight to the product.
+/// Long enough to read as a considered opening rather than a flash, short enough that a
+/// returning user is not held up. Initialization runs alongside it, not after it.
+const splashMinimumDuration = Duration(milliseconds: 1600);
+
+/// Resolves to the route the app should open.
 final splashControllerProvider = FutureProvider<String>((ref) async {
   final started = DateTime.now();
 
-  final hasOnboarded = await ref.watch(onboardingRepositoryProvider).hasCompleted();
+  final onboarding = ref.watch(onboardingRepositoryProvider);
+  final auth = ref.watch(authRepositoryProvider);
 
-  // Further startup steps go here as they arrive:
-  //   await ref.read(sessionRepositoryProvider).restore();
-  //   await ref.read(remoteConfigProvider.future);
+  // Both reads happen together rather than one after the other: neither depends on the
+  // other, and the splash should not last longer than the slower of the two.
+  final results = await Future.wait([
+    onboarding.hasCompleted(),
+    auth.restoreSession(),
+  ]);
+
+  final hasOnboarded = results[0]! as bool;
+  final hasSession = results[1] != null;
 
   final elapsed = DateTime.now().difference(started);
   final remaining = splashMinimumDuration - elapsed;
@@ -37,5 +45,6 @@ final splashControllerProvider = FutureProvider<String>((ref) async {
     await Future<void>.delayed(remaining);
   }
 
-  return hasOnboarded ? Routes.home : Routes.onboarding;
+  if (!hasOnboarded) return Routes.onboarding;
+  return hasSession ? Routes.home : Routes.authEntry;
 });

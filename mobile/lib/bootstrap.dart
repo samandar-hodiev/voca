@@ -17,6 +17,7 @@ import 'core/config/app_config.dart';
 import 'core/config/flavor.dart';
 import 'core/di/providers.dart';
 import 'core/storage/key_value_store.dart';
+import 'core/storage/secure_storage.dart';
 
 /// Starts Voca for [flavor].
 ///
@@ -46,6 +47,7 @@ void bootstrap(Flavor flavor) {
       // Opened before runApp so the first frame can read it synchronously. It is a local
       // file read and takes a few milliseconds.
       final keyValueStore = await SharedPreferencesStore.open();
+      final secureStore = FlutterSecureStore.create();
 
       runApp(
         ProviderScope(
@@ -53,6 +55,7 @@ void bootstrap(Flavor flavor) {
             appConfigProvider.overrideWithValue(config),
             platformProvider.overrideWithValue(_platformName()),
             keyValueStoreProvider.overrideWithValue(keyValueStore),
+            secureStoreProvider.overrideWithValue(secureStore),
           ],
           child: const VocaApp(),
         ),

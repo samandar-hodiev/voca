@@ -19,7 +19,7 @@ import 'helpers/app_harness.dart';
 /// disposed by the navigation under test; the container outlives every route.
 void main() {
   testWidgets('the app boots and lands on the home route', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -27,7 +27,7 @@ void main() {
   });
 
   testWidgets('navigates between routes', (tester) async {
-    final (app, container) = buildApp(onboardingCompleted: true);
+    final (app, container) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -44,7 +44,7 @@ void main() {
 
   testWidgets('an unknown route renders the error screen rather than crashing',
       (tester) async {
-    final (app, container) = buildApp(onboardingCompleted: true);
+    final (app, container) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -55,7 +55,7 @@ void main() {
   });
 
   testWidgets('the Voca theme extensions resolve', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -68,7 +68,7 @@ void main() {
   // The design-system gallery is a development tool and must never be reachable in a
   // production build.
   testWidgets('the design gallery is not routed in production', (tester) async {
-    final (app, container) = buildApp(flavor: Flavor.prod, onboardingCompleted: true);
+    final (app, container) = buildApp(flavor: Flavor.prod, onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -80,7 +80,7 @@ void main() {
   });
 
   testWidgets('the design gallery renders in development', (tester) async {
-    final (app, container) = buildApp(onboardingCompleted: true);
+    final (app, container) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 

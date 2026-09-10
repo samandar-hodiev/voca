@@ -44,7 +44,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   Future<void> _finish() async {
     await ref.read(onboardingRepositoryProvider).markCompleted();
-    if (mounted) context.go(Routes.home);
+    // Setup follows onboarding: level, goal, then daily goal. Skipping onboarding skips
+    // the slides, not the questions, because the answers shape every later screen.
+    if (mounted) context.go(Routes.level);
   }
 
   void _next() {

@@ -14,7 +14,7 @@ import '../../helpers/app_harness.dart';
 
 void main() {
   testWidgets('the app opens on the splash, not on a product screen', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -27,7 +27,7 @@ void main() {
   });
 
   testWidgets('the splash uses the liquid and glass layers', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -38,7 +38,7 @@ void main() {
   });
 
   testWidgets('it hands over to home once startup work finishes', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -49,7 +49,7 @@ void main() {
   // The splash is a transition, not a destination: it must not be reachable by going
   // back from the first real screen.
   testWidgets('the splash is replaced, not pushed', (tester) async {
-    final (app, container) = buildApp(onboardingCompleted: true);
+    final (app, container) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -59,7 +59,7 @@ void main() {
   });
 
   testWidgets('the splash route is the initial location', (tester) async {
-    final (app, container) = buildApp(onboardingCompleted: true);
+    final (app, container) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -92,7 +92,7 @@ void main() {
 
   testWidgets('once onboarding is completed it goes straight to the product',
       (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -101,7 +101,7 @@ void main() {
   });
 
   testWidgets('it renders and hands over with reduced motion', (tester) async {
-    final (app, _) = buildApp(onboardingCompleted: true);
+    final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(disableAnimations: true),

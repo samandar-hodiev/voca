@@ -16,6 +16,15 @@ import '../core/config/app_config.dart';
 import '../core/config/flavor.dart';
 import '../core/widgets/placeholder_screen.dart';
 import '../features/dev/design_system_gallery.dart';
+import '../features/auth/presentation/pages/auth_entry_page.dart';
+import '../features/auth/presentation/pages/create_profile_page.dart';
+import '../features/auth/presentation/pages/email_sign_up_page.dart';
+import '../features/auth/presentation/pages/email_verify_page.dart';
+import '../features/auth/presentation/pages/forgot_password_page.dart';
+import '../features/auth/presentation/pages/login_page.dart';
+import '../features/onboarding/presentation/pages/daily_goal_page.dart';
+import '../features/onboarding/presentation/pages/goal_page.dart';
+import '../features/onboarding/presentation/pages/level_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import 'routes.dart';
@@ -36,6 +45,65 @@ abstract final class AppRouter {
           name: Routes.onboardingName,
           builder: (_, __) => const OnboardingPage(),
         ),
+        // First-launch setup.
+        GoRoute(
+          path: Routes.level,
+          name: Routes.levelName,
+          builder: (_, __) => const LevelPage(),
+        ),
+        GoRoute(
+          path: Routes.goal,
+          name: Routes.goalName,
+          builder: (_, __) => const GoalPage(),
+        ),
+        GoRoute(
+          path: Routes.dailyGoal,
+          name: Routes.dailyGoalName,
+          builder: (_, __) => const DailyGoalPage(),
+        ),
+
+        // Authentication.
+        GoRoute(
+          path: Routes.authEntry,
+          name: Routes.authEntryName,
+          builder: (_, __) => const AuthEntryPage(),
+        ),
+        GoRoute(
+          path: Routes.emailSignUp,
+          name: Routes.emailSignUpName,
+          builder: (_, __) => const EmailSignUpPage(),
+        ),
+        GoRoute(
+          path: Routes.emailVerify,
+          name: Routes.emailVerifyName,
+          builder: (_, __) => const EmailVerifyPage(),
+        ),
+        GoRoute(
+          path: Routes.createProfile,
+          name: Routes.createProfileName,
+          builder: (_, __) => const CreateProfilePage(),
+        ),
+        GoRoute(
+          path: Routes.login,
+          name: Routes.loginName,
+          builder: (_, __) => const LoginPage(),
+        ),
+        GoRoute(
+          path: Routes.forgotPassword,
+          name: Routes.forgotPasswordName,
+          builder: (_, __) => const ForgotPasswordPage(),
+        ),
+        GoRoute(
+          path: Routes.forgotVerify,
+          name: Routes.forgotVerifyName,
+          builder: (_, __) => const ForgotVerifyPage(),
+        ),
+        GoRoute(
+          path: Routes.newPassword,
+          name: Routes.newPasswordName,
+          builder: (_, __) => const NewPasswordPage(),
+        ),
+
         GoRoute(
           path: Routes.home,
           name: Routes.homeName,
