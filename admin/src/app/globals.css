@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+  Voca design tokens for the admin.
+
+  These values are the SAME semantic tokens the Flutter app uses
+  (mobile/lib/core/theme/app_colors.dart). Mobile and admin share a design LANGUAGE, not
+  components: the numbers below are kept in step by hand and documented in
+  docs/design/DESIGN_SYSTEM.md (ARCHITECTURE.md 44).
+
+  The status colours are the darker weights on purpose. The vivid 500-weights fall below
+  3:1 on a white surface, and they are used here as foreground for icons and badge text.
+*/
+
+@theme {
+  /* Brand */
+  --color-primary: #5b5bf7;
+  --color-primary-pressed: #4a4ae0;
+  --color-primary-muted: #eeeefe;
+  --color-on-primary: #ffffff;
+
+  /* Surfaces */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-disabled: #d1d5db;
+
+  /* Lines */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* Status: foreground weights, legible on a white card */
+  --color-success: #16a34a;
+  --color-success-muted: #dcfce7;
+  --color-on-success-muted: #14532d;
+  --color-warning: #b45309;
+  --color-warning-muted: #fef3c7;
+  --color-on-warning-muted: #78350f;
+  --color-error: #dc2626;
+  --color-error-muted: #fee2e2;
+  --color-on-error-muted: #991b1b;
+
+  /* Radius. The admin is data-dense, so it sits one step tighter than mobile. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Motion */
+  --animate-duration-quick: 200ms;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* Respect the platform reduce-motion setting. Accessibility outranks the effect. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* A visible keyboard focus ring. The admin is a keyboard-driven tool. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

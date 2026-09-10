@@ -8,7 +8,11 @@
 // language costs no backend work (ARCHITECTURE.md 19.1).
 package httpx
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+
+	"github.com/samandar-hodiev/voca/backend/internal/shared/apperr"
+)
 
 // ContextRequestIDKey is where middleware stores the per-request identifier.
 const ContextRequestIDKey = "request_id"
@@ -66,4 +70,25 @@ func Fail(c *gin.Context, status int, code, message string) {
 		Message:   message,
 		RequestID: RequestID(c),
 	}})
+}
+
+// FailWith renders an AppError. This is the ONE place a domain error becomes an HTTP
+// response, so status codes cannot drift between call sites (ARCHITECTURE.md 19.3).
+//
+// Only client-safe fields are serialized. The wrapped internal cause is never written to
+// the response; it belongs in the log, alongside the request ID.
+func FailWith(c *gin.Context, err error) {
+	appErr := apperr.From(err)
+	if appErr == nil {
+		return
+	}
+
+	body := ErrorEnvelope{Error: ErrorBody{
+		Code:      string(appErr.Code),
+		Message:   appErr.Message,
+		Details:   appErr.Details,
+		RequestID: RequestID(c),
+	}}
+
+	c.AbortWithStatusJSON(appErr.HTTPStatus, body)
 }

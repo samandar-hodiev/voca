@@ -20,6 +20,7 @@ import (
 // Dependencies is the set of built modules the router mounts.
 type Dependencies struct {
 	Logger         *slog.Logger
+	CORS           middleware.CORSConfig
 	DevhookHandler *devhook.Handler
 }
 
@@ -27,10 +28,14 @@ type Dependencies struct {
 func NewRouter(deps Dependencies) *gin.Engine {
 	r := gin.New()
 
+	// Order matters. RequestID first so every later line and every error carries a
+	// correlation ID. Recovery before Logger so a panic is still logged as a request.
+	// CORS before routing so a preflight never reaches a handler.
 	r.Use(
 		middleware.RequestID(),
 		middleware.Recovery(deps.Logger),
 		middleware.Logger(deps.Logger),
+		middleware.CORS(deps.CORS),
 	)
 
 	// Operational endpoints sit outside /api/v1: they are infrastructure, not product,

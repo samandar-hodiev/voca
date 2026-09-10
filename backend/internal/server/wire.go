@@ -11,6 +11,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/config"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
+	"github.com/samandar-hodiev/voca/backend/internal/middleware"
 )
 
 // Build constructs every dependency and returns the assembled router input.
@@ -32,6 +33,7 @@ func Build(cfg config.Config, log *slog.Logger) Dependencies {
 
 	return Dependencies{
 		Logger:         log,
+		CORS:           middleware.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
 		DevhookHandler: devhookHandler,
 	}
 }

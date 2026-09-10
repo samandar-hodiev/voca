@@ -26,6 +26,11 @@ type Config struct {
 	// Telegram delivery credentials. Both are required for delivery to work.
 	TelegramBotToken string
 	TelegramChatID   string
+
+	// CORSAllowedOrigins lists browser origins permitted to call this API. Empty means
+	// no cross-origin request is allowed, which is the safe default for a deployment
+	// that has not been configured yet.
+	CORSAllowedOrigins []string
 }
 
 const (
@@ -50,6 +55,7 @@ func Load() (Config, error) {
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
+		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -114,4 +120,19 @@ func loadDotEnv(path string) {
 		}
 		_ = os.Setenv(key, value)
 	}
+}
+
+// splitAndTrim turns a comma-separated environment value into a clean slice.
+func splitAndTrim(v string) []string {
+	if strings.TrimSpace(v) == "" {
+		return nil
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

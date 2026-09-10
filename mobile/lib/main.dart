@@ -1,4 +1,10 @@
-// Default entrypoint. Keep it thin: delegate to bootstrap.dart and runApp.
-//
-// Flavor entrypoints (main_dev, main_staging, main_prod) exist so all three builds can be,
-// installed on one device with distinct bundle IDs — ARCHITECTURE.md 25.1.
+/// Default entrypoint. Runs the development flavor.
+///
+/// Thin on purpose: it delegates to [bootstrap] and decides nothing
+/// (ARCHITECTURE.md 27).
+library;
+
+import 'bootstrap.dart';
+import 'core/config/flavor.dart';
+
+void main() => bootstrap(Flavor.dev);
