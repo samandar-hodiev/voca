@@ -11,6 +11,7 @@ import (
 	"bufio"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -19,6 +20,12 @@ type Config struct {
 	AppEnv   string
 	Port     string
 	LogLevel string
+
+	// DatabaseURL is required in every environment. There is no in-memory fallback: a
+	// service that silently runs without its database is worse than one that refuses to
+	// start.
+	DatabaseURL      string
+	DatabaseMaxConns int32
 
 	// GitHubWebhookSecret verifies X-Hub-Signature-256 on incoming webhooks.
 	GitHubWebhookSecret string
@@ -37,6 +44,10 @@ const (
 	defaultAppEnv   = "development"
 	defaultPort     = "8082"
 	defaultLogLevel = "info"
+
+	// A local development default so a new developer can run the backend after creating
+	// the database and nothing else. Deployments always set DATABASE_URL explicitly.
+	defaultDatabaseURL = "postgres://localhost:5432/voca_dev?sslmode=disable"
 )
 
 // Load reads configuration from the process environment.
@@ -52,6 +63,8 @@ func Load() (Config, error) {
 		AppEnv:              getEnv("APP_ENV", defaultAppEnv),
 		Port:                getEnv("PORT", defaultPort),
 		LogLevel:            getEnv("LOG_LEVEL", defaultLogLevel),
+		DatabaseURL:         getEnv("DATABASE_URL", defaultDatabaseURL),
+		DatabaseMaxConns:    int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
@@ -67,6 +80,9 @@ func Load() (Config, error) {
 func (c Config) validate() error {
 	if strings.TrimSpace(c.Port) == "" {
 		return errors.New("config: PORT must not be empty")
+	}
+	if strings.TrimSpace(c.DatabaseURL) == "" {
+		return errors.New("config: DATABASE_URL must not be empty")
 	}
 	return nil
 }
@@ -135,4 +151,17 @@ func splitAndTrim(v string) []string {
 		}
 	}
 	return out
+}
+
+// getEnvInt reads an integer setting, falling back when unset or unparseable.
+func getEnvInt(key string, fallback int) int {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return fallback
+	}
+	return v
 }
