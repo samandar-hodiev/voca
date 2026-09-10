@@ -206,5 +206,69 @@ curl -s localhost:8082/api/v1/config
 
 `google_sign_in` flips to `true` and the app enables the button on its next launch.
 
-The iOS app also needs its reversed client ID registered as a URL scheme in
-`mobile/ios/Runner/Info.plist`, otherwise the Google sheet opens and never returns.
+### Creating the iOS client ID, step by step
+
+1. Open <https://console.cloud.google.com> and sign in with the Google account that
+   should own the app.
+2. Top left, next to the Google Cloud logo, click the project picker, then **New
+   project**. Name it `Voca` and click **Create**. Wait for it to be selected.
+3. In the search bar type `OAuth consent screen` and open it.
+   - User type: **External**, then **Create**.
+   - App name `Voca`, support email your own address, developer contact your own
+     address. **Save and continue** through the remaining steps, then **Back to
+     dashboard**.
+   - While the app is in Testing, only accounts listed under **Test users** can sign in.
+     Add your own Gmail address there.
+4. Search for `Credentials`, open it, then **Create credentials** ->
+   **OAuth client ID**.
+5. Application type **iOS**.
+   - Name: `Voca iOS`
+   - Bundle ID: `com.voca.voca` (it must match exactly, or Google rejects the token)
+   - **Create**.
+6. The dialog now shows two values. Copy both:
+   - **Client ID**, which looks like `123456789-abc123.apps.googleusercontent.com`
+   - **iOS URL scheme**, the same thing reversed:
+     `com.googleusercontent.apps.123456789-abc123`
+
+Then wire them in:
+
+```
+# backend/.env
+GOOGLE_IOS_CLIENT_ID=123456789-abc123.apps.googleusercontent.com
+```
+
+```xml
+<!-- mobile/ios/Runner/Info.plist, inside the top-level <dict> -->
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>com.googleusercontent.apps.123456789-abc123</string>
+    </array>
+  </dict>
+</array>
+```
+
+Without the URL scheme the Google sheet opens and never returns, because the browser has
+no way to hand the result back to the app.
+
+Restart the backend, rebuild the app, and the button enables itself.
+
+For Android later, repeat step 4 with application type **Android**, package name
+`com.voca.voca`, and the SHA-1 of the signing certificate, then set
+`GOOGLE_ANDROID_CLIENT_ID`.
+
+## Getting a Gmail app password
+
+1. Open <https://myaccount.google.com/security>.
+2. Turn on **2-Step Verification** if it is not already on. App passwords do not exist
+   without it.
+3. Go to <https://myaccount.google.com/apppasswords>.
+4. Type a name such as `Voca backend` and click **Create**.
+5. Google shows a 16-character password in four groups. Copy it. The spaces do not
+   matter; they can be removed.
+
+Put it in `backend/.env` as `SMTP_PASSWORD` and restart the backend. The password is only
+shown once, so store it somewhere safe. It grants access to sending mail as that account,
+so it never belongs in a commit.
