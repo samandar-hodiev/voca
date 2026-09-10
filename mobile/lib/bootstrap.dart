@@ -16,6 +16,7 @@ import 'app.dart';
 import 'core/config/app_config.dart';
 import 'core/config/flavor.dart';
 import 'core/di/providers.dart';
+import 'core/storage/key_value_store.dart';
 
 /// Starts Voca for [flavor].
 ///
@@ -42,11 +43,16 @@ void bootstrap(Flavor flavor) {
 
       final config = AppConfig.forFlavor(flavor);
 
+      // Opened before runApp so the first frame can read it synchronously. It is a local
+      // file read and takes a few milliseconds.
+      final keyValueStore = await SharedPreferencesStore.open();
+
       runApp(
         ProviderScope(
           overrides: [
             appConfigProvider.overrideWithValue(config),
             platformProvider.overrideWithValue(_platformName()),
+            keyValueStoreProvider.overrideWithValue(keyValueStore),
           ],
           child: const VocaApp(),
         ),

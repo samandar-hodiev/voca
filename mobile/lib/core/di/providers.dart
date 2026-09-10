@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
 import '../network/dio_client.dart';
+import '../storage/key_value_store.dart';
 
 /// Overridden in [bootstrap] with the flavor's configuration. Reading it without an
 /// override is a wiring mistake, so it throws rather than guessing.
@@ -28,6 +29,14 @@ final appVersionProvider = Provider<String>((ref) => '0.1.0');
 
 /// Platform name reported to the backend. Overridden at bootstrap.
 final platformProvider = Provider<String>((ref) => 'unknown');
+
+/// Non-secret local storage.
+///
+/// Overridden in [bootstrap] with the opened store. Reading it without an override is a
+/// wiring mistake, so it throws rather than silently losing writes.
+final keyValueStoreProvider = Provider<KeyValueStore>((ref) {
+  throw UnimplementedError('keyValueStoreProvider must be overridden in bootstrap');
+});
 
 /// The single HTTP client.
 final dioProvider = Provider<Dio>((ref) {

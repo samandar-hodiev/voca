@@ -5,35 +5,21 @@
 // catch a broken shell before anyone opens a simulator.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/app.dart';
-import 'package:voca/core/config/app_config.dart';
 import 'package:voca/core/config/flavor.dart';
-import 'package:voca/core/di/providers.dart';
 import 'package:voca/core/theme/app_colors.dart';
 import 'package:voca/routing/routes.dart';
+
+import 'helpers/app_harness.dart';
 
 /// Builds the app and hands back the container, so tests can read the router directly.
 ///
 /// Reading GoRouter from a screen's BuildContext breaks as soon as that screen is
 /// disposed by the navigation under test; the container outlives every route.
-(Widget, ProviderContainer) _app({Flavor flavor = Flavor.dev}) {
-  final container = ProviderContainer(
-    overrides: [
-      appConfigProvider.overrideWithValue(AppConfig.forFlavor(flavor)),
-      platformProvider.overrideWithValue('test'),
-    ],
-  );
-  return (
-    UncontrolledProviderScope(container: container, child: const VocaApp()),
-    container,
-  );
-}
-
 void main() {
   testWidgets('the app boots and lands on the home route', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -41,7 +27,7 @@ void main() {
   });
 
   testWidgets('navigates between routes', (tester) async {
-    final (app, container) = _app();
+    final (app, container) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -58,7 +44,7 @@ void main() {
 
   testWidgets('an unknown route renders the error screen rather than crashing',
       (tester) async {
-    final (app, container) = _app();
+    final (app, container) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -69,7 +55,7 @@ void main() {
   });
 
   testWidgets('the Voca theme extensions resolve', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -82,7 +68,7 @@ void main() {
   // The design-system gallery is a development tool and must never be reachable in a
   // production build.
   testWidgets('the design gallery is not routed in production', (tester) async {
-    final (app, container) = _app(flavor: Flavor.prod);
+    final (app, container) = buildApp(flavor: Flavor.prod, onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -94,7 +80,7 @@ void main() {
   });
 
   testWidgets('the design gallery renders in development', (tester) async {
-    final (app, container) = _app();
+    final (app, container) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 

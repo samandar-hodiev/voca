@@ -10,6 +10,11 @@ abstract final class Routes {
   static const splash = '/';
   static const splashName = 'splash';
 
+  /// First-run only. The splash sends people here once; afterwards it goes straight to
+  /// [home].
+  static const onboarding = '/onboarding';
+  static const onboardingName = 'onboarding';
+
   // Product routes. Declared so the shell can prove navigation works and so deep links
   // have stable targets. Their screens are placeholders; the real ones arrive with their
   // features (ARCHITECTURE.md 37).

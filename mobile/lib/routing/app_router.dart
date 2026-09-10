@@ -16,6 +16,7 @@ import '../core/config/app_config.dart';
 import '../core/config/flavor.dart';
 import '../core/widgets/placeholder_screen.dart';
 import '../features/dev/design_system_gallery.dart';
+import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import 'routes.dart';
 
@@ -29,6 +30,11 @@ abstract final class AppRouter {
           path: Routes.splash,
           name: Routes.splashName,
           builder: (_, __) => const SplashPage(),
+        ),
+        GoRoute(
+          path: Routes.onboarding,
+          name: Routes.onboardingName,
+          builder: (_, __) => const OnboardingPage(),
         ),
         GoRoute(
           path: Routes.home,

@@ -26,6 +26,10 @@ dependencies:
   # Localization. Uzbek is the first UI language.
   intl: ^0.20.2
 
+  # Non-secret local flags: whether onboarding has been completed, last selected tab.
+  # Tokens never go here; those belong in secure storage (ARCHITECTURE.md 4.5).
+  shared_preferences: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

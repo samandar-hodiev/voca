@@ -1,33 +1,18 @@
 // The splash screen.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/app.dart';
-import 'package:voca/core/config/app_config.dart';
-import 'package:voca/core/config/flavor.dart';
-import 'package:voca/core/di/providers.dart';
 import 'package:voca/core/widgets/glass_surface.dart';
 import 'package:voca/core/widgets/liquid_background.dart';
 import 'package:voca/features/splash/presentation/pages/splash_page.dart';
 import 'package:voca/routing/routes.dart';
 
-(Widget, ProviderContainer) _app() {
-  final container = ProviderContainer(
-    overrides: [
-      appConfigProvider.overrideWithValue(AppConfig.forFlavor(Flavor.dev)),
-      platformProvider.overrideWithValue('test'),
-    ],
-  );
-  return (
-    UncontrolledProviderScope(container: container, child: const VocaApp()),
-    container,
-  );
-}
+import '../../helpers/app_harness.dart';
 
 void main() {
   testWidgets('the app opens on the splash, not on a product screen', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -40,7 +25,7 @@ void main() {
   });
 
   testWidgets('the splash uses the liquid and glass layers', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -51,7 +36,7 @@ void main() {
   });
 
   testWidgets('it hands over to home once startup work finishes', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -62,7 +47,7 @@ void main() {
   // The splash is a transition, not a destination: it must not be reachable by going
   // back from the first real screen.
   testWidgets('the splash is replaced, not pushed', (tester) async {
-    final (app, container) = _app();
+    final (app, container) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
@@ -72,7 +57,7 @@ void main() {
   });
 
   testWidgets('the splash route is the initial location', (tester) async {
-    final (app, container) = _app();
+    final (app, container) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(app);
     await tester.pump();
 
@@ -88,7 +73,7 @@ void main() {
   // the outcome, not which widget wraps what, so this asserts behaviour: the screen
   // renders its content and still completes its handover.
   testWidgets('it renders and hands over with reduced motion', (tester) async {
-    final (app, _) = _app();
+    final (app, _) = buildApp(onboardingCompleted: true);
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(disableAnimations: true),

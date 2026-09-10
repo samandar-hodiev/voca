@@ -17,7 +17,6 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/liquid_background.dart';
-import '../../../../routing/routes.dart';
 import '../controllers/splash_controller.dart';
 
 class SplashPage extends ConsumerWidget {
@@ -27,9 +26,13 @@ class SplashPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // When startup work finishes, replace the splash so it cannot be reached with the
     // back gesture: it is a transition, not a destination.
+    //
+    // The destination comes from the controller: onboarding on a first run, the product
+    // afterwards. This screen makes no decision of its own.
     ref.listen(splashControllerProvider, (_, next) {
-      if (next.hasValue && context.mounted) {
-        context.go(Routes.home);
+      final destination = next.valueOrNull;
+      if (destination != null && context.mounted) {
+        context.go(destination);
       }
     });
 
