@@ -26,6 +26,7 @@ import '../features/onboarding/presentation/pages/daily_goal_page.dart';
 import '../features/onboarding/presentation/pages/goal_page.dart';
 import '../features/onboarding/presentation/pages/level_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import 'routes.dart';
 
@@ -143,11 +144,7 @@ abstract final class AppRouter {
         GoRoute(
           path: Routes.settings,
           name: Routes.settingsName,
-          builder: (_, __) => const PlaceholderScreen(
-            title: 'Settings',
-            description: 'Language, accent, difficulty and reminders will be built here.',
-            icon: Icons.settings_outlined,
-          ),
+          builder: (_, __) => const SettingsPage(),
         ),
 
         // Development only. The gallery is how the design system is reviewed without a

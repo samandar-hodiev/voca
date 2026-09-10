@@ -307,3 +307,37 @@ looked like a broken app:
   the second flow.
 * **`pumpAndSettle` is never used.** The liquid background animates forever, so there is
   never a frame with nothing scheduled, and `pumpAndSettle` would wait until it times out.
+
+## When SMTP is blocked
+
+On many networks, including a lot of consumer ISPs, outbound ports 587 and 465 are
+blocked to keep spam off the line. Check before assuming a credential is wrong:
+
+```sh
+nc -z -G 6 smtp.gmail.com 587 || echo blocked
+```
+
+If it is blocked, no SMTP configuration will ever work from that connection: the TCP
+connection never completes, and the backend reports `dial mail server: i/o timeout`.
+
+Use the HTTP mail API instead. It speaks HTTPS on 443, which is always open:
+
+```
+RESEND_API_KEY=re_...
+RESEND_FROM=onboarding@resend.dev
+RESEND_FROM_NAME=Voca
+```
+
+Create the key at <https://resend.com> (the free tier needs no card). Until a domain is
+verified there, Resend only accepts `onboarding@resend.dev` as the sender and only
+delivers to the address the account was registered with, which is enough to test the
+flow end to end.
+
+Provider selection is most capable first, so setting the key is all that is needed:
+
+| Configuration | Provider | Where the code goes |
+|---|---|---|
+| `RESEND_API_KEY` + `RESEND_FROM` | resend | a real inbox, over HTTPS |
+| `SMTP_HOST` + `SMTP_FROM` | smtp | a real inbox, if the ports are open |
+| `EMAIL_OUTBOX_DIR` only | outbox | a file, readable with `make code` |
+| none of the above | log | nowhere |

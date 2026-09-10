@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/di/providers.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_mode_controller.dart';
 import 'routing/app_router.dart';
 
 /// Holds the router for the lifetime of the app. Rebuilding a GoRouter drops navigation
@@ -33,9 +34,8 @@ class VocaApp extends ConsumerWidget {
 
       theme: VocaTheme.light(),
       darkTheme: VocaTheme.dark(),
-      // Follow the device. Dark mode is complete but not yet visually designed, so it is
-      // honest to respect the system rather than force either.
-      themeMode: ThemeMode.system,
+      // The person's choice, which defaults to following the device until they make one.
+      themeMode: ref.watch(themeModeProvider),
 
       // Uzbek is the first UI language; English ships alongside it from day one to prove
       // the plumbing works before a second language is real (ARCHITECTURE.md 4.6).

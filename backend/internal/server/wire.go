@@ -15,6 +15,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
+	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
 	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
@@ -42,12 +43,26 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 
 	// Email provider selection, most capable first (ARCHITECTURE.md 18.4).
 	//
+	//   Resend configured  -> real delivery over HTTPS, which works on networks that
+	//                         block the SMTP ports
 	//   SMTP configured    -> real delivery to a real inbox
 	//   EMAIL_OUTBOX_DIR   -> written to disk for a developer to read (never production)
 	//   neither            -> the log provider, which says a message would have been sent
 	//                         and never reveals the code
 	var emailProvider auth.EmailProvider = emaillog.New(log)
 	switch {
+	case cfg.ResendConfigured():
+		sender, err := emailresend.New(emailresend.Config{
+			APIKey:   cfg.ResendAPIKey,
+			From:     cfg.ResendFrom,
+			FromName: cfg.ResendFromName,
+		}, log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		emailProvider = sender
+		log.Info("email_provider_selected", slog.String("provider", "resend"))
+
 	case cfg.SMTPConfigured():
 		sender, err := emailsmtp.New(emailsmtp.Config{
 			Host:     cfg.SMTPHost,
@@ -77,7 +92,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 
 	default:
 		log.Warn("email_delivery_unavailable",
-			slog.String("hint", "set SMTP_HOST, SMTP_FROM and credentials to deliver real email"))
+			slog.String("hint", "set RESEND_API_KEY and RESEND_FROM, or SMTP_HOST and SMTP_FROM"))
 	}
 
 	// Google sign-in verifies tokens against Google's keys. With no client ID configured

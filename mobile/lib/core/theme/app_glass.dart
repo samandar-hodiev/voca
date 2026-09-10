@@ -32,6 +32,8 @@ import 'app_radius.dart';
 class VocaGlass extends ThemeExtension<VocaGlass> {
   const VocaGlass({
     required this.tint,
+    required this.controlOpacity,
+    required this.selectionOpacity,
     required this.highlight,
     required this.borderTop,
     required this.borderBottom,
@@ -42,6 +44,18 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
 
   /// The translucent fill.
   final Color tint;
+
+  /// How much of [tint] a control carries.
+  ///
+  /// A control sits directly on the liquid field and has to let it through, so it is much
+  /// thinner than a content card. The right value is not the same in both themes: on a
+  /// light page a thin white lifts the surface enough to read, while on a dark page the
+  /// same fraction of a dark slate is invisible against the background behind it, so dark
+  /// needs considerably more.
+  final double controlOpacity;
+
+  /// How much brand colour a selected control carries.
+  final double selectionOpacity;
 
   /// The lit top face, fading to nothing partway down.
   final Color highlight;
@@ -63,6 +77,8 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
 
   static const light = VocaGlass(
     tint: Color(0x59FFFFFF),
+    controlOpacity: 0.20,
+    selectionOpacity: 0.16,
     highlight: Color(0x66FFFFFF),
     borderTop: Color(0xB3FFFFFF),
     borderBottom: Color(0x1F5B5BF7),
@@ -84,7 +100,9 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   );
 
   static const dark = VocaGlass(
-    tint: Color(0x8C1B212C),
+    tint: Color(0xD91B212C),
+    controlOpacity: 0.52,
+    selectionOpacity: 0.34,
     highlight: Color(0x1AFFFFFF),
     borderTop: Color(0x3DFFFFFF),
     borderBottom: Color(0x14FFFFFF),
@@ -103,6 +121,8 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   @override
   VocaGlass copyWith({
     Color? tint,
+    double? controlOpacity,
+    double? selectionOpacity,
     Color? highlight,
     Color? borderTop,
     Color? borderBottom,
@@ -112,6 +132,8 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   }) {
     return VocaGlass(
       tint: tint ?? this.tint,
+      controlOpacity: controlOpacity ?? this.controlOpacity,
+      selectionOpacity: selectionOpacity ?? this.selectionOpacity,
       highlight: highlight ?? this.highlight,
       borderTop: borderTop ?? this.borderTop,
       borderBottom: borderBottom ?? this.borderBottom,
@@ -126,6 +148,8 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
     if (other == null) return this;
     return VocaGlass(
       tint: Color.lerp(tint, other.tint, t)!,
+      controlOpacity: _lerpDouble(controlOpacity, other.controlOpacity, t),
+      selectionOpacity: _lerpDouble(selectionOpacity, other.selectionOpacity, t),
       highlight: Color.lerp(highlight, other.highlight, t)!,
       borderTop: Color.lerp(borderTop, other.borderTop, t)!,
       borderBottom: Color.lerp(borderBottom, other.borderBottom, t)!,

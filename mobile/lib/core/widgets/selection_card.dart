@@ -68,8 +68,8 @@ class SelectionCard extends StatelessWidget {
               // is a white card, whatever it is called. Selection is carried by the ring
               // and the check mark, so the selected pane only has to shift hue.
               tint: selected
-                  ? colors.primary.withValues(alpha: 0.16)
-                  : glass.tint.withValues(alpha: 0.18),
+                  ? colors.primary.withValues(alpha: glass.selectionOpacity)
+                  : glass.tint.withValues(alpha: glass.controlOpacity),
               padding: const EdgeInsets.symmetric(
                 horizontal: VocaSpacing.md,
                 vertical: VocaSpacing.sm,

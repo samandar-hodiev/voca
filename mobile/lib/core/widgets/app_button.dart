@@ -230,6 +230,7 @@ class _VocaButtonState extends State<_VocaButton> {
                 child: GlassSurface(
                   borderRadius: VocaRadius.mediumAll,
                   tint: background.withValues(alpha: _enabled ? 0.92 : 1),
+                borderWidth: 1.2,
                   showShadow: _enabled && !_pressed,
                   padding: const EdgeInsets.symmetric(
                     horizontal: VocaSpacing.lg,

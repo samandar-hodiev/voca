@@ -70,11 +70,10 @@ class _GlassActionButtonState extends State<GlassActionButton> {
     // Thinner than the card tint so the liquid field reads through the control. Pressing
     // thickens it, which is what a pane of glass does when you push a finger against it.
     // Disabled goes thinner still: less present, without disappearing.
-    final double fillAlpha = !_enabled
-        ? 0.20
-        : _pressed
-            ? 0.42
-            : 0.20;
+    // The base comes from the theme because the right thinness is not the same in both:
+    // on a dark page a fill this thin would vanish into the background.
+    final base = glass.controlOpacity;
+    final double fillAlpha = _pressed ? (base + 0.22).clamp(0.0, 1.0) : base;
     final tint = glass.tint.withValues(alpha: fillAlpha);
 
     final surface = GlassSurface(

@@ -45,6 +45,12 @@ type Config struct {
 	TelegramBotToken string
 	TelegramChatID   string
 
+	// Resend delivers real email over HTTPS. Preferred over SMTP because ports 587 and
+	// 465 are blocked on many networks, while 443 is always open.
+	ResendAPIKey   string
+	ResendFrom     string
+	ResendFromName string
+
 	// SMTP delivers real email. Configured means a person actually receives the
 	// verification code. Unset falls back to the outbox or the log provider, neither of
 	// which leaves the machine.
@@ -99,6 +105,9 @@ func Load() (Config, error) {
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
+		ResendAPIKey:        strings.TrimSpace(os.Getenv("RESEND_API_KEY")),
+		ResendFrom:          strings.TrimSpace(os.Getenv("RESEND_FROM")),
+		ResendFromName:      getEnv("RESEND_FROM_NAME", "Voca"),
 		SMTPHost:            strings.TrimSpace(os.Getenv("SMTP_HOST")),
 		SMTPPort:            getEnvInt("SMTP_PORT", 587),
 		SMTPUsername:        strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
@@ -134,6 +143,11 @@ func (c Config) validate() error {
 // being spelled slightly differently at each call site.
 func (c Config) IsProduction() bool {
 	return strings.EqualFold(strings.TrimSpace(c.AppEnv), "production")
+}
+
+// ResendConfigured reports whether the HTTP mail API can be used.
+func (c Config) ResendConfigured() bool {
+	return c.ResendAPIKey != "" && c.ResendFrom != ""
 }
 
 // SMTPConfigured reports whether real email can be delivered.
