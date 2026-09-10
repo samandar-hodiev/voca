@@ -342,46 +342,36 @@ Provider selection is most capable first, so setting the key is all that is need
 | `EMAIL_OUTBOX_DIR` only | outbox | a file, readable with `make code` |
 | none of the above | log | nowhere |
 
-## Getting the code onto the phone when SMTP is blocked
 
-The outbox works but lives on the developer's disk, which means leaving the phone to read
-a terminal. On a network that blocks the SMTP ports and with no mail API key yet, the
-development bot is the fastest way to close that gap:
+## Setting up Brevo, step by step
+
+A verification code belongs in the recipient's own inbox and nowhere else. With ten
+thousand people signing up, each one types their own address and each one has to receive
+their own code there. That is what the code already does: the address the person typed is
+what the message is addressed to. The only piece that has ever been missing on this
+machine is a way to actually reach a mail server, because the network blocks every SMTP
+port.
+
+Brevo closes that over HTTPS, and it is the one provider that works before the product
+owns a domain.
+
+1. Sign up at <https://www.brevo.com>. The free tier needs no card and allows 300
+   messages a day.
+2. Verify the sender address. **Settings -> Senders, Domains & Dedicated IPs -> Senders
+   -> Add a sender.** Use the address the mail should come from. Brevo emails a
+   confirmation link to it; click that link. No domain is required for this.
+3. Create the key. **Settings -> SMTP & API -> API Keys -> Generate a new API key.**
+   Copy it; it is shown once.
+4. Put both in `backend/.env`:
 
 ```
-EMAIL_VIA_TELEGRAM=true
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
+BREVO_API_KEY=xkeysib-...
+BREVO_FROM=the-address-you-verified@example.com
+BREVO_FROM_NAME=Voca
 ```
 
-Every message the backend would have emailed is posted to that chat instead, with the
-intended recipient named at the top so it is never mistaken for the reader's own code.
-Telegram's API is HTTPS on 443, which is open where 587 and 465 are not.
+5. Restart the backend. The startup line `email_provider_selected provider=brevo`
+   confirms it, and from then on codes go to real inboxes.
 
-This is development only. The provider refuses to start when `APP_ENV=production`,
-because a deployment that reached it would be sending every customer's verification code
-to one person's chat. Real delivery is `RESEND_API_KEY`.
-
-Provider selection, most capable first:
-
-| Configuration | Provider | Where the code goes |
-|---|---|---|
-| `BREVO_API_KEY` + `BREVO_FROM` | brevo | a real inbox, over HTTPS |
-| `RESEND_API_KEY` + `RESEND_FROM` | resend | a real inbox, over HTTPS |
-| `SMTP_HOST` + `SMTP_FROM` | smtp | a real inbox, if the ports are open |
-| `EMAIL_VIA_TELEGRAM=true` | telegram-dev | the development chat |
-| `EMAIL_OUTBOX_DIR` | outbox | a file, readable with `make code` |
-| none | log | nowhere |
-
-### Choosing between the two HTTP providers
-
-They differ in what the sender has to own, not in anything technical.
-
-| | Brevo | Resend |
-|---|---|---|
-| To send to anyone | verified sender ADDRESS | verified DOMAIN |
-| Before you own a domain | works | only sends to the account owner |
-| Free tier | 300 messages a day | 3,000 a month |
-
-Brevo is the one to start with while the product has no domain. Resend is the better
-long-term home once `voca.uz` or similar exists and can be verified.
+Later, when the product owns a domain, verify it in Brevo or move to Resend and send from
+`no-reply@yourdomain`. A verified domain is what stops the messages landing in spam.

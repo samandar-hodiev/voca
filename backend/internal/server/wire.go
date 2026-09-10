@@ -18,7 +18,6 @@ import (
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
-	emailtelegram "github.com/samandar-hodiev/voca/backend/internal/integrations/email/telegramdev"
 	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
@@ -48,7 +47,6 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 	//   Brevo configured   -> real delivery over HTTPS, sender address only
 	//   Resend configured  -> real delivery over HTTPS, verified domain
 	//   SMTP configured    -> real delivery to a real inbox
-	//   EMAIL_VIA_TELEGRAM -> posted to the development chat (never production)
 	//   EMAIL_OUTBOX_DIR   -> written to disk for a developer to read (never production)
 	//   neither            -> the log provider, which says a message would have been sent
 	//                         and never reveals the code
@@ -94,18 +92,6 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		log.Info("email_provider_selected",
 			slog.String("provider", "smtp"),
 			slog.String("host", cfg.SMTPHost))
-
-	case cfg.EmailTelegramEnabled():
-		sender, err := emailtelegram.New(emailtelegram.Config{
-			BotToken: cfg.TelegramBotToken,
-			ChatID:   cfg.TelegramChatID,
-		}, cfg.IsProduction(), log)
-		if err != nil {
-			return Dependencies{}, err
-		}
-		emailProvider = sender
-		log.Warn("email_via_telegram_enabled",
-			slog.String("hint", "development only: codes go to the chat, not to an inbox"))
 
 	case cfg.EmailOutboxEnabled():
 		box, err := emailoutbox.New(cfg.EmailOutboxDir, cfg.IsProduction(), log)
