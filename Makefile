@@ -72,6 +72,20 @@ gitpulse-hook:
 	@chmod +x .git/hooks/pre-push
 	@echo "pre-push hook installed; a successful push now notifies GitPulse"
 
+## code: print the newest verification code the backend wrote
+#
+# Only useful while EMAIL_OUTBOX_DIR is set and no SMTP provider is configured, which is
+# the state a development machine is in until real mail credentials exist.
+code:
+	@f=$$(ls -t backend/tmp/mail/*.txt 2>/dev/null | head -1); \
+	if [ -z "$$f" ]; then \
+		echo "hali hech qanday xabar yozilmagan"; \
+	else \
+		echo "$$(grep '^To:' $$f)"; \
+		echo "kod: $$(awk '/code = /{print $$3; exit}' $$f)"; \
+		echo "vaqt: $$(basename $$f | cut -c1-19)"; \
+	fi
+
 ## e2e: drive the sign-in flows on a simulator against the running backend
 #
 # Not part of `make test`: it needs a booted simulator, a running backend and a few
