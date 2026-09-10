@@ -100,6 +100,38 @@ Settings, Webhooks, Recent Deliveries:
 the URL it keeps showing the old failure until the next push, which looks alarming and is
 not.
 
+## When GitHub says 200 but Telegram stays silent, or GitHub says 500
+
+Telegram's `sendMessage` rejects any message over **4096 characters**. The commit body is
+the only unbounded field in a push notification, so a long commit message overflows the
+limit, Telegram refuses the message, and gitpulse returns 500 to GitHub.
+
+This was observed on 2026-09-09. Three consecutive pushes:
+
+| Commit message | GitHub delivery |
+|----------------|-----------------|
+| 1430 characters | 200 OK |
+| 6 characters | 200 OK |
+| 4774 characters | **500** |
+
+Reproduce it locally without involving GitHub by posting a signed payload with a very long
+`head_commit.message` to `http://localhost:8080/webhook/github`.
+
+**Fixed** in gitpulse by truncating the commit body to 1500 runes before HTML escaping.
+Truncating the body rather than the finished message keeps the HTML structure intact:
+slicing the rendered message could cut a tag in half, which Telegram also rejects. Runes
+rather than bytes, so a multi-byte character is never split into invalid UTF-8.
+
+The lesson generalises: **every unbounded field that reaches a third-party API needs a
+bound on our side.** The provider's limit is not a suggestion, and discovering it in
+production costs a silent notification.
+
+## Reading the failure correctly
+
+GitHub's Recent Deliveries reports what *gitpulse* returned, not what Telegram did. A 500
+there means the webhook was received and verified, and something downstream failed. Check
+gitpulse's own log for the Telegram error before suspecting the tunnel or the signature.
+
 ## Making it permanent
 
 Two ways to stop depending on a running laptop:
