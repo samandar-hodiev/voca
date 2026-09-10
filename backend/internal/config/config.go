@@ -45,6 +45,16 @@ type Config struct {
 	TelegramBotToken string
 	TelegramChatID   string
 
+	// SMTP delivers real email. Configured means a person actually receives the
+	// verification code. Unset falls back to the outbox or the log provider, neither of
+	// which leaves the machine.
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
+	SMTPFromName string
+
 	// EmailOutboxDir turns on the local mail catcher outside production: every message
 	// the service sends is written there as a file so a developer can read a
 	// verification code without mail credentials. Empty keeps the log provider, which
@@ -89,6 +99,12 @@ func Load() (Config, error) {
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
+		SMTPHost:            strings.TrimSpace(os.Getenv("SMTP_HOST")),
+		SMTPPort:            getEnvInt("SMTP_PORT", 587),
+		SMTPUsername:        strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
+		SMTPPassword:        os.Getenv("SMTP_PASSWORD"),
+		SMTPFrom:            strings.TrimSpace(os.Getenv("SMTP_FROM")),
+		SMTPFromName:        strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
 		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
 		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
@@ -118,6 +134,14 @@ func (c Config) validate() error {
 // being spelled slightly differently at each call site.
 func (c Config) IsProduction() bool {
 	return strings.EqualFold(strings.TrimSpace(c.AppEnv), "production")
+}
+
+// SMTPConfigured reports whether real email can be delivered.
+//
+// A host and a sender are the minimum. Username and password are optional because a
+// relay on a private network may not require authentication.
+func (c Config) SMTPConfigured() bool {
+	return c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPPort > 0
 }
 
 // EmailOutboxEnabled reports whether the local mail catcher should be used.

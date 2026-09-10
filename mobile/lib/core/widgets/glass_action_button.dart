@@ -4,6 +4,12 @@
 /// alternatives to one another, not a hierarchy: making one solid would say it is the
 /// right answer, and it is not.
 ///
+/// The button is built from [GlassSurface], not from a plain container with a pale fill.
+/// That distinction is the whole point: a rounded box filled with 65% white on a light
+/// page is a white pill, while the surface below it puts a backdrop blur, a lit top face
+/// and a gradient rim under the same fill, and only then does it read as glass. The tint
+/// here is thinner than a card's so the liquid field behind actually shows through.
+///
 /// A disabled button still renders, greyed and labelled, when a method exists but is not
 /// available yet. Hiding it would leave people wondering whether it is coming; showing it
 /// as tappable would be a lie.
@@ -17,6 +23,7 @@ import '../theme/app_motion.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'glass_surface.dart';
 
 class GlassActionButton extends StatefulWidget {
   const GlassActionButton({
@@ -55,7 +62,71 @@ class _GlassActionButtonState extends State<GlassActionButton> {
     final glass = context.vocaGlass;
     final text = context.vocaText;
 
-    final foreground = _enabled ? colors.textPrimary : colors.textDisabled;
+    // Disabled uses the secondary text colour, not the disabled one. Over a saturated
+    // liquid field a very light grey stops being legible, and a method someone is being
+    // asked to wait for still has to be readable.
+    final foreground = _enabled ? colors.textPrimary : colors.textSecondary;
+
+    // Thinner than the card tint so the liquid field reads through the control. Pressing
+    // thickens it, which is what a pane of glass does when you push a finger against it.
+    // Disabled goes thinner still: less present, without disappearing.
+    final double fillAlpha = !_enabled
+        ? 0.34
+        : _pressed
+            ? 0.58
+            : 0.34;
+    final tint = glass.tint.withValues(alpha: fillAlpha);
+
+    final surface = GlassSurface(
+      borderRadius: BorderRadius.circular(VocaRadius.large),
+      tint: tint,
+      borderWidth: _enabled ? 1.4 : 1,
+      showShadow: _enabled && !_pressed,
+      padding: const EdgeInsets.symmetric(
+        horizontal: VocaSpacing.md,
+        vertical: VocaSpacing.sm,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 40),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.isLoading)
+              SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: colors.primary,
+                ),
+              )
+            else ...[
+              if (widget.icon != null) ...[
+                Opacity(opacity: _enabled ? 1 : 0.4, child: widget.icon),
+                const SizedBox(width: VocaSpacing.sm),
+              ],
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: text.subtitle.copyWith(color: foreground),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.unavailableNote != null)
+                      Text(
+                        widget.unavailableNote!,
+                        style: text.caption.copyWith(color: colors.textDisabled),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
 
     return Semantics(
       button: true,
@@ -66,57 +137,13 @@ class _GlassActionButtonState extends State<GlassActionButton> {
         onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
         onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
         onTap: _enabled ? widget.onPressed : null,
-        child: AnimatedContainer(
+        // A press shrinks the pane very slightly. Glass does not depress like a rubber
+        // key, so the movement is small enough to feel rather than watch.
+        child: AnimatedScale(
+          scale: _pressed ? 0.985 : 1,
           duration: VocaMotion.respectReducedMotion(context, VocaMotion.instant),
           curve: VocaMotion.standardCurve,
-          constraints: const BoxConstraints(minHeight: 56),
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: VocaSpacing.md,
-            vertical: VocaSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: _pressed ? colors.primaryMuted : glass.tint,
-            borderRadius: BorderRadius.circular(VocaRadius.large),
-            border: Border.all(
-              color: _enabled ? glass.borderBottom : colors.border,
-            ),
-            boxShadow: _enabled && !_pressed ? glass.shadows : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.isLoading)
-                SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.2, color: colors.primary),
-                )
-              else ...[
-                if (widget.icon != null) ...[
-                  Opacity(opacity: _enabled ? 1 : 0.4, child: widget.icon),
-                  const SizedBox(width: VocaSpacing.sm),
-                ],
-                Flexible(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.label,
-                        style: text.subtitle.copyWith(color: foreground),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (widget.unavailableNote != null)
-                        Text(
-                          widget.unavailableNote!,
-                          style: text.caption.copyWith(color: colors.textDisabled),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+          child: SizedBox(width: double.infinity, child: surface),
         ),
       ),
     );

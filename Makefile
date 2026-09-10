@@ -27,9 +27,16 @@ admin:
 # framework. See docs/runbooks/local-development.md.
 #
 # Edit code in this repository; this target copies it before each run.
+#
+# CocoaPods output is excluded from the delete pass. It is generated inside the run
+# directory and does not exist in this repository, so without these excludes every sync
+# would wipe Pods while leaving the Xcode project still referencing them, and the build
+# would fail with "Module not found" for whichever plugin Xcode reached first.
 mobile-sync:
 	@mkdir -p $(MOBILE_RUN_DIR)
 	@rsync -a --delete --exclude build --exclude .dart_tool --exclude .idea \
+		--exclude ios/Pods --exclude ios/.symlinks --exclude ios/Podfile.lock \
+		--exclude macos/Pods --exclude macos/Podfile.lock \
 		mobile/ $(MOBILE_RUN_DIR)/
 	@xattr -cr /tmp/voca-run 2>/dev/null || true
 	@cd $(MOBILE_RUN_DIR) && flutter pub get >/dev/null

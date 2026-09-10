@@ -7,6 +7,10 @@
 /// A method whose server-side credentials are missing renders disabled with a note rather
 /// than being hidden. Hiding it leaves people wondering whether it is coming; showing it
 /// as tappable would be a lie.
+///
+/// Sign in with Apple is absent entirely rather than shown disabled: there is no Apple
+/// Developer account yet, so there is no date to promise. It returns when the account
+/// exists.
 library;
 
 import 'dart:async';
@@ -93,13 +97,6 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
           ),
           const SizedBox(height: VocaSpacing.sm),
 
-          GlassActionButton(
-            label: 'Apple bilan kirish',
-            icon: AppleMark(color: colors.textPrimary),
-            // Needs an Apple Developer configuration that does not exist yet.
-            unavailableNote: caps.appleSignIn ? null : 'Tez orada',
-            onPressed: caps.appleSignIn && !busy ? () {} : null,
-          ),
           const SizedBox(height: VocaSpacing.lg),
 
           TextButton(

@@ -28,11 +28,22 @@ class GlassSurface extends StatelessWidget {
     this.borderRadius,
     this.blur = true,
     this.showShadow = true,
+    this.tint,
+    this.borderWidth = 1,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
+
+  /// Overrides the fill. A control that sits directly on the liquid field wants a
+  /// thinner tint than a content card does, so more of the colour behind reads through
+  /// it. Null uses the theme's tint.
+  final Color? tint;
+
+  /// Rim thickness. A control reads as a distinct object with a slightly heavier rim
+  /// than a large card needs.
+  final double borderWidth;
 
   /// Whether to apply a backdrop blur. Turn it off inside long scrolling lists: many
   /// simultaneous [BackdropFilter]s are the fastest way to make a mid-range Android
@@ -50,7 +61,7 @@ class GlassSurface extends StatelessWidget {
     // the top face reads as lit.
     Widget pane = DecoratedBox(
       decoration: BoxDecoration(
-        color: glass.tint,
+        color: tint ?? glass.tint,
         borderRadius: radius,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -84,6 +95,7 @@ class GlassSurface extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: radius,
                 border: GradientBoxBorder(
+                  width: borderWidth,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

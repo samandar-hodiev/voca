@@ -15,6 +15,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
+	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
 	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
@@ -39,12 +40,32 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		return Dependencies{}, err
 	}
 
-	// Email provider selection. The log provider is the default because it can never
-	// reveal a code. Outside production, setting EMAIL_OUTBOX_DIR swaps in a local mail
-	// catcher so a developer can finish a signup without mail credentials; production
-	// cannot reach that branch (ARCHITECTURE.md 18.4).
+	// Email provider selection, most capable first (ARCHITECTURE.md 18.4).
+	//
+	//   SMTP configured    -> real delivery to a real inbox
+	//   EMAIL_OUTBOX_DIR   -> written to disk for a developer to read (never production)
+	//   neither            -> the log provider, which says a message would have been sent
+	//                         and never reveals the code
 	var emailProvider auth.EmailProvider = emaillog.New(log)
-	if cfg.EmailOutboxEnabled() {
+	switch {
+	case cfg.SMTPConfigured():
+		sender, err := emailsmtp.New(emailsmtp.Config{
+			Host:     cfg.SMTPHost,
+			Port:     cfg.SMTPPort,
+			Username: cfg.SMTPUsername,
+			Password: cfg.SMTPPassword,
+			From:     cfg.SMTPFrom,
+			FromName: cfg.SMTPFromName,
+		}, log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		emailProvider = sender
+		log.Info("email_provider_selected",
+			slog.String("provider", "smtp"),
+			slog.String("host", cfg.SMTPHost))
+
+	case cfg.EmailOutboxEnabled():
 		box, err := emailoutbox.New(cfg.EmailOutboxDir, cfg.IsProduction(), log)
 		if err != nil {
 			return Dependencies{}, err
@@ -53,6 +74,10 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		log.Warn("email_outbox_enabled",
 			slog.String("dir", cfg.EmailOutboxDir),
 			slog.String("hint", "development only: messages are written to disk, not sent"))
+
+	default:
+		log.Warn("email_delivery_unavailable",
+			slog.String("hint", "set SMTP_HOST, SMTP_FROM and credentials to deliver real email"))
 	}
 
 	// Google sign-in verifies tokens against Google's keys. With no client ID configured

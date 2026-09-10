@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/samandar-hodiev/voca/backend/internal/auth"
+	"github.com/samandar-hodiev/voca/backend/internal/integrations/email/template"
 )
 
 // Provider writes each outgoing message to its own file.
@@ -87,11 +88,11 @@ func (p *Provider) Send(_ context.Context, msg auth.EmailMessage) error {
 func render(msg auth.EmailMessage, at time.Time) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "To:       %s\n", msg.To)
-	fmt.Fprintf(&b, "Subject:  %s\n", subjectFor(msg.Template))
+	fmt.Fprintf(&b, "Subject:  %s\n", template.Subject(msg.Template))
 	fmt.Fprintf(&b, "Template: %s\n", msg.Template)
 	fmt.Fprintf(&b, "Date:     %s\n", at.Format(time.RFC1123))
 	b.WriteString(strings.Repeat("-", 56) + "\n\n")
-	b.WriteString(bodyFor(msg) + "\n\n")
+	b.WriteString(template.Body(msg) + "\n\n")
 	b.WriteString(strings.Repeat("-", 56) + "\n")
 	b.WriteString("Parameters:\n")
 
@@ -104,31 +105,6 @@ func render(msg auth.EmailMessage, at time.Time) string {
 		fmt.Fprintf(&b, "  %s = %s\n", k, msg.Params[k])
 	}
 	return b.String()
-}
-
-func subjectFor(t auth.EmailTemplate) string {
-	switch t {
-	case auth.TemplateSignupCode:
-		return "Voca tasdiqlash kodi"
-	case auth.TemplatePasswordResetCode:
-		return "Voca parolni tiklash kodi"
-	default:
-		return "Voca"
-	}
-}
-
-func bodyFor(msg auth.EmailMessage) string {
-	code := msg.Params["code"]
-	switch msg.Template {
-	case auth.TemplateSignupCode:
-		return "Salom!\n\nVoca'da ro'yxatdan o'tishni yakunlash uchun kod:\n\n    " +
-			code + "\n\nKod 10 daqiqa amal qiladi."
-	case auth.TemplatePasswordResetCode:
-		return "Salom!\n\nParolingizni tiklash uchun kod:\n\n    " + code +
-			"\n\nAgar bu siz bo'lmasangiz, xabarni e'tiborsiz qoldiring."
-	default:
-		return code
-	}
 }
 
 // sanitize keeps a recipient usable as a file name.

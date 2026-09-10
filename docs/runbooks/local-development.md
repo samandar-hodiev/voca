@@ -152,3 +152,59 @@ scripts/gitpulse-notify.sh <commit-sha>
 ```
 
 The webhook secret is read from GitPulse's own `.env` and is never printed.
+
+## Sending the verification code to a real inbox
+
+The outbox above is for reading a code without credentials. To make the code actually
+arrive at a Gmail address, configure SMTP in `backend/.env`:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=you@gmail.com
+SMTP_PASSWORD=<16-character app password>
+SMTP_FROM=you@gmail.com
+SMTP_FROM_NAME=Voca
+```
+
+Gmail rejects an ordinary account password over SMTP. Turn on two-factor authentication,
+then create an app password at Google Account -> Security -> App passwords, and paste
+that. `SMTP_FROM` should match `SMTP_USERNAME`, because most providers reject a sender
+that is not the authenticated account.
+
+Restart the backend. The startup log line `email_provider_selected provider=smtp` confirms
+the choice. Provider selection is most capable first:
+
+| Configuration | Provider | Where the code goes |
+|---|---|---|
+| `SMTP_HOST` + `SMTP_FROM` set | smtp | a real inbox |
+| `EMAIL_OUTBOX_DIR` set, no SMTP | outbox | a file on disk |
+| neither | log | nowhere; the log says a message would have been sent |
+
+The connection is always encrypted. Port 465 opens in TLS, everything else must offer
+STARTTLS or the send fails rather than crossing the network in plain text.
+
+## Enabling Google sign-in
+
+The button renders disabled until the backend reports the capability, and the backend
+reports it only when at least one OAuth client ID is configured. Create the client IDs in
+the Google Cloud console under APIs & Services -> Credentials, then set them in
+`backend/.env`:
+
+```
+GOOGLE_IOS_CLIENT_ID=...apps.googleusercontent.com
+GOOGLE_ANDROID_CLIENT_ID=...apps.googleusercontent.com
+GOOGLE_WEB_CLIENT_ID=...apps.googleusercontent.com
+```
+
+Each configured ID becomes an accepted audience, so a token minted for the iOS app is
+accepted only if the iOS client ID is listed. Check it took effect:
+
+```sh
+curl -s localhost:8082/api/v1/config
+```
+
+`google_sign_in` flips to `true` and the app enables the button on its next launch.
+
+The iOS app also needs its reversed client ID registered as a URL scheme in
+`mobile/ios/Runner/Info.plist`, otherwise the Google sheet opens and never returns.

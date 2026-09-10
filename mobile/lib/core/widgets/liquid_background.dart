@@ -76,7 +76,7 @@ class _LiquidBackgroundState extends State<LiquidBackground>
               end: Alignment.bottomCenter,
               colors: [
                 colors.background,
-                Color.lerp(colors.background, colors.primary, 0.03)!,
+                Color.lerp(colors.background, colors.primary, 0.07)!,
               ],
             ),
           ),
@@ -136,25 +136,25 @@ class _FieldPainter extends CustomPainter {
     // Top left, the strongest field. Anchored off-screen so only its falloff is visible.
     _field(
       canvas, size,
-      colors.primary.withValues(alpha: 0.34 * intensity),
+      colors.primary.withValues(alpha: 0.48 * intensity),
       centre: Alignment(-0.85 + 0.14 * math.sin(t * tau),
           -0.75 + 0.10 * math.cos(t * tau)),
-      radius: 0.58,
+      radius: 0.72,
     );
 
     // Top right, violet, cooler and smaller.
     _field(
       canvas, size,
-      _violet.withValues(alpha: 0.24 * intensity),
+      _violet.withValues(alpha: 0.38 * intensity),
       centre: Alignment(0.92 + 0.12 * math.cos(t * tau + 2.1),
           -0.62 + 0.14 * math.sin(t * tau + 2.1)),
-      radius: 0.46,
+      radius: 0.60,
     );
 
     // Bottom, a wide cool blue that grounds the page.
     _field(
       canvas, size,
-      _blue.withValues(alpha: 0.30 * intensity),
+      _blue.withValues(alpha: 0.44 * intensity),
       centre: Alignment(-0.45 + 0.18 * math.sin(t * tau + 3.9),
           1.02 + 0.09 * math.cos(t * tau + 3.9)),
       radius: 0.62,
@@ -163,7 +163,7 @@ class _FieldPainter extends CustomPainter {
     // Bottom right, a quiet indigo echo so the corner is not empty.
     _field(
       canvas, size,
-      colors.primary.withValues(alpha: 0.22 * intensity),
+      colors.primary.withValues(alpha: 0.34 * intensity),
       centre: Alignment(0.88 + 0.10 * math.cos(t * tau + 5.2),
           0.78 + 0.12 * math.sin(t * tau + 5.2)),
       radius: 0.48,

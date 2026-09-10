@@ -28,6 +28,7 @@ class SetupScaffold extends StatelessWidget {
     this.footer,
     this.showBack = true,
     this.trailing,
+    this.liquidIntensity = 1.0,
   });
 
   final String title;
@@ -47,6 +48,12 @@ class SetupScaffold extends StatelessWidget {
   /// An action at the top right, such as skip.
   final Widget? trailing;
 
+  /// Scales the liquid field opacity. Screens that put glass controls in front of the
+  /// background want the full strength, because a pane with nothing behind it to show
+  /// through reads as a white pill rather than as glass. Screens dense with dark text
+  /// can dial it down.
+  final double liquidIntensity;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
@@ -56,7 +63,7 @@ class SetupScaffold extends StatelessWidget {
       // The background must not jump when the keyboard appears.
       resizeToAvoidBottomInset: true,
       body: LiquidBackground(
-        intensity: 0.75,
+        intensity: liquidIntensity,
         child: SafeArea(
           child: PageContainer(
             child: Column(
