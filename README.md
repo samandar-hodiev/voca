@@ -83,7 +83,7 @@ default.
 2. `docs/architecture/adr/` — eleven decision records explaining why each major choice was made.
 3. Section 37 of the specification — the recommended implementation order.
 
-## Rules that hold everywhere
+## Rules that hold everywhere.
 
 - No secrets in either client. Ever. Azure, AI and RevenueCat keys are backend-only.
   Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is public.
