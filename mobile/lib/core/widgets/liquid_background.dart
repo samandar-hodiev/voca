@@ -1,20 +1,26 @@
 /// The liquid background layer.
 ///
-/// Soft, blurred colour fields that drift slowly behind content. It is the "liquid" half
-/// of Voca's visual direction, and it is deliberately quiet: three low-opacity orbs, a
-/// long drift period, and no hard edges anywhere.
+/// Soft colour fields that drift slowly behind content, giving the page depth without
+/// competing with it.
 ///
-/// Restraint is the whole point. A background that competes for attention makes every
-/// screen in front of it harder to read, and this one sits behind the most important
-/// moments in the product.
+/// Three decisions define how it looks:
 ///
-/// Performance and accessibility notes, both of which outrank the effect:
+/// 1. **One colour family.** Indigo through violet to a cool blue, all neighbours on the
+///    wheel. Mixing in a distant hue such as green produces muddy secondary colours where
+///    fields overlap, which reads as a cheap gradient rather than as light.
+/// 2. **The centre stays clear.** Fields are anchored to the edges and corners, so the
+///    middle of the screen stays pale and dark text placed there keeps its contrast.
+/// 3. **Blur defines, it does not erase.** Enough to remove every hard edge, not so much
+///    that the fields flatten into a single wash. Past roughly 50 sigma the shapes stop
+///    being shapes.
 ///
-/// * The blur is applied ONCE to the orb layer, not per orb, and never as a
-///   [BackdropFilter]. Backdrop blur re-reads the whole frame and is the fastest way to
-///   make a mid-range Android device stutter.
-/// * With reduce-motion enabled the orbs are painted in a fixed position. A still
-///   gradient is still a good background.
+/// Accessibility and performance, both of which outrank the effect:
+///
+/// * Blur is applied ONCE to the whole field layer, never per shape, and never as a
+///   [BackdropFilter]. Backdrop blur re-reads the frame and is the fastest way to make a
+///   mid-range Android device stutter.
+/// * With reduce-motion the fields are painted in a fixed position. A still gradient is
+///   still a good background.
 library;
 
 import 'dart:math' as math;
@@ -33,7 +39,7 @@ class LiquidBackground extends StatefulWidget {
 
   final Widget child;
 
-  /// Scales orb opacity. Below 1 for screens with dense content in front.
+  /// Scales field opacity. Below 1 for screens with dense content in front.
   final double intensity;
 
   @override
@@ -45,7 +51,7 @@ class _LiquidBackgroundState extends State<LiquidBackground>
   // A long period: the movement should be noticeable only if you look for it.
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 18),
+    duration: const Duration(seconds: 22),
   )..repeat();
 
   @override
@@ -62,15 +68,27 @@ class _LiquidBackgroundState extends State<LiquidBackground>
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColoredBox(color: colors.background),
+        // A base wash so the page is never flat white behind the fields.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colors.background,
+                Color.lerp(colors.background, colors.primary, 0.03)!,
+              ],
+            ),
+          ),
+        ),
         RepaintBoundary(
           child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+            imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
             child: reduceMotion
-                ? _Orbs(t: 0, colors: colors, intensity: widget.intensity)
+                ? _Fields(t: 0, colors: colors, intensity: widget.intensity)
                 : AnimatedBuilder(
                     animation: _controller,
-                    builder: (_, __) => _Orbs(
+                    builder: (_, __) => _Fields(
                       t: _controller.value,
                       colors: colors,
                       intensity: widget.intensity,
@@ -84,8 +102,8 @@ class _LiquidBackgroundState extends State<LiquidBackground>
   }
 }
 
-class _Orbs extends StatelessWidget {
-  const _Orbs({required this.t, required this.colors, required this.intensity});
+class _Fields extends StatelessWidget {
+  const _Fields({required this.t, required this.colors, required this.intensity});
 
   final double t;
   final VocaColors colors;
@@ -94,49 +112,65 @@ class _Orbs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _OrbPainter(t: t, colors: colors, intensity: intensity),
+      painter: _FieldPainter(t: t, colors: colors, intensity: intensity),
       size: Size.infinite,
     );
   }
 }
 
-class _OrbPainter extends CustomPainter {
-  _OrbPainter({required this.t, required this.colors, required this.intensity});
+class _FieldPainter extends CustomPainter {
+  _FieldPainter({required this.t, required this.colors, required this.intensity});
 
   final double t;
   final VocaColors colors;
   final double intensity;
 
+  // One family: the brand indigo, a violet beside it, and a cool blue on the other side.
+  static const _violet = Color(0xFF8B5CF6);
+  static const _blue = Color(0xFF4F8DF7);
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Each orb travels its own slow ellipse, offset in phase so they never line up.
-    _orb(
-      canvas,
-      size,
+    final tau = 2 * math.pi;
+
+    // Top left, the strongest field. Anchored off-screen so only its falloff is visible.
+    _field(
+      canvas, size,
+      colors.primary.withValues(alpha: 0.34 * intensity),
+      centre: Alignment(-0.85 + 0.14 * math.sin(t * tau),
+          -0.75 + 0.10 * math.cos(t * tau)),
+      radius: 0.58,
+    );
+
+    // Top right, violet, cooler and smaller.
+    _field(
+      canvas, size,
+      _violet.withValues(alpha: 0.24 * intensity),
+      centre: Alignment(0.92 + 0.12 * math.cos(t * tau + 2.1),
+          -0.62 + 0.14 * math.sin(t * tau + 2.1)),
+      radius: 0.46,
+    );
+
+    // Bottom, a wide cool blue that grounds the page.
+    _field(
+      canvas, size,
+      _blue.withValues(alpha: 0.30 * intensity),
+      centre: Alignment(-0.45 + 0.18 * math.sin(t * tau + 3.9),
+          1.02 + 0.09 * math.cos(t * tau + 3.9)),
+      radius: 0.62,
+    );
+
+    // Bottom right, a quiet indigo echo so the corner is not empty.
+    _field(
+      canvas, size,
       colors.primary.withValues(alpha: 0.22 * intensity),
-      centre: Alignment(-0.7 + 0.25 * math.sin(t * 2 * math.pi),
-          -0.6 + 0.18 * math.cos(t * 2 * math.pi)),
-      radius: 0.55,
-    );
-    _orb(
-      canvas,
-      size,
-      colors.success.withValues(alpha: 0.13 * intensity),
-      centre: Alignment(0.85 + 0.18 * math.cos(t * 2 * math.pi + 1.9),
-          -0.25 + 0.22 * math.sin(t * 2 * math.pi + 1.9)),
-      radius: 0.45,
-    );
-    _orb(
-      canvas,
-      size,
-      colors.primary.withValues(alpha: 0.16 * intensity),
-      centre: Alignment(0.2 + 0.22 * math.sin(t * 2 * math.pi + 3.6),
-          0.85 + 0.14 * math.cos(t * 2 * math.pi + 3.6)),
-      radius: 0.6,
+      centre: Alignment(0.88 + 0.10 * math.cos(t * tau + 5.2),
+          0.78 + 0.12 * math.sin(t * tau + 5.2)),
+      radius: 0.48,
     );
   }
 
-  void _orb(
+  void _field(
     Canvas canvas,
     Size size,
     Color color, {
@@ -152,11 +186,14 @@ class _OrbPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [color, color.withValues(alpha: 0)],
+          // Hold the colour through the middle before falling away, so the field has a
+          // body rather than being a thin ring of colour.
+          stops: const [0.15, 1],
         ).createShader(Rect.fromCircle(center: offset, radius: r)),
     );
   }
 
   @override
-  bool shouldRepaint(_OrbPainter old) =>
+  bool shouldRepaint(_FieldPainter old) =>
       old.t != t || old.intensity != intensity || old.colors != colors;
 }
