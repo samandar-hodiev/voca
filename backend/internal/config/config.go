@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Config holds every setting the running service needs.
@@ -26,6 +27,11 @@ type Config struct {
 	// start.
 	DatabaseURL      string
 	DatabaseMaxConns int32
+
+	// JWTSecret signs access tokens. Required: a service that signs with a predictable
+	// key is worse than one that refuses to start.
+	JWTSecret    string
+	JWTAccessTTL time.Duration
 
 	// GitHubWebhookSecret verifies X-Hub-Signature-256 on incoming webhooks.
 	GitHubWebhookSecret string
@@ -65,6 +71,8 @@ func Load() (Config, error) {
 		LogLevel:            getEnv("LOG_LEVEL", defaultLogLevel),
 		DatabaseURL:         getEnv("DATABASE_URL", defaultDatabaseURL),
 		DatabaseMaxConns:    int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
+		JWTSecret:           os.Getenv("JWT_SECRET"),
+		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
@@ -83,6 +91,9 @@ func (c Config) validate() error {
 	}
 	if strings.TrimSpace(c.DatabaseURL) == "" {
 		return errors.New("config: DATABASE_URL must not be empty")
+	}
+	if strings.TrimSpace(c.JWTSecret) == "" {
+		return errors.New("config: JWT_SECRET must not be empty")
 	}
 	return nil
 }
@@ -164,4 +175,18 @@ func getEnvInt(key string, fallback int) int {
 		return fallback
 	}
 	return v
+}
+
+// getEnvDuration reads a duration setting such as "15m", falling back when unset or
+// unparseable.
+func getEnvDuration(key string, fallback time.Duration) time.Duration {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return fallback
+	}
+	return d
 }

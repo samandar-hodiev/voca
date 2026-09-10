@@ -49,6 +49,18 @@ const (
 	CodeProviderUnavailable Code = "PROVIDER_UNAVAILABLE"
 	CodeProviderTimeout     Code = "PROVIDER_TIMEOUT"
 
+	// Authentication and registration.
+	CodeInvalidEmail       Code = "INVALID_EMAIL"
+	CodeEmailAlreadyExists Code = "EMAIL_ALREADY_EXISTS"
+	CodeInvalidCode        Code = "INVALID_VERIFICATION_CODE"
+	CodeCodeExpired        Code = "VERIFICATION_CODE_EXPIRED"
+	CodeTooManyAttempts    Code = "TOO_MANY_ATTEMPTS"
+	CodeTooManyRequests    Code = "TOO_MANY_REQUESTS"
+	CodeInvalidPassword    Code = "INVALID_PASSWORD"
+	CodeInvalidCredentials Code = "INVALID_CREDENTIALS"
+	CodeEmailNotVerified   Code = "ACCOUNT_NOT_VERIFIED"
+	CodeSessionExpired     Code = "SESSION_EXPIRED"
+
 	// Catch-all.
 	CodeInternal Code = "INTERNAL_ERROR"
 )
@@ -127,6 +139,12 @@ func ProviderUnavailable(message string) *AppError {
 
 // Internal builds a 500. The caller passes the real cause for the log; the client only
 // ever sees the generic message.
+// New builds an AppError with an explicit code and status. Used where a constructor
+// would add nothing.
+func New(code Code, status int, message string) *AppError {
+	return newError(code, status, message)
+}
+
 func Internal(err error) *AppError {
 	return &AppError{
 		Code:       CodeInternal,

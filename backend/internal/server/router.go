@@ -12,6 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/samandar-hodiev/voca/backend/internal/auth"
+	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
 	"github.com/samandar-hodiev/voca/backend/internal/shared/httpx"
@@ -22,6 +24,9 @@ type Dependencies struct {
 	Logger         *slog.Logger
 	CORS           middleware.CORSConfig
 	DevhookHandler *devhook.Handler
+	AuthHandler    *auth.Handler
+	RequireAuth    gin.HandlerFunc
+	DB             *database.Pool
 }
 
 // NewRouter builds the HTTP router.
@@ -45,6 +50,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 	v1 := r.Group("/api/v1")
 	devhook.RegisterRoutes(v1, deps.DevhookHandler)
+	auth.RegisterRoutes(v1, deps.AuthHandler, deps.RequireAuth)
 
 	return r
 }

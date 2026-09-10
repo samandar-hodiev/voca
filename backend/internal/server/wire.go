@@ -6,16 +6,44 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 
+	"github.com/samandar-hodiev/voca/backend/internal/auth"
 	"github.com/samandar-hodiev/voca/backend/internal/config"
+	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
+	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
 )
 
 // Build constructs every dependency and returns the assembled router input.
-func Build(cfg config.Config, log *slog.Logger) Dependencies {
+//
+// Returns an error rather than panicking: a misconfigured service must fail at startup
+// with a readable message.
+func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependencies, error) {
+	pool, err := database.Open(ctx, database.Config{
+		URL:      cfg.DatabaseURL,
+		MaxConns: cfg.DatabaseMaxConns,
+	})
+	if err != nil {
+		return Dependencies{}, err
+	}
+
+	issuer, err := jwt.NewIssuer(cfg.JWTSecret, cfg.JWTAccessTTL)
+	if err != nil {
+		return Dependencies{}, err
+	}
+
+	// Email: the development provider until a real one is configured. It reports that a
+	// message would have been sent and never logs the code.
+	emailProvider := emaillog.New(log)
+
+	authService := auth.NewService(
+		auth.NewRepository(pool.Pool), issuer, emailProvider, auth.DefaultPolicy(), log)
+
 	// Provider selection happens here and nowhere else. Without Telegram credentials the
 	// service still runs and logs what it would have sent, so local development and CI
 	// need no vendor secrets (ARCHITECTURE.md 7.3).
@@ -35,5 +63,19 @@ func Build(cfg config.Config, log *slog.Logger) Dependencies {
 		Logger:         log,
 		CORS:           middleware.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
 		DevhookHandler: devhookHandler,
-	}
+		AuthHandler:    auth.NewHandler(authService),
+		RequireAuth:    middleware.RequireAuth(jwtVerifier{issuer}),
+		DB:             pool,
+	}, nil
+}
+
+// jwtVerifier adapts the JWT issuer to the middleware's port.
+//
+// The port takes a context because a future verifier may need one, for example to check a
+// revocation list. The JWT issuer does not, so the adapter simply drops it. Writing the
+// adapter here rather than widening either side keeps both interfaces honest.
+type jwtVerifier struct{ issuer *jwt.Issuer }
+
+func (v jwtVerifier) VerifyAccessToken(_ context.Context, raw string) (string, error) {
+	return v.issuer.Verify(raw)
 }

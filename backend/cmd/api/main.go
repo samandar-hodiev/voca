@@ -51,11 +51,17 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	deps := server.Build(cfg, log)
-	srv := server.New(cfg.Port, server.NewRouter(deps), log)
-
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	deps, err := server.Build(ctx, cfg, log)
+	if err != nil {
+		log.Error("startup_failed", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	defer deps.DB.Close()
+
+	srv := server.New(cfg.Port, server.NewRouter(deps), log)
 
 	if err := srv.Start(ctx); err != nil {
 		log.Error("server_failed", slog.String("error", err.Error()))
