@@ -121,3 +121,34 @@ The provider refuses to start when `APP_ENV=production`, so a deployment that fo
 configure a real email provider fails at startup instead of quietly writing customer
 verification codes to a server disk. The code still never reaches a log line, an HTTP
 response, or a terminal.
+
+## Getting a Telegram message on every push
+
+The intended path is GitHub -> webhook -> ngrok -> GitPulse -> Telegram. It needs the
+ngrok URL currently registered in the repository's webhook settings to be reachable, so
+it breaks whenever that URL changes.
+
+The local path does not depend on GitHub at all:
+
+```sh
+make gitpulse-hook
+```
+
+That installs `.git/hooks/pre-push`. After a push lands, the hook confirms the remote
+really has the commit, then posts a GitHub-shaped, correctly signed payload straight to
+GitPulse on `localhost:8080`. A rejected push sends nothing, and a notification failure
+never fails the push.
+
+GitPulse must be running for this to do anything:
+
+```sh
+cd ~/Desktop/gitpulse/gitpulse && go run .
+```
+
+To send a notification by hand for a commit that was already pushed:
+
+```sh
+scripts/gitpulse-notify.sh <commit-sha>
+```
+
+The webhook secret is read from GitPulse's own `.env` and is never printed.

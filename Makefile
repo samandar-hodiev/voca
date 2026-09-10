@@ -56,6 +56,15 @@ mobile-reset:
 ## mobile-fresh: erase, then run as a brand new install (splash + onboarding)
 mobile-fresh: mobile-reset mobile
 
+## gitpulse-hook: install the pre-push hook that notifies GitPulse
+#
+# Git hooks live in .git/hooks, which is not tracked, so every clone installs its own.
+# The hook itself is versioned at scripts/pre-push-hook.sh.
+gitpulse-hook:
+	@cp scripts/pre-push-hook.sh .git/hooks/pre-push
+	@chmod +x .git/hooks/pre-push
+	@echo "pre-push hook installed; a successful push now notifies GitPulse"
+
 ## test: run the backend and mobile suites
 test:
 	$(MAKE) -C backend test
