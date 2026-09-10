@@ -5,8 +5,10 @@
 library;
 
 abstract final class Routes {
-  static const shell = '/';
-  static const shellName = 'shell';
+  /// The first screen. A transition, not a destination: it replaces itself once startup
+  /// work finishes, so it is never on the back stack.
+  static const splash = '/';
+  static const splashName = 'splash';
 
   // Product routes. Declared so the shell can prove navigation works and so deep links
   // have stable targets. Their screens are placeholders; the real ones arrive with their

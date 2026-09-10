@@ -16,14 +16,20 @@ import '../core/config/app_config.dart';
 import '../core/config/flavor.dart';
 import '../core/widgets/placeholder_screen.dart';
 import '../features/dev/design_system_gallery.dart';
+import '../features/splash/presentation/pages/splash_page.dart';
 import 'routes.dart';
 
 abstract final class AppRouter {
   static GoRouter create(AppConfig config) {
     return GoRouter(
-      initialLocation: Routes.home,
+      initialLocation: Routes.splash,
       debugLogDiagnostics: config.flavor.isDebugFriendly,
       routes: [
+        GoRoute(
+          path: Routes.splash,
+          name: Routes.splashName,
+          builder: (_, __) => const SplashPage(),
+        ),
         GoRoute(
           path: Routes.home,
           name: Routes.homeName,
