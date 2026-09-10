@@ -72,6 +72,13 @@ gitpulse-hook:
 	@chmod +x .git/hooks/pre-push
 	@echo "pre-push hook installed; a successful push now notifies GitPulse"
 
+## e2e: drive the sign-in flows on a simulator against the running backend
+#
+# Not part of `make test`: it needs a booted simulator, a running backend and a few
+# minutes. Run it when the auth screens change.
+e2e:
+	@./scripts/e2e-mobile.sh
+
 ## test: run the backend and mobile suites
 test:
 	$(MAKE) -C backend test

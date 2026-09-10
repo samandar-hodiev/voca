@@ -42,27 +42,36 @@ void bootstrap(Flavor flavor) {
         return true;
       };
 
-      final config = AppConfig.forFlavor(flavor);
-
-      // Opened before runApp so the first frame can read it synchronously. It is a local
-      // file read and takes a few milliseconds.
-      final keyValueStore = await SharedPreferencesStore.open();
-      final secureStore = FlutterSecureStore.create();
-
-      runApp(
-        ProviderScope(
-          overrides: [
-            appConfigProvider.overrideWithValue(config),
-            platformProvider.overrideWithValue(_platformName()),
-            keyValueStoreProvider.overrideWithValue(keyValueStore),
-            secureStoreProvider.overrideWithValue(secureStore),
-          ],
-          child: const VocaApp(),
-        ),
-      );
+      runApp(await buildApp(flavor));
     },
     (error, stack) => _report(error, stack, source: 'zone'),
   ));
+}
+
+/// Builds the configured application widget.
+///
+/// Separate from [bootstrap] so an end-to-end test can pump the real app without
+/// entering the guarded zone. runZonedGuarded runs its body in a child zone, and calling
+/// runApp from there while a test binding owns a different zone makes the framework
+/// refuse to build. Everything the app depends on is assembled here; the only thing
+/// [bootstrap] adds around it is error handling that a test does not want anyway.
+Future<Widget> buildApp(Flavor flavor) async {
+  final config = AppConfig.forFlavor(flavor);
+
+  // Opened before the first frame so it can be read synchronously. It is a local file
+  // read and takes a few milliseconds.
+  final keyValueStore = await SharedPreferencesStore.open();
+  final secureStore = FlutterSecureStore.create();
+
+  return ProviderScope(
+    overrides: [
+      appConfigProvider.overrideWithValue(config),
+      platformProvider.overrideWithValue(_platformName()),
+      keyValueStoreProvider.overrideWithValue(keyValueStore),
+      secureStoreProvider.overrideWithValue(secureStore),
+    ],
+    child: const VocaApp(),
+  );
 }
 
 /// Records an uncaught error.

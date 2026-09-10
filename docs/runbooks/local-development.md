@@ -272,3 +272,38 @@ For Android later, repeat step 4 with application type **Android**, package name
 Put it in `backend/.env` as `SMTP_PASSWORD` and restart the backend. The password is only
 shown once, so store it somewhere safe. It grants access to sending mail as that account,
 so it never belongs in a commit.
+
+## Checking that the ways in still work
+
+`flutter test` covers widgets in isolation. It cannot tell you that tapping a button
+produces a session, because nothing real is on the other end of it. That is what the
+end-to-end suite is for:
+
+```sh
+make e2e
+```
+
+It needs a booted simulator and a backend running on :8082 with `EMAIL_OUTBOX_DIR` set.
+It drives the real app and talks to the real backend, and it covers three flows:
+
+| Flow | What it proves |
+|---|---|
+| Mehmon sifatida kirish | a guest session is created and the product opens |
+| Akkauntingiz bormi? Kirish | an existing account signs in with its password |
+| Email bilan kirish | address, code, profile, account created, product opens |
+
+Sign in with Google is not covered. It cannot be driven from a test without a real Google
+account and a real consent screen.
+
+Three details of the setup are worth knowing, because each one caused a failure that
+looked like a broken app:
+
+* **The signup code is fetched while the test runs, not before it.** Submitting the
+  address makes the backend issue a fresh code, so anything read earlier is already
+  stale. `scripts/e2e-code-server.py` serves the current one from the outbox over
+  localhost. The app is never given the ability to read the outbox.
+* **Each flow runs in its own process.** Pumping a second app into a process that already
+  has one leaves the first router and its timers alive, and the app dies part way through
+  the second flow.
+* **`pumpAndSettle` is never used.** The liquid background animates forever, so there is
+  never a frame with nothing scheduled, and `pumpAndSettle` would wait until it times out.
