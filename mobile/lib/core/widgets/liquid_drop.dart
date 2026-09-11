@@ -219,11 +219,23 @@ abstract final class PremiumGreen {
   static const pressedStart = Color(0xFF6EE7B7);
   static const pressedEnd = Color(0xFF10B981);
 
-  /// How much of the colour the glass carries: enough to be green, clear enough that
-  /// what is behind still shows through.
-  static const alpha = 0.88;
+  /// The same glass in the dark theme, a step deeper: over the dark page a pale mint
+  /// would leave the white label below contrast.
+  static const darkStart = Color(0xFF10B981);
+  static const darkEnd = Color(0xFF059669);
+  static const darkPressedStart = Color(0xFF059669);
+  static const darkPressedEnd = Color(0xFF047857);
 
-  /// The label on the glass. A deep green, which reads on it in both themes
-  /// (contrast_test).
+  /// How much of the colour the glass carries, per theme: about half, so the page shows
+  /// through the button and it reads as green glass rather than green paint. Dark
+  /// carries a little less, because the dark page behind already deepens it.
+  static const alphaLight = 0.50;
+  static const alphaDark = 0.40;
+
+  /// The label on the glass in the light theme: a deep green (contrast_test).
   static const label = Color(0xFF022C22);
+
+  /// The label on the glass in the dark theme. Half-clear green over the dark page comes
+  /// out a deep jade, where the deep green label would sink; white reads on it.
+  static const labelOnDark = Color(0xFFFFFFFF);
 }

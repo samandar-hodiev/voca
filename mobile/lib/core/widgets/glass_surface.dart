@@ -216,7 +216,7 @@ class GlassSurface extends StatelessWidget {
     // The shadow is painted outside the pane only. Under translucent glass an ordinary
     // shadow shows through and turns the pane grey.
     return CustomPaint(
-      painter: _OuterShadow(
+      painter: OuterShadowPainter(
         borderRadius: radius,
         shadows: shadows ?? glass.shadows,
       ),
@@ -336,9 +336,10 @@ class _EdgeLens extends CustomPainter {
       old.borderRadius != borderRadius || old.color != color;
 }
 
-/// Paints [shadows] around a pane and never under it.
-class _OuterShadow extends CustomPainter {
-  const _OuterShadow({required this.borderRadius, required this.shadows});
+/// Paints [shadows] around a shape and never under it. Anything translucent needs this:
+/// an ordinary shadow shows through half-clear glass and fills it back in.
+class OuterShadowPainter extends CustomPainter {
+  const OuterShadowPainter({required this.borderRadius, required this.shadows});
 
   final BorderRadius borderRadius;
   final List<BoxShadow> shadows;
@@ -368,7 +369,7 @@ class _OuterShadow extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_OuterShadow old) =>
+  bool shouldRepaint(OuterShadowPainter old) =>
       old.borderRadius != borderRadius || old.shadows != shadows;
 }
 
@@ -483,6 +484,7 @@ class GlassCard extends StatelessWidget {
     this.onTap,
     this.blur = true,
     this.semanticLabel,
+    this.clear = false,
   });
 
   final Widget child;
@@ -491,15 +493,50 @@ class GlassCard extends StatelessWidget {
   final bool blur;
   final String? semanticLabel;
 
+  /// See-through liquid glass: almost no tint, so the page shows through the card, and
+  /// its volume carried by light instead: a sheen across the top, a caustic along the
+  /// bottom, light gathered inside the edge, a bright rim and the corner light. For a card
+  /// that stands on the page, not a sheet or dialog that opens over content.
+  final bool clear;
+
+  /// The tint of a [clear] card, per theme. Public so the contrast test checks text on it.
+  @visibleForTesting
+  static Color clearTint(Brightness brightness) => brightness == Brightness.dark
+      ? const Color(0x590A0E14)
+      : const Color(0x1AFFFFFF);
+
   @override
   Widget build(BuildContext context) {
     final glass = context.vocaGlass;
     final radius = BorderRadius.circular(glass.radius);
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     Widget card = GlassSurface(
       padding: padding,
       borderRadius: radius,
       blur: blur,
+      tint: clear ? clearTint(Theme.of(context).brightness) : null,
+      highlight: clear ? Color(dark ? 0x14FFFFFF : 0x59FFFFFF) : null,
+      tintGradient: clear
+          ? LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: dark
+                  ? const [
+                      Color(0x0AFFFFFF),
+                      Color(0x00FFFFFF),
+                      Color(0x14FFFFFF),
+                    ]
+                  : const [
+                      Color(0x1FFFFFFF),
+                      Color(0x00FFFFFF),
+                      Color(0x33FFFFFF),
+                    ],
+              stops: const [0, 0.55, 1],
+            )
+          : null,
+      rimBottom: clear ? Color(dark ? 0x33FFFFFF : 0xB3FFFFFF) : null,
+      edgeLight: clear ? Color(dark ? 0x40FFFFFF : 0xF2FFFFFF) : null,
       child: child,
     );
 

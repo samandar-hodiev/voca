@@ -143,6 +143,7 @@ class _Slide extends StatelessWidget {
       child: Center(
         child: SingleChildScrollView(
           child: GlassCard(
+            clear: true,
             padding: const EdgeInsets.symmetric(
               horizontal: VocaSpacing.xl,
               vertical: VocaSpacing.xxl,

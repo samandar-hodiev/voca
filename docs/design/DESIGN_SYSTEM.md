@@ -170,10 +170,20 @@ and only a whisper of shade at the bottom: a gradient, not a slab. Labels keep 5
 both ends. The background fields keep their own indigo, so the page does not move when the
 brand does.
 
-**Primary button.** A pane of light, premium green glass (`PremiumGreen`): the backdrop
-blurred and saturated, a mint-to-emerald liquid body (`#A7F3D0` to `#34D399`), a specular
-band across the top, a caustic along the bottom, a bright rim and a soft green glow. The
-label is a deep green (`#022C22`), which reads on it in both themes; white would not.
+**Primary button.** Half-clear premium green glass (`PremiumGreen`): about half its colour in
+light (50%) and a little less in dark (40%), so the page shows through it and it reads as
+green glass rather than green paint. The backdrop is blurred and saturated; the body runs
+mint to emerald in light (`#A7F3D0` to `#34D399`) and a step deeper in dark (`#10B981` to
+`#059669`); a specular band crosses the top, a caustic runs along the bottom, and the rim
+goes from white into green. Its glow is painted outside the glass only, because an
+ordinary shadow would show through and fill it back in. The label is deep green in light
+(`#022C22`) and white in dark.
+
+**Clear liquid card.** `GlassCard(clear: true)`, used on onboarding: almost no tint, so the
+page shows through, with its volume carried by light (a sheen across the top, a caustic
+along the bottom, light gathered at the edge, a bright rim and the corner light). Sheets
+and dialogs keep the ordinary card, because they open over content that must not show
+through their text.
 
 **Selected choice.** A soft emerald-to-teal wash fading from left to right and a fine
 gradient rim, like the selected row in the reference card, instead of a flat fill and a

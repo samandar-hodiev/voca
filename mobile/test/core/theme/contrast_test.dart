@@ -233,6 +233,12 @@ void main() {
         expectReadable('secondary text', colors.textSecondary, card);
       });
 
+      test('text on a clear liquid card meets AA', () {
+        Color card(Color b) => throughGlass(GlassCard.clearTint(brightness), b);
+        expectReadable('primary text', colors.textPrimary, card);
+        expectReadable('secondary text', colors.textSecondary, card);
+      });
+
       test('text in a clear glass well meets AA', () {
         Color well(Color b) => Color.alphaBlend(GlassBead.fill(brightness), b);
         expectReadable('primary text', colors.textPrimary, well);
@@ -242,17 +248,31 @@ void main() {
       // The primary button is light green glass with a deep green label. Checked on both
       // ends of the glass, resting and pressed, over every background colour.
       test('primary button label on its green glass meets AA', () {
-        for (final fill in [
-          PremiumGreen.start,
-          PremiumGreen.end,
-          PremiumGreen.pressedStart,
-          PremiumGreen.pressedEnd,
-        ]) {
+        for (final fill
+            in brightness == Brightness.dark
+                ? [
+                    PremiumGreen.darkStart,
+                    PremiumGreen.darkEnd,
+                    PremiumGreen.darkPressedStart,
+                    PremiumGreen.darkPressedEnd,
+                  ]
+                : [
+                    PremiumGreen.start,
+                    PremiumGreen.end,
+                    PremiumGreen.pressedStart,
+                    PremiumGreen.pressedEnd,
+                  ]) {
           expectReadable(
             'button label',
-            PremiumGreen.label,
+            brightness == Brightness.dark
+                ? PremiumGreen.labelOnDark
+                : PremiumGreen.label,
             (b) => Color.alphaBlend(
-              fill.withValues(alpha: PremiumGreen.alpha),
+              fill.withValues(
+                alpha: brightness == Brightness.dark
+                    ? PremiumGreen.alphaDark
+                    : PremiumGreen.alphaLight,
+              ),
               GlassSurface.saturate(b),
             ),
           );

@@ -185,7 +185,10 @@ class _VocaButtonState extends State<_VocaButton> {
     final colors = context.vocaColors;
     final text = context.vocaText;
 
-    final (background, foreground, border) = _resolveColors(colors);
+    final (background, foreground, border) = _resolveColors(
+      colors,
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     final content = widget.isLoading
         ? SizedBox(
@@ -302,7 +305,7 @@ class _VocaButtonState extends State<_VocaButton> {
   }
 
   /// Returns background, foreground and optional border for the current state.
-  (Color, Color, Color?) _resolveColors(VocaColors colors) {
+  (Color, Color, Color?) _resolveColors(VocaColors colors, bool dark) {
     if (!_enabled) {
       return switch (widget.emphasis) {
         _Emphasis.primary => (colors.border, colors.textDisabled, null),
@@ -316,10 +319,11 @@ class _VocaButtonState extends State<_VocaButton> {
     }
 
     return switch (widget.emphasis) {
-      // Deep green on the light green glass: white would not read on it.
+      // Deep green on the half-clear green glass in light; white in dark, where the
+      // glass over the dark page comes out a deep jade.
       _Emphasis.primary => (
         _pressed ? colors.primaryPressed : colors.primary,
-        PremiumGreen.label,
+        dark ? PremiumGreen.labelOnDark : PremiumGreen.label,
         null,
       ),
       // The darker brand tone: brand-coloured text on clear glass over the background
@@ -337,7 +341,7 @@ class _VocaButtonState extends State<_VocaButton> {
 /// The primary action: a pane of light, premium green glass.
 ///
 /// What is behind it is blurred and made more saturated, as with every glass surface. The
-/// body is a mint-to-emerald liquid, lit by a specular band across the top and a faint
+/// body is a half-clear mint-to-emerald liquid that lets the page show through, lit by a specular band across the top and a faint
 /// caustic along the bottom, with a bright rim and a soft green glow beneath. Light and
 /// clear rather than a dark slab of ink, so the one action a screen asks for reads as the
 /// most precious object on it.
@@ -358,11 +362,17 @@ class _PrimaryGlass extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
     const radius = VocaRadius.largeAll;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final alpha = dark ? PremiumGreen.alphaDark : PremiumGreen.alphaLight;
     final (start, end) = !enabled
         ? (colors.border, colors.border)
         : pressed
-        ? (PremiumGreen.pressedStart, PremiumGreen.pressedEnd)
-        : (PremiumGreen.start, PremiumGreen.end);
+        ? (dark
+              ? (PremiumGreen.darkPressedStart, PremiumGreen.darkPressedEnd)
+              : (PremiumGreen.pressedStart, PremiumGreen.pressedEnd))
+        : (dark
+              ? (PremiumGreen.darkStart, PremiumGreen.darkEnd)
+              : (PremiumGreen.start, PremiumGreen.end));
 
     final glass = ClipRRect(
       borderRadius: radius,
@@ -377,8 +387,8 @@ class _PrimaryGlass extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                start.withValues(alpha: PremiumGreen.alpha),
-                end.withValues(alpha: PremiumGreen.alpha),
+                start.withValues(alpha: alpha),
+                end.withValues(alpha: alpha),
               ],
             ),
           ),
@@ -404,21 +414,22 @@ class _PrimaryGlass extends StatelessWidget {
       ),
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
+    // The glow falls outside the glass only: under half-clear glass an ordinary shadow
+    // would show through and fill the button back in.
+    return CustomPaint(
+      painter: OuterShadowPainter(
         borderRadius: radius,
-        boxShadow: enabled && !pressed
+        shadows: enabled && !pressed
             ? [
                 BoxShadow(
-                  color: PremiumGreen.end.withValues(alpha: 0.45),
+                  color: end.withValues(alpha: 0.45),
                   blurRadius: 22,
                   spreadRadius: -6,
                   offset: const Offset(0, 8),
                 ),
               ]
-            : null,
+            : const [],
       ),
-      position: DecorationPosition.background,
       child: Stack(
         fit: StackFit.passthrough,
         children: [
@@ -432,7 +443,7 @@ class _PrimaryGlass extends StatelessWidget {
                     width: 1.2,
                     gradient: specularRim(
                       Colors.white.withValues(alpha: 0.95),
-                      Colors.white.withValues(alpha: 0.35),
+                      end.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
