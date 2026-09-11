@@ -8,6 +8,7 @@ package server
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/samandar-hodiev/voca/backend/internal/auth"
 	"github.com/samandar-hodiev/voca/backend/internal/config"
@@ -151,7 +152,11 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		DevhookHandler: devhookHandler,
 		AuthHandler:    auth.NewHandler(authService),
 		RequireAuth:    middleware.RequireAuth(jwtVerifier{issuer}),
-		DB:             pool,
+		AuthRateLimit: middleware.RateLimit(middleware.RateLimitConfig{
+			Requests: cfg.AuthRateLimitPerMin,
+			Window:   time.Minute,
+		}),
+		DB: pool,
 		Capabilities: Capabilities{
 			GoogleSignIn: googleVerifier.Configured(),
 			// Apple needs an Apple Developer configuration that does not exist yet.

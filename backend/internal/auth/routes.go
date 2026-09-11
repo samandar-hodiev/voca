@@ -8,8 +8,15 @@ import "github.com/gin-gonic/gin"
 // requireAuth is injected rather than imported so this package does not depend on the
 // middleware package, which would create a cycle once middleware needs a verifier built
 // from this module.
-func RegisterRoutes(v1 *gin.RouterGroup, h *Handler, requireAuth gin.HandlerFunc) {
+func RegisterRoutes(v1 *gin.RouterGroup, h *Handler,
+	requireAuth gin.HandlerFunc, rateLimit gin.HandlerFunc) {
+
+	// Everything under /auth is rate limited. These are the endpoints where guessing is
+	// the attack: passwords, codes, and whether an address is registered at all.
 	a := v1.Group("/auth")
+	if rateLimit != nil {
+		a.Use(rateLimit)
+	}
 	{
 		a.POST("/email/start", h.StartEmailVerification)
 		a.POST("/email/verify", h.VerifyEmail)

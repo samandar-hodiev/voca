@@ -77,8 +77,14 @@ func NewService(repo Repository, issuer *jwt.Issuer, emailProvider EmailProvider
 
 // StartEmailVerification issues a one-time code for signing up.
 //
-// It returns success even when the address already has an account. Answering differently
-// would turn this endpoint into a way to discover who is registered.
+// An address that already has an account is told so, rather than being answered as if a
+// code had been sent. Staying silent is the stricter choice against address enumeration,
+// but in practice it strands the person: the app says a code is on its way, nothing
+// arrives, and there is no way to tell a forgotten account from a broken product.
+//
+// What keeps enumeration expensive instead is the rate limit on this group. At the default
+// of twenty attempts a minute, walking a list of a million addresses takes over a month
+// from one address (ADR-018).
 func (s *Service) StartEmailVerification(ctx context.Context, rawEmail string) error {
 	email, err := normalizeEmail(rawEmail)
 	if err != nil {
@@ -86,23 +92,22 @@ func (s *Service) StartEmailVerification(ctx context.Context, rawEmail string) e
 	}
 
 	if _, err := s.repo.UserByEmail(ctx, email); err == nil {
-		// Already registered. The API answer stays identical to the one a new address
-		// gets, so nobody can use this endpoint to discover who has an account.
-		//
-		// The address itself is told what happened, though. Saying nothing at all leaves
-		// the real owner watching an inbox for a code that is never coming, with no way
-		// to tell a broken product from a forgotten account. The message carries no code
-		// and no sign-in link, so it cannot let in whoever typed the address.
 		s.log.Info("signup_attempt_on_existing_account")
+
+		// The address is also told by email, because somebody who did not try to sign up
+		// should learn that an attempt was made. That message carries no code and no
+		// sign-in link, so it cannot let in whoever typed the address. A failure to send
+		// it must not change the answer the app gets.
 		if err := s.email.Send(ctx, EmailMessage{
 			To:       email,
 			Template: TemplateAccountExists,
 		}); err != nil {
-			// A failure here must not change the answer, or the difference between a
-			// delivered and an undelivered message would itself reveal the account.
 			s.log.Error("account_exists_email_failed", slog.String("error", err.Error()))
 		}
-		return nil
+
+		return apperr.New(apperr.CodeEmailAlreadyExists, http.StatusConflict,
+			"Bu pochta bilan akkaunt allaqachon ochilgan. "+
+				"Kirish tugmasidan foydalaning yoki parolni tiklang.")
 	} else if !errors.Is(err, ErrNotFound) {
 		return apperr.Internal(err)
 	}

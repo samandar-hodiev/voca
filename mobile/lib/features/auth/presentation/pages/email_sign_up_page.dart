@@ -7,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
@@ -40,6 +43,10 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(trimmed);
   }
 
+  /// Whether the last failure was "this address already has an account".
+  bool _isTaken(Object? failure) =>
+      failure is ApiFailure && failure.code == 'EMAIL_ALREADY_EXISTS';
+
   Future<void> _submit() async {
     final email = _controller.text.trim();
     if (!_looksLikeEmail(email)) {
@@ -66,6 +73,20 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
+
+          // An address that already has an account is a dead end on this screen, so the
+          // way out is offered here rather than leaving the person to find it.
+          if (_isTaken(state.failure)) ...[
+            SecondaryButton(
+              label: 'Shu pochta bilan kirish',
+              icon: Icons.login_rounded,
+              onPressed: state.isBusy
+                  ? null
+                  : () => unawaited(context.push(Routes.login)),
+            ),
+            const SizedBox(height: VocaSpacing.md),
+          ],
+
           AppTextField(
             label: 'Elektron pochta',
             hint: 'siz@example.com',

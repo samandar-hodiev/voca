@@ -27,6 +27,7 @@ type Dependencies struct {
 	AuthHandler    *auth.Handler
 	Capabilities   Capabilities
 	RequireAuth    gin.HandlerFunc
+	AuthRateLimit  gin.HandlerFunc
 	DB             *database.Pool
 
 	// AvatarDir and AvatarPrefix let the router serve uploaded pictures back. Serving
@@ -77,7 +78,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 	v1 := r.Group("/api/v1")
 	devhook.RegisterRoutes(v1, deps.DevhookHandler)
-	auth.RegisterRoutes(v1, deps.AuthHandler, deps.RequireAuth)
+	auth.RegisterRoutes(v1, deps.AuthHandler, deps.RequireAuth, deps.AuthRateLimit)
 
 	// Remote configuration: feature availability the client cannot know on its own.
 	v1.GET("/config", func(c *gin.Context) {

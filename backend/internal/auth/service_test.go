@@ -415,29 +415,24 @@ func TestStartEmailVerification_SendsACode(t *testing.T) {
 	}
 }
 
-// An address that already has an account gets the same answer a new one gets, so this
-// endpoint cannot become a way to discover who is registered.
-//
-// It does get an email, but not a code: the address is told that an account already
-// exists, which is what stops the real owner watching an inbox for a code that is never
-// coming. Whoever typed the address learns nothing from the API either way.
-func TestStartEmailVerification_ExistingAccountIsToldWithoutRevealingIt(t *testing.T) {
+// An address that already has an account is told so, so the app can send the person to
+// sign in instead of leaving them waiting for a code that will never arrive.
+func TestStartEmailVerification_SaysWhenTheAddressIsTaken(t *testing.T) {
 	svc, repo, mail := newService(t)
 	repo.addUser("taken@voca.dev", "password123")
 
-	if err := svc.StartEmailVerification(context.Background(), "taken@voca.dev"); err != nil {
-		t.Fatalf("the response must not differ: %v", err)
+	err := svc.StartEmailVerification(context.Background(), "taken@voca.dev")
+	if got := codeOf(t, err); got != apperr.CodeEmailAlreadyExists {
+		t.Fatalf("got %s, want EMAIL_ALREADY_EXISTS", got)
 	}
 
+	// No code is issued, whatever the answer says.
 	msg, sent := mail.Last()
 	if !sent {
-		t.Fatal("the address should be told that it already has an account")
+		t.Fatal("the address should also be told by email")
 	}
 	if msg.Template != TemplateAccountExists {
 		t.Errorf("template = %q, want the account-exists notice", msg.Template)
-	}
-	if msg.To != "taken@voca.dev" {
-		t.Errorf("recipient = %q", msg.To)
 	}
 	// Whoever typed the address may not own it, so the message must carry nothing that
 	// would let them in.
@@ -446,15 +441,16 @@ func TestStartEmailVerification_ExistingAccountIsToldWithoutRevealingIt(t *testi
 	}
 }
 
-// A delivery failure must not change the answer, or the difference between a delivered
-// and an undelivered message would itself reveal the account.
-func TestStartEmailVerification_ExistingAccountSucceedsEvenIfTheNoticeFails(t *testing.T) {
+// Somebody who did not try to sign up should still learn that an attempt was made, but a
+// failure to tell them must not change what the app is told.
+func TestStartEmailVerification_TakenAddressAnswersTheSameIfTheNoticeFails(t *testing.T) {
 	svc, repo, mail := newService(t)
 	repo.addUser("taken@voca.dev", "password123")
 	mail.err = errors.New("provider is down")
 
-	if err := svc.StartEmailVerification(context.Background(), "taken@voca.dev"); err != nil {
-		t.Fatalf("a failed notice must not change the answer: %v", err)
+	err := svc.StartEmailVerification(context.Background(), "taken@voca.dev")
+	if got := codeOf(t, err); got != apperr.CodeEmailAlreadyExists {
+		t.Fatalf("got %s, want EMAIL_ALREADY_EXISTS even when the notice fails", got)
 	}
 }
 

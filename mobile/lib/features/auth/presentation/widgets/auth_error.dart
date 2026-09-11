@@ -17,7 +17,8 @@ String authFailureMessage(Failure failure) {
   if (failure is ApiFailure) {
     return switch (failure.code) {
       'INVALID_EMAIL' => 'Elektron pochta manzili noto‘g‘ri.',
-      'EMAIL_ALREADY_EXISTS' => 'Bu pochta bilan akkaunt allaqachon mavjud.',
+      'EMAIL_ALREADY_EXISTS' =>
+        'Bu pochta bilan akkaunt allaqachon ochilgan. Kiring yoki parolni tiklang.',
       'INVALID_VERIFICATION_CODE' => 'Kod noto‘g‘ri. Qaytadan urinib ko‘ring.',
       'VERIFICATION_CODE_EXPIRED' => 'Kod muddati tugagan. Yangisini so‘rang.',
       'TOO_MANY_ATTEMPTS' => 'Juda ko‘p urinish. Yangi kod so‘rang.',
@@ -31,7 +32,11 @@ String authFailureMessage(Failure failure) {
   return switch (failure) {
     UnauthenticatedFailure() => 'Sessiya tugagan. Qaytadan kiring.',
     NetworkFailure() => 'Internet aloqasi yo‘q.',
-    ProviderFailure() => 'Xizmat vaqtincha ishlamayapti.',
+    // Sending is the only provider the auth flow talks to, so this is always about an
+    // email that could not be delivered. Saying so is more useful than naming a service
+    // the person has never heard of.
+    ProviderFailure() =>
+      'Bu manzilga xat yubora olmadik. Boshqa pochta kiriting yoki keyinroq urinib ko‘ring.',
     _ => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.',
   };
 }
