@@ -190,11 +190,13 @@ is scaled to fit. Only the tab bar and its pill are capsules by design.
 card's longer side (between 70 and 170 points), so wide, short cards get light that runs
 along their long edges instead of a dab at the corner.
 
-**Tab bar.** Clear glass with a body. In light it is a frosted capsule deepening from white
-into a whisper of mint, with a bright sheen and rim, light gathered inside the edge, a
-fine outline and a soft shadow, so it stands off the pale page; the selected destination
-sits in a pill of the same premium green glass as the primary button, with a deep green
-icon and label. In dark it stays a clear smoked capsule with a light glass pill.
+**Tab bar.** Genuinely see-through glass: a light blur (sigma 6) and almost no tint, so what
+passes under the bar stays recognisable through it. Its volume comes from light rather
+than from fill: a bright rim along the top and a refracted one along the bottom, light
+gathered inside the edge, a sheen across the top and a caustic along the bottom, with a
+fine outline and a soft shadow. Icons and labels carry a soft halo so they stay legible
+over whatever passes underneath. In light the selected destination sits in a pill of the
+premium green glass; in dark, in a light glass pill.
 
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own

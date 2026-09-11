@@ -3,8 +3,9 @@
 /// The design follows a reference tab bar the product owner chose, on top of Apple's
 /// Liquid Glass: a
 /// tall capsule of clear glass with a thin light rim, outline icons at rest, and the
-/// selected destination sitting in a lighter, see-through pill of glass with its icon
-/// filled. The bar blurs what passes under it only lightly, so it reads as clear glass. The
+/// selected destination sitting in a pill of liquid glass with its icon filled. The bar
+/// is genuinely see-through: it blurs what passes under it only lightly and carries almost
+/// no tint, and its volume comes from light at the rim, the edge and the caustic. The
 /// pill is a small body of liquid glass, lit across the top and a touch deeper at the
 /// bottom, and it slides to a new destination, stretching a little on the way and
 /// settling with a slight overshoot.
@@ -58,9 +59,9 @@ class LiquidBottomBar extends StatefulWidget {
   /// How much of the theme's glass tint the bar carries: clear. The labels stay readable
   /// over the background with no tint at all (contrast_test).
   @visibleForTesting
-  static const lightGlassAlpha = 0.30;
+  static const lightGlassAlpha = 0.12;
   @visibleForTesting
-  static const darkGlassAlpha = 0.32;
+  static const darkGlassAlpha = 0.20;
 
   /// How much of the premium green the selected pill carries in the light theme.
   @visibleForTesting
@@ -134,20 +135,30 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
         padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.lg),
         child: GlassSurface(
           edgeGlow: false,
-          // In light, a frosted body that deepens from white into a whisper of mint, so
-          // the bar reads as a piece of glass on the pale page instead of vanishing.
-          tintGradient: dark
-              ? null
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x40FFFFFF), Color(0x40D1FAE5)],
-                ),
-          blurSigma: 20,
-          highlight: Color(dark ? 0x14FFFFFF : 0x8CFFFFFF),
+          // Clear glass with volume: light across the top and a caustic along the
+          // bottom where light that crossed the glass comes out, and almost nothing in
+          // between, so what is under the bar shows through it.
+          tintGradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: dark
+                ? const [
+                    Color(0x0FFFFFFF),
+                    Color(0x00FFFFFF),
+                    Color(0x14FFFFFF),
+                  ]
+                : const [
+                    Color(0x24FFFFFF),
+                    Color(0x00FFFFFF),
+                    Color(0x2EFFFFFF),
+                  ],
+            stops: const [0, 0.5, 1],
+          ),
+          blurSigma: 6,
+          highlight: Color(dark ? 0x14FFFFFF : 0x66FFFFFF),
           rimTop: Color(dark ? 0x59FFFFFF : 0xFFFFFFFF),
-          rimBottom: Color(dark ? 0x1AFFFFFF : 0x80FFFFFF),
-          edgeLight: Color(dark ? 0x26FFFFFF : 0xE6FFFFFF),
+          rimBottom: Color(dark ? 0x33FFFFFF : 0xB3FFFFFF),
+          edgeLight: Color(dark ? 0x40FFFFFF : 0xE6FFFFFF),
           borderWidth: 1.2,
           shadows: [
             BoxShadow(
@@ -364,6 +375,16 @@ class _NavButton extends StatelessWidget {
           : PremiumGreen.label,
       coverage,
     )!;
+    // A soft halo behind icon and label, so they stay legible over whatever passes
+    // under the clear glass.
+    final halo = [
+      Shadow(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xB3000000)
+            : const Color(0xCCFFFFFF),
+        blurRadius: 8,
+      ),
+    ];
 
     return Semantics(
       button: true,
@@ -384,6 +405,7 @@ class _NavButton extends StatelessWidget {
                   selected ? item.activeIcon : item.icon,
                   size: 26,
                   color: foreground,
+                  shadows: halo,
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -394,6 +416,7 @@ class _NavButton extends StatelessWidget {
                   style: text.caption.copyWith(
                     fontSize: 10.5,
                     color: foreground,
+                    shadows: halo,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
