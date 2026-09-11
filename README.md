@@ -94,3 +94,4 @@ default.
 - The backend is the only authority on subscription entitlement and on admin authorization.
   A hidden button is not an access control.
 - Mobile and admin share design tokens and an API contract. They never share UI code.
+
