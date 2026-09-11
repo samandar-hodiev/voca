@@ -23,6 +23,8 @@ func Subject(t auth.EmailTemplate) string {
 		return "Voca tasdiqlash kodi"
 	case auth.TemplatePasswordResetCode:
 		return "Voca parolni tiklash kodi"
+	case auth.TemplateAccountExists:
+		return "Voca: bu pochta allaqachon ro'yxatdan o'tgan"
 	default:
 		return "Voca"
 	}
@@ -57,6 +59,21 @@ func Body(msg auth.EmailMessage) string {
 			"",
 			"Agar parolni tiklashni so'ramagan bo'lsangiz, hech narsa qilish shart emas.",
 			"Parolingiz o'zgarmaydi.",
+		)
+	case auth.TemplateAccountExists:
+		// No code and no sign-in link. Whoever typed the address may not own it, so this
+		// message must not let them in, only tell the real owner what happened.
+		return join(
+			"Salom!",
+			"",
+			"Kimdir shu pochta bilan Voca'da yangi akkaunt ochmoqchi bo'ldi.",
+			"Bu manzilda akkaunt allaqachon mavjud, shuning uchun yangisi yaratilmadi.",
+			"",
+			"Agar bu siz bo'lsangiz, ilovada \"Kirish\" tugmasidan foydalaning.",
+			"Parolni eslay olmasangiz, \"Parolni unutdingizmi?\" orqali tiklang.",
+			"",
+			"Agar bu siz bo'lmasangiz, hech narsa qilish shart emas.",
+			"Akkauntingiz o'zgarmadi va hech kim unga kira olmadi.",
 		)
 	default:
 		return fmt.Sprintf("Voca: %s", code)

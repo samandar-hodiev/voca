@@ -84,9 +84,22 @@ func (s *Service) StartEmailVerification(ctx context.Context, rawEmail string) e
 	}
 
 	if _, err := s.repo.UserByEmail(ctx, email); err == nil {
-		// Already registered. Send nothing, say nothing, and log it so the pattern is
-		// still visible to us.
-		s.log.Info("signup_code_suppressed_existing_account")
+		// Already registered. The API answer stays identical to the one a new address
+		// gets, so nobody can use this endpoint to discover who has an account.
+		//
+		// The address itself is told what happened, though. Saying nothing at all leaves
+		// the real owner watching an inbox for a code that is never coming, with no way
+		// to tell a broken product from a forgotten account. The message carries no code
+		// and no sign-in link, so it cannot let in whoever typed the address.
+		s.log.Info("signup_attempt_on_existing_account")
+		if err := s.email.Send(ctx, EmailMessage{
+			To:       email,
+			Template: TemplateAccountExists,
+		}); err != nil {
+			// A failure here must not change the answer, or the difference between a
+			// delivered and an undelivered message would itself reveal the account.
+			s.log.Error("account_exists_email_failed", slog.String("error", err.Error()))
+		}
 		return nil
 	} else if !errors.Is(err, ErrNotFound) {
 		return apperr.Internal(err)

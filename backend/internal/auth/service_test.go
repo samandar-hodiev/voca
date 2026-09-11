@@ -371,17 +371,46 @@ func TestStartEmailVerification_SendsACode(t *testing.T) {
 	}
 }
 
-// An address that already has an account gets no email and no different answer: this
-// endpoint must not become a way to discover who is registered.
-func TestStartEmailVerification_SilentForExistingAccount(t *testing.T) {
+// An address that already has an account gets the same answer a new one gets, so this
+// endpoint cannot become a way to discover who is registered.
+//
+// It does get an email, but not a code: the address is told that an account already
+// exists, which is what stops the real owner watching an inbox for a code that is never
+// coming. Whoever typed the address learns nothing from the API either way.
+func TestStartEmailVerification_ExistingAccountIsToldWithoutRevealingIt(t *testing.T) {
 	svc, repo, mail := newService(t)
 	repo.addUser("taken@voca.dev", "password123")
 
 	if err := svc.StartEmailVerification(context.Background(), "taken@voca.dev"); err != nil {
 		t.Fatalf("the response must not differ: %v", err)
 	}
-	if _, sent := mail.Last(); sent {
-		t.Fatal("no email may be sent to an address that already has an account")
+
+	msg, sent := mail.Last()
+	if !sent {
+		t.Fatal("the address should be told that it already has an account")
+	}
+	if msg.Template != TemplateAccountExists {
+		t.Errorf("template = %q, want the account-exists notice", msg.Template)
+	}
+	if msg.To != "taken@voca.dev" {
+		t.Errorf("recipient = %q", msg.To)
+	}
+	// Whoever typed the address may not own it, so the message must carry nothing that
+	// would let them in.
+	if _, hasCode := msg.Params["code"]; hasCode {
+		t.Error("the account-exists notice must not carry a verification code")
+	}
+}
+
+// A delivery failure must not change the answer, or the difference between a delivered
+// and an undelivered message would itself reveal the account.
+func TestStartEmailVerification_ExistingAccountSucceedsEvenIfTheNoticeFails(t *testing.T) {
+	svc, repo, mail := newService(t)
+	repo.addUser("taken@voca.dev", "password123")
+	mail.err = errors.New("provider is down")
+
+	if err := svc.StartEmailVerification(context.Background(), "taken@voca.dev"); err != nil {
+		t.Fatalf("a failed notice must not change the answer: %v", err)
 	}
 }
 

@@ -23,6 +23,11 @@ type EmailTemplate string
 const (
 	TemplateSignupCode        EmailTemplate = "signup_code"
 	TemplatePasswordResetCode EmailTemplate = "password_reset_code"
+
+	// TemplateAccountExists is sent when somebody tries to create an account with an
+	// address that already has one. It carries no code and no link that would let the
+	// sender in, so it is safe to send to an address whoever typed it may not own.
+	TemplateAccountExists EmailTemplate = "account_exists"
 )
 
 // EmailProvider delivers transactional email.
