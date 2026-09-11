@@ -11,6 +11,16 @@ import 'package:voca/core/config/flavor.dart';
 import 'package:voca/core/di/providers.dart';
 import 'package:voca/core/storage/key_value_store.dart';
 import 'package:voca/core/storage/secure_storage.dart';
+import 'package:voca/features/auth/domain/repositories/auth_repository.dart';
+import 'package:voca/features/home/data/repositories/home_repository_impl.dart';
+import 'package:voca/features/home/presentation/controllers/home_controller.dart';
+import 'package:voca/features/practice/data/repositories/practice_repository_impl.dart';
+import 'package:voca/features/practice/presentation/controllers/practice_controller.dart';
+import 'package:voca/features/profile/domain/entities/profile.dart';
+import 'package:voca/features/profile/domain/repositories/profile_repository.dart';
+import 'package:voca/features/profile/presentation/controllers/profile_controller.dart';
+import 'package:voca/features/progress/data/repositories/progress_repository_impl.dart';
+import 'package:voca/features/progress/presentation/controllers/progress_controller.dart';
 
 /// Returns the widget to pump and the container, so a test can read providers directly.
 ///
@@ -42,11 +52,46 @@ import 'package:voca/core/storage/secure_storage.dart';
             }),
       ),
       secureStoreProvider.overrideWithValue(secure),
+
+      // The signed-in screens read these. A test must not reach a server, and the mocks'
+      // simulated latency would leave timers pending when a test ends.
+      profileRepositoryProvider.overrideWithValue(
+        const FakeProfileRepository(),
+      ),
+      homeRepositoryProvider.overrideWithValue(
+        const MockHomeRepository(latency: Duration.zero),
+      ),
+      practiceRepositoryProvider.overrideWithValue(
+        const MockPracticeRepository(latency: Duration.zero),
+      ),
+      progressRepositoryProvider.overrideWithValue(
+        MockProgressRepository(latency: Duration.zero),
+      ),
     ],
   );
 
   return (
     UncontrolledProviderScope(container: container, child: const VocaApp()),
     container,
+  );
+}
+
+/// A signed-in learner with a complete profile, answered without a network.
+class FakeProfileRepository implements ProfileRepository {
+  const FakeProfileRepository();
+
+  @override
+  Future<Result<Profile>> me() async => const Ok(
+    Profile(
+      id: 'test-user',
+      provider: 'email',
+      isGuest: false,
+      email: 'test@voca.dev',
+      firstName: 'Test',
+      lastName: 'Learner',
+      cefrLevel: 'B1',
+      learningGoal: 'pronunciation',
+      dailyGoalWords: 10,
+    ),
   );
 }

@@ -30,6 +30,7 @@ type Repository interface {
 	LinkGoogleAccount(ctx context.Context, userID uuid.UUID, subject string) error
 
 	AvatarURL(ctx context.Context, userID uuid.UUID) (string, error)
+	Profile(ctx context.Context, userID uuid.UUID) (ProfileInfo, error)
 	SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) error
 	SetPasswordHash(ctx context.Context, email, hash string) error
 	TouchLastLogin(ctx context.Context, userID uuid.UUID) error
@@ -165,6 +166,21 @@ func (r *repository) Preferences(ctx context.Context, userID uuid.UUID) (Prefere
 	}
 	if err != nil {
 		return Preferences{}, fmt.Errorf("auth: read preferences: %w", err)
+	}
+	return p, nil
+}
+
+// Profile returns the name and picture a person set up.
+func (r *repository) Profile(ctx context.Context, userID uuid.UUID) (ProfileInfo, error) {
+	var p ProfileInfo
+	err := r.pool.QueryRow(ctx,
+		`SELECT first_name, last_name, avatar_url FROM profiles WHERE user_id = $1`,
+		userID).Scan(&p.FirstName, &p.LastName, &p.AvatarURL)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ProfileInfo{}, ErrNotFound
+	}
+	if err != nil {
+		return ProfileInfo{}, fmt.Errorf("auth: read profile: %w", err)
 	}
 	return p, nil
 }

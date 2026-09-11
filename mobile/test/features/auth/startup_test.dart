@@ -3,6 +3,7 @@
 // Three branches, and all three must be covered: the one a new install takes, the one a
 // returning-but-signed-out person takes, and the one a returning signed-in person takes.
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/features/auth/presentation/pages/auth_entry_page.dart';
 import 'package:voca/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -16,7 +17,9 @@ void main() {
   // minimum is the right tool for a screen that is never "settled".
   Future<void> pumpPastSplash(WidgetTester tester) async {
     await tester.pump();
-    await tester.pump(splashMinimumDuration + const Duration(milliseconds: 400));
+    await tester.pump(
+      splashMinimumDuration + const Duration(milliseconds: 400),
+    );
     await tester.pump(const Duration(milliseconds: 400));
   }
 
@@ -28,23 +31,29 @@ void main() {
     expect(find.byType(OnboardingPage), findsOneWidget);
   });
 
-  testWidgets('onboarded but signed out goes to the auth entry', (tester) async {
+  testWidgets('onboarded but signed out goes to the auth entry', (
+    tester,
+  ) async {
     final (app, _) = buildApp(onboardingCompleted: true, signedIn: false);
     await tester.pumpWidget(app);
     await pumpPastSplash(tester);
 
     expect(find.byType(AuthEntryPage), findsOneWidget);
-    expect(find.byType(OnboardingPage), findsNothing,
-        reason: 'onboarding must not reappear once it has been completed');
+    expect(
+      find.byType(OnboardingPage),
+      findsNothing,
+      reason: 'onboarding must not reappear once it has been completed',
+    );
   });
 
-  testWidgets('a returning signed-in person goes straight to the product',
-      (tester) async {
+  testWidgets('a returning signed-in person goes straight to the product', (
+    tester,
+  ) async {
     final (app, _) = buildApp(onboardingCompleted: true, signedIn: true);
     await tester.pumpWidget(app);
     await pumpPastSplash(tester);
 
-    expect(find.text('Home'), findsWidgets);
+    expect(find.byKey(const ValueKey('home-dashboard')), findsWidgets);
     expect(find.byType(AuthEntryPage), findsNothing);
     expect(find.byType(OnboardingPage), findsNothing);
   });
@@ -56,8 +65,11 @@ void main() {
       await tester.pumpWidget(app);
       await tester.pump();
 
-      expect(find.text('Voca'), findsOneWidget,
-          reason: 'signedIn=$signedIn should still show the splash');
+      expect(
+        find.text('Voca'),
+        findsOneWidget,
+        reason: 'signedIn=$signedIn should still show the splash',
+      );
 
       await pumpPastSplash(tester);
     }

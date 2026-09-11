@@ -742,6 +742,45 @@ func normalizePhone(raw *string) (string, error) {
 	return "+" + d, nil
 }
 
+// ProfileInfo is the part of a profile a signed-in person sees about themselves.
+type ProfileInfo struct {
+	FirstName *string
+	LastName  *string
+	AvatarURL *string
+}
+
+// Me is everything the app needs to render the signed-in person: who they are, what they
+// look like and how they want to practise. One call instead of three, because every
+// screen that shows one of these shows the others.
+type Me struct {
+	User        User
+	Profile     ProfileInfo
+	Preferences Preferences
+}
+
+// Me returns the signed-in person's account, profile and preferences.
+func (s *Service) Me(ctx context.Context, userID uuid.UUID) (Me, error) {
+	user, err := s.repo.UserByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return Me{}, apperr.Unauthenticated("Authentication required.")
+		}
+		return Me{}, apperr.Internal(err)
+	}
+
+	profile, err := s.repo.Profile(ctx, userID)
+	if err != nil && !errors.Is(err, ErrNotFound) {
+		return Me{}, apperr.Internal(err)
+	}
+
+	prefs, err := s.Preferences(ctx, userID)
+	if err != nil {
+		return Me{}, err
+	}
+
+	return Me{User: user, Profile: profile, Preferences: prefs}, nil
+}
+
 // splitDisplayName turns "Samandar Xodiev" into its two halves.
 //
 // A display name is one free-text field, so this is a guess rather than a parse: the first

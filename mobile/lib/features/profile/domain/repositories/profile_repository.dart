@@ -1,3 +1,9 @@
-// profile/domain: ProfileRepository interface.
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// Reading the signed-in person's profile.
+library;
+
+import '../../../../features/auth/domain/repositories/auth_repository.dart';
+import '../entities/profile.dart';
+
+abstract interface class ProfileRepository {
+  Future<Result<Profile>> me();
+}

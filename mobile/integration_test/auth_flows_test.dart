@@ -41,12 +41,16 @@ void main() {
   /// that triggered it, so the first read can arrive a moment early.
   Future<String> fetchSignupCode(String email) async {
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
-    final uri = Uri.parse('$codeServer?email=${Uri.encodeQueryComponent(email)}');
+    final uri = Uri.parse(
+      '$codeServer?email=${Uri.encodeQueryComponent(email)}',
+    );
 
     try {
       for (var attempt = 0; attempt < 15; attempt++) {
         final response = await (await client.getUrl(uri)).close();
-        final body = await response.transform(const SystemEncoding().decoder).join();
+        final body = await response
+            .transform(const SystemEncoding().decoder)
+            .join();
         if (response.statusCode == 200 && body.trim().isNotEmpty) {
           return body.trim();
         }
@@ -80,7 +84,11 @@ void main() {
   }
 
   /// Waits until [finder] matches, pumping in between.
-  Future<void> waitFor(WidgetTester tester, Finder finder, {int frames = 100}) async {
+  Future<void> waitFor(
+    WidgetTester tester,
+    Finder finder, {
+    int frames = 100,
+  }) async {
     for (var i = 0; i < frames; i++) {
       if (finder.evaluate().isNotEmpty) return;
       await tester.pump(const Duration(milliseconds: 100));
@@ -107,7 +115,11 @@ void main() {
     await settle(tester);
   }
 
-  Future<void> typeInto(WidgetTester tester, int fieldIndex, String value) async {
+  Future<void> typeInto(
+    WidgetTester tester,
+    int fieldIndex,
+    String value,
+  ) async {
     final fields = find.byType(TextField);
     await waitFor(tester, fields);
     await tester.enterText(fields.at(fieldIndex), value);
@@ -121,13 +133,18 @@ void main() {
     await waitFor(tester, find.text('Mehmon sifatida kirish'));
 
     await tapText(tester, 'Mehmon sifatida kirish');
-    await waitFor(tester, find.text('Home'));
+    await waitFor(tester, find.byKey(const ValueKey('home-dashboard')));
 
-    expect(find.text('Home'), findsWidgets,
-        reason: 'a guest session should land on the product');
+    expect(
+      find.byKey(const ValueKey('home-dashboard')),
+      findsWidgets,
+      reason: 'a guest session should land on the product',
+    );
   });
 
-  testWidgets('signing in to an existing account reaches the product', (tester) async {
+  testWidgets('signing in to an existing account reaches the product', (
+    tester,
+  ) async {
     expect(seededEmail, isNotEmpty, reason: 'runner must pass E2E_LOGIN_EMAIL');
     await resetToSignedOut();
     await launch(tester);
@@ -142,16 +159,21 @@ void main() {
     await settle(tester);
 
     await waitFor(tester, find.text('Xush kelibsiz'));
-    await typeInto(tester, 0, seededEmail);   // Elektron pochta
+    await typeInto(tester, 0, seededEmail); // Elektron pochta
     await typeInto(tester, 1, seededPassword); // Parol
     await tapText(tester, 'Kirish');
-    await waitFor(tester, find.text('Home'));
+    await waitFor(tester, find.byKey(const ValueKey('home-dashboard')));
 
-    expect(find.text('Home'), findsWidgets,
-        reason: 'valid credentials should land on the product');
+    expect(
+      find.byKey(const ValueKey('home-dashboard')),
+      findsWidgets,
+      reason: 'valid credentials should land on the product',
+    );
   });
 
-  testWidgets('creating an account with email reaches the profile form', (tester) async {
+  testWidgets('creating an account with email reaches the profile form', (
+    tester,
+  ) async {
     expect(codeServer, isNotEmpty, reason: 'runner must pass E2E_CODE_SERVER');
     await resetToSignedOut();
     await launch(tester);
@@ -172,14 +194,21 @@ void main() {
     // the button is already gone by the time a tap could reach it.
     await settle(tester);
     await waitFor(tester, find.text('Profilingizni to‘ldiring'), frames: 150);
-    await typeInto(tester, 0, 'Samandar');      // Ism
-    await typeInto(tester, 1, 'Xodiev');        // Familiya
-    await typeInto(tester, 3, 'ParolE2E123!');  // Parol
-    await typeInto(tester, 4, 'ParolE2E123!');  // Parolni tasdiqlang
+    await typeInto(tester, 0, 'Samandar'); // Ism
+    await typeInto(tester, 1, 'Xodiev'); // Familiya
+    await typeInto(tester, 3, 'ParolE2E123!'); // Parol
+    await typeInto(tester, 4, 'ParolE2E123!'); // Parolni tasdiqlang
     await tapText(tester, 'Akkaunt yaratish');
-    await waitFor(tester, find.text('Home'), frames: 150);
+    await waitFor(
+      tester,
+      find.byKey(const ValueKey('home-dashboard')),
+      frames: 150,
+    );
 
-    expect(find.text('Home'), findsWidgets,
-        reason: 'a completed signup should land on the product');
+    expect(
+      find.byKey(const ValueKey('home-dashboard')),
+      findsWidgets,
+      reason: 'a completed signup should land on the product',
+    );
   });
 }

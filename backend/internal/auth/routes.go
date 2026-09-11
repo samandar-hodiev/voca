@@ -38,6 +38,7 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler,
 	// Preferences belong to a signed-in person, so they sit behind authentication.
 	me := v1.Group("/users/me", requireAuth)
 	{
+		me.GET("", h.Me)
 		me.GET("/preferences", h.GetPreferences)
 		me.PUT("/preferences", h.UpdatePreferences)
 		me.POST("/avatar", h.UploadAvatar)

@@ -1,3 +1,17 @@
-// progress/domain: DailyProgress — one local day of practice counts and scores.
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// One day of practice.
+library;
+
+class DailyProgress {
+  const DailyProgress({
+    required this.day,
+    required this.words,
+    required this.goal,
+  });
+
+  final DateTime day;
+  final int words;
+  final int goal;
+
+  bool get goalMet => words >= goal;
+  double get ratio => goal == 0 ? 0 : (words / goal).clamp(0.0, 1.0);
+}

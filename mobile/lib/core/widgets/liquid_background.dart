@@ -52,7 +52,21 @@ class _LiquidBackgroundState extends State<LiquidBackground>
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 22),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // With reduced motion the field is painted still, and the ticker is stopped as well
+    // rather than left running underneath it. A controller that repeats forever keeps the
+    // screen redrawing at full frame rate for somebody who asked for nothing to move,
+    // which costs battery for no visible reason.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
 
   @override
   void dispose() {
@@ -103,7 +117,11 @@ class _LiquidBackgroundState extends State<LiquidBackground>
 }
 
 class _Fields extends StatelessWidget {
-  const _Fields({required this.t, required this.colors, required this.intensity});
+  const _Fields({
+    required this.t,
+    required this.colors,
+    required this.intensity,
+  });
 
   final double t;
   final VocaColors colors;
@@ -119,7 +137,11 @@ class _Fields extends StatelessWidget {
 }
 
 class _FieldPainter extends CustomPainter {
-  _FieldPainter({required this.t, required this.colors, required this.intensity});
+  _FieldPainter({
+    required this.t,
+    required this.colors,
+    required this.intensity,
+  });
 
   final double t;
   final VocaColors colors;
@@ -135,37 +157,49 @@ class _FieldPainter extends CustomPainter {
 
     // Top left, the strongest field. Anchored off-screen so only its falloff is visible.
     _field(
-      canvas, size,
+      canvas,
+      size,
       colors.primary.withValues(alpha: 0.48 * intensity),
-      centre: Alignment(-0.85 + 0.14 * math.sin(t * tau),
-          -0.75 + 0.10 * math.cos(t * tau)),
+      centre: Alignment(
+        -0.85 + 0.14 * math.sin(t * tau),
+        -0.75 + 0.10 * math.cos(t * tau),
+      ),
       radius: 0.72,
     );
 
     // Top right, violet, cooler and smaller.
     _field(
-      canvas, size,
+      canvas,
+      size,
       _violet.withValues(alpha: 0.38 * intensity),
-      centre: Alignment(0.92 + 0.12 * math.cos(t * tau + 2.1),
-          -0.62 + 0.14 * math.sin(t * tau + 2.1)),
+      centre: Alignment(
+        0.92 + 0.12 * math.cos(t * tau + 2.1),
+        -0.62 + 0.14 * math.sin(t * tau + 2.1),
+      ),
       radius: 0.60,
     );
 
     // Bottom, a wide cool blue that grounds the page.
     _field(
-      canvas, size,
+      canvas,
+      size,
       _blue.withValues(alpha: 0.44 * intensity),
-      centre: Alignment(-0.45 + 0.18 * math.sin(t * tau + 3.9),
-          1.02 + 0.09 * math.cos(t * tau + 3.9)),
+      centre: Alignment(
+        -0.45 + 0.18 * math.sin(t * tau + 3.9),
+        1.02 + 0.09 * math.cos(t * tau + 3.9),
+      ),
       radius: 0.62,
     );
 
     // Bottom right, a quiet indigo echo so the corner is not empty.
     _field(
-      canvas, size,
+      canvas,
+      size,
       colors.primary.withValues(alpha: 0.34 * intensity),
-      centre: Alignment(0.88 + 0.10 * math.cos(t * tau + 5.2),
-          0.78 + 0.12 * math.sin(t * tau + 5.2)),
+      centre: Alignment(
+        0.88 + 0.10 * math.cos(t * tau + 5.2),
+        0.78 + 0.12 * math.sin(t * tau + 5.2),
+      ),
       radius: 0.48,
     );
   }

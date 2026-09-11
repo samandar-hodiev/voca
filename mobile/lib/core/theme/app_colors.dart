@@ -56,6 +56,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
     required this.onPrimary,
     required this.primaryPressed,
     required this.primaryMuted,
+    required this.onPrimaryMuted,
     required this.background,
     required this.surface,
     required this.surfaceElevated,
@@ -88,6 +89,11 @@ class VocaColors extends ThemeExtension<VocaColors> {
 
   /// A quiet wash of the accent, for selected rows and subtle highlights.
   final Color primaryMuted;
+
+  /// Text and icons that sit on a brand-tinted surface, such as a sound chip or the active
+  /// tab. Brand colour on a brand tint loses contrast twice over, so this is a deeper shade
+  /// in light and a paler one in dark, keeping the hue while clearing 4.5:1.
+  final Color onPrimaryMuted;
 
   /// The page behind everything.
   final Color background;
@@ -140,6 +146,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
     onPrimary: _Palette.white,
     primaryPressed: _Palette.indigo600,
     primaryMuted: _Palette.indigo50,
+    onPrimaryMuted: Color(0xFF4338CA),
     background: _Palette.gray50,
     surface: _Palette.white,
     surfaceElevated: _Palette.white,
@@ -170,6 +177,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
     onPrimary: _Palette.gray950,
     primaryPressed: Color(0xFF7373F0),
     primaryMuted: Color(0xFF1E1E3A),
+    onPrimaryMuted: Color(0xFFB4B4FF),
     background: _Palette.gray950,
     surface: Color(0xFF141922),
     surfaceElevated: Color(0xFF1B212C),
@@ -196,6 +204,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
     Color? onPrimary,
     Color? primaryPressed,
     Color? primaryMuted,
+    Color? onPrimaryMuted,
     Color? background,
     Color? surface,
     Color? surfaceElevated,
@@ -220,6 +229,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
       onPrimary: onPrimary ?? this.onPrimary,
       primaryPressed: primaryPressed ?? this.primaryPressed,
       primaryMuted: primaryMuted ?? this.primaryMuted,
+      onPrimaryMuted: onPrimaryMuted ?? this.onPrimaryMuted,
       background: background ?? this.background,
       surface: surface ?? this.surface,
       surfaceElevated: surfaceElevated ?? this.surfaceElevated,
@@ -249,6 +259,7 @@ class VocaColors extends ThemeExtension<VocaColors> {
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       primaryPressed: Color.lerp(primaryPressed, other.primaryPressed, t)!,
       primaryMuted: Color.lerp(primaryMuted, other.primaryMuted, t)!,
+      onPrimaryMuted: Color.lerp(onPrimaryMuted, other.onPrimaryMuted, t)!,
       background: Color.lerp(background, other.background, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
       surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,

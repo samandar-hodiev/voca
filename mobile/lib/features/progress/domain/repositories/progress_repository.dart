@@ -1,3 +1,8 @@
-// progress/domain: ProgressRepository interface.
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// Where progress data comes from.
+library;
+
+import '../entities/progress_summary.dart';
+
+abstract interface class ProgressRepository {
+  Future<ProgressSummary> summary();
+}

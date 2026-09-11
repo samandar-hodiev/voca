@@ -4,9 +4,8 @@
 /// composed from per-feature fragments as features arrive, so adding a feature costs one
 /// entry rather than an edit threaded through a large file.
 ///
-/// The screens behind these routes are PLACEHOLDERS. This foundation proves the app
-/// starts, the theme resolves and navigation works; the real screens belong to their
-/// feature tasks.
+/// The signed-in screens live inside a StatefulShellRoute, which is what gives the app its
+/// persistent bottom bar and lets each tab keep its state when another is opened.
 library;
 
 import 'package:flutter/material.dart';
@@ -28,6 +27,11 @@ import '../features/onboarding/presentation/pages/level_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/home/presentation/pages/home_page.dart';
+import '../features/practice/presentation/pages/practice_page.dart';
+import '../features/profile/presentation/pages/profile_page.dart';
+import '../features/progress/presentation/pages/progress_page.dart';
+import 'app_shell.dart';
 import 'routes.dart';
 
 abstract final class AppRouter {
@@ -105,51 +109,52 @@ abstract final class AppRouter {
           builder: (_, __) => const NewPasswordPage(),
         ),
 
-        GoRoute(
-          path: Routes.home,
-          name: Routes.homeName,
-          builder: (context, _) => PlaceholderScreen(
-            title: 'Home',
-            description: 'The learner dashboard will be built here.',
-            icon: Icons.home_outlined,
-            actions: [
-              IconButton(
-                tooltip: 'Sozlamalar',
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () => context.push(Routes.settings),
-              ),
-            ],
-          ),
+        // The signed-in app. Each tab is its own branch, so switching keeps the scroll
+        // position and the data already loaded instead of rebuilding from scratch.
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, shell) => AppShell(navigationShell: shell),
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.home,
+                  name: Routes.homeName,
+                  builder: (_, __) => const HomePage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.practice,
+                  name: Routes.practiceName,
+                  builder: (_, __) => const PracticePage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.progress,
+                  name: Routes.progressName,
+                  builder: (_, __) => const ProgressPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: Routes.profile,
+                  name: Routes.profileName,
+                  builder: (_, __) => const ProfilePage(),
+                ),
+              ],
+            ),
+          ],
         ),
-        GoRoute(
-          path: Routes.practice,
-          name: Routes.practiceName,
-          builder: (_, __) => const PlaceholderScreen(
-            title: 'Practice',
-            description:
-                'Word practice and the recording flow will be built here.',
-            icon: Icons.mic_none_rounded,
-          ),
-        ),
-        GoRoute(
-          path: Routes.progress,
-          name: Routes.progressName,
-          builder: (_, __) => const PlaceholderScreen(
-            title: 'Progress',
-            description:
-                'Streaks, daily progress and weak sounds will be built here.',
-            icon: Icons.insights_outlined,
-          ),
-        ),
-        GoRoute(
-          path: Routes.profile,
-          name: Routes.profileName,
-          builder: (_, __) => const PlaceholderScreen(
-            title: 'Profile',
-            description: 'Account and profile will be built here.',
-            icon: Icons.person_outline_rounded,
-          ),
-        ),
+
+        // Settings opens over the shell rather than inside a tab: it is somewhere you go
+        // and come back from, not a place you stay.
         GoRoute(
           path: Routes.settings,
           name: Routes.settingsName,

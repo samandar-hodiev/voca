@@ -253,6 +253,20 @@ func (h *Handler) UpdatePreferences(c *gin.Context) {
 	httpx.OK(c, http.StatusOK, toPreferencesResponse(prefs))
 }
 
+// Me returns the signed-in person's account, profile and preferences.
+func (h *Handler) Me(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	me, err := h.svc.Me(c.Request.Context(), userID)
+	if err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, toMeResponse(me))
+}
+
 // UploadAvatar stores a profile picture for the signed-in person.
 //
 // Multipart rather than JSON, because base64 inside a JSON body inflates an image by a

@@ -136,3 +136,25 @@ const maxAvatarUpload = 3 << 20
 type avatarResponse struct {
 	AvatarURL string `json:"avatar_url"`
 }
+
+// meResponse is the signed-in person as the app renders them.
+//
+// It embeds the same user shape sign-in returns, so a client parses one representation of
+// a user rather than two that can drift apart.
+type meResponse struct {
+	userResponse
+	FirstName   *string             `json:"first_name"`
+	LastName    *string             `json:"last_name"`
+	AvatarURL   *string             `json:"avatar_url"`
+	Preferences preferencesResponse `json:"preferences"`
+}
+
+func toMeResponse(m Me) meResponse {
+	return meResponse{
+		userResponse: toUserResponse(m.User),
+		FirstName:    m.Profile.FirstName,
+		LastName:     m.Profile.LastName,
+		AvatarURL:    m.Profile.AvatarURL,
+		Preferences:  toPreferencesResponse(m.Preferences),
+	}
+}

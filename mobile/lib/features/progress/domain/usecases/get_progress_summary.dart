@@ -1,3 +1,13 @@
-// progress/domain: loads the progress dashboard.
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// Loads the Progress dashboard.
+library;
+
+import '../entities/progress_summary.dart';
+import '../repositories/progress_repository.dart';
+
+class GetProgressSummary {
+  const GetProgressSummary(this._repository);
+
+  final ProgressRepository _repository;
+
+  Future<ProgressSummary> call() => _repository.summary();
+}

@@ -33,6 +33,7 @@ type fakeRepo struct {
 	codeHashes    map[uuid.UUID]string
 	refresh       map[string]refreshRow
 	avatars       map[uuid.UUID]string
+	profiles      map[uuid.UUID]ProfileInfo
 	createErr     error
 
 	// Set by a test to say which address the next created account should carry, since
@@ -102,6 +103,14 @@ func (f *fakeRepo) CreateUserTx(ctx context.Context, fn func(tx pgx.Tx) (User, e
 		f.nextEmail = ""
 	}
 	return u, nil
+}
+
+func (f *fakeRepo) Profile(_ context.Context, userID uuid.UUID) (ProfileInfo, error) {
+	p, ok := f.profiles[userID]
+	if !ok {
+		return ProfileInfo{}, ErrNotFound
+	}
+	return p, nil
 }
 
 func (f *fakeRepo) AvatarURL(_ context.Context, userID uuid.UUID) (string, error) {
@@ -1121,5 +1130,56 @@ func TestLogin_AccountWithoutAPasswordIsJustWrongCredentials(t *testing.T) {
 	_, err := svc.Login(context.Background(), "social@voca.dev", "anything123")
 	if got := codeOf(t, err); got != apperr.CodeInvalidCredentials {
 		t.Fatalf("got %s, want INVALID_CREDENTIALS", got)
+	}
+}
+
+// Me gathers the account, the profile and the preferences in one answer, because every
+// screen that shows one of them shows the others.
+func TestMe_ReturnsAccountProfileAndPreferences(t *testing.T) {
+	svc, repo, _ := newService(t)
+	repo.addUser("me@voca.dev", "password123")
+	u, _ := repo.UserByEmail(context.Background(), "me@voca.dev")
+
+	first, last, avatar := "Samandar", "Xodiev", "/media/avatars/x.png"
+	repo.profiles = map[uuid.UUID]ProfileInfo{
+		u.ID: {FirstName: &first, LastName: &last, AvatarURL: &avatar},
+	}
+
+	me, err := svc.Me(context.Background(), u.ID)
+	if err != nil {
+		t.Fatalf("Me: %v", err)
+	}
+	if me.User.ID != u.ID {
+		t.Errorf("user = %v, want %v", me.User.ID, u.ID)
+	}
+	if me.Profile.FirstName == nil || *me.Profile.FirstName != "Samandar" {
+		t.Errorf("first name = %v", me.Profile.FirstName)
+	}
+	if me.Profile.AvatarURL == nil || *me.Profile.AvatarURL != avatar {
+		t.Errorf("avatar = %v", me.Profile.AvatarURL)
+	}
+}
+
+// A guest has no profile row. That is normal and must not fail the request.
+func TestMe_MissingProfileIsNotAnError(t *testing.T) {
+	svc, repo, _ := newService(t)
+	repo.addUser("guest@voca.dev", "password123")
+	u, _ := repo.UserByEmail(context.Background(), "guest@voca.dev")
+
+	me, err := svc.Me(context.Background(), u.ID)
+	if err != nil {
+		t.Fatalf("Me: %v", err)
+	}
+	if me.Profile.FirstName != nil {
+		t.Errorf("expected no first name, got %v", *me.Profile.FirstName)
+	}
+}
+
+// A token for an account that no longer exists is a signed-out person, not a server error.
+func TestMe_UnknownUserIsUnauthenticated(t *testing.T) {
+	svc, _, _ := newService(t)
+	_, err := svc.Me(context.Background(), uuid.New())
+	if got := codeOf(t, err); got != apperr.CodeUnauthenticated {
+		t.Fatalf("got %s, want UNAUTHENTICATED", got)
 	}
 }

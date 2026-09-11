@@ -16,7 +16,9 @@ import 'package:voca/core/theme/app_colors.dart';
 /// Relative luminance per WCAG 2.1.
 double _luminance(Color c) {
   double channel(double v) {
-    return v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+    return v <= 0.03928
+        ? v / 12.92
+        : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
   }
 
   return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
@@ -116,4 +118,59 @@ void main() {
       lessThan(aaBody),
     );
   });
+
+  // Surfaces added by the signed-in shell. Brand text on a brand-tinted chip loses
+  // contrast twice over, once from the tint and once from sharing a hue, so these pairs
+  // are checked outright rather than assumed from the ones above.
+  for (final (name, colors) in <(String, VocaColors)>[
+    ('light', VocaColors.light),
+    ('dark', VocaColors.dark),
+  ]) {
+    group('$name theme, signed-in surfaces', () {
+      for (final (what, alpha) in [
+        ('sound symbol chip', 0.12),
+        ('active tab capsule', 0.14),
+      ]) {
+        test('text on the $what stays readable', () {
+          for (final (where, base) in [
+            ('surface', colors.surface),
+            ('background', colors.background),
+          ]) {
+            final tint = Color.alphaBlend(
+              colors.primary.withValues(alpha: alpha),
+              base,
+            );
+            final ratio = contrastRatio(colors.onPrimaryMuted, tint);
+            expect(
+              ratio,
+              greaterThanOrEqualTo(aaBody),
+              reason: '$what over $where is ${ratio.toStringAsFixed(2)}:1',
+            );
+          }
+        });
+      }
+
+      // The reason the token exists: plain brand text would fail on the same tint.
+      test('plain brand text would not have been enough', () {
+        final tint = Color.alphaBlend(
+          colors.primary.withValues(alpha: 0.14),
+          colors.surface,
+        );
+        expect(contrastRatio(colors.primary, tint), lessThan(aaBody));
+      });
+
+      test('captions stay readable on the elevated score card', () {
+        final ratio = contrastRatio(
+          colors.textSecondary,
+          colors.surfaceElevated,
+        );
+        expect(
+          ratio,
+          greaterThanOrEqualTo(aaBody),
+          reason:
+              'caption on elevated surface is ${ratio.toStringAsFixed(2)}:1',
+        );
+      });
+    });
+  }
 }

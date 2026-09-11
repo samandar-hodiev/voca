@@ -1,3 +1,14 @@
-// home/domain: loads the home dashboard. Backed by GET /api/v1/users/me and progress endpoints.
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// Loads the Home dashboard.
+library;
+
+import '../entities/home_summary.dart';
+import '../repositories/home_repository.dart';
+
+class GetHomeSummary {
+  const GetHomeSummary(this._repository);
+
+  final HomeRepository _repository;
+
+  Future<HomeSummary> call({required int dailyGoal}) =>
+      _repository.summary(dailyGoal: dailyGoal);
+}
