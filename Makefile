@@ -72,6 +72,18 @@ gitpulse-hook:
 	@chmod +x .git/hooks/pre-push
 	@echo "pre-push hook installed; a successful push now notifies GitPulse"
 
+## email-on: point the backend at Brevo so any address receives a real code
+#
+#   make email-on KEY=xkeysib-... FROM=you@gmail.com [TO=someone@example.com]
+email-on:
+	@./scripts/enable-email.sh "$(KEY)" "$(FROM)" $(TO)
+
+## google-on: turn on Sign in with Google
+#
+#   make google-on CLIENT_ID=123-abc.apps.googleusercontent.com
+google-on:
+	@./scripts/enable-google.sh "$(CLIENT_ID)"
+
 ## code: print the newest verification code the backend wrote
 #
 # Only useful while EMAIL_OUTBOX_DIR is set and no SMTP provider is configured, which is
