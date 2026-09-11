@@ -41,18 +41,22 @@ class LiquidDrop extends StatelessWidget {
   static const topLightenLight = 0.18;
   static const topLightenDark = 0.20;
 
-  /// How much black the colour is mixed with by the bottom edge, per theme. From the
-  /// lighter top it deepens all the way down, so a filled control reads as a body of
-  /// colour with depth rather than a flat chip. Behind a label it is only ever the colour
-  /// or darker; the contrast test checks the dark theme's dark label at the very bottom.
-  static const shadeLight = 0.40;
-  static const shadeDark = 0.30;
+  /// A whisper of shade along the bottom edge, per theme: enough for a little volume,
+  /// not enough to muddy the colour.
+  static const shadeLight = 0.12;
+  static const shadeDark = 0.14;
 
   /// Where, as a fraction of the height, the light at the top has faded out. A label's
   /// band starts at [labelBandTop], so everything behind a label is the plain colour.
   /// Public so the contrast test holds the two to each other.
   static const colourStop = 0.30;
   static const labelBandTop = 0.30;
+
+  /// The teal the brand colour flows into across a filled control, per theme. White (in
+  /// light) and near-black (in dark) keep their contrast on it; contrast_test checks.
+  static Color brandTeal(Brightness brightness) => brightness == Brightness.dark
+      ? const Color(0xFF2DD4BF)
+      : const Color(0xFF0F766E);
 
   /// Whichever of white and near-black reads better on [color].
   static Color foregroundOn(Color color) {
@@ -69,10 +73,20 @@ class LiquidDrop extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final radius = borderRadius ?? VocaRadius.pillAll;
     final top = dark ? topLightenDark : topLightenLight;
+    final base = color ?? colors.primary;
+    // The brand runs diagonally from emerald into teal; any other colour stays itself.
+    final brand = base == colors.primary || base == colors.primaryPressed;
+    final end = brand
+        ? Color.lerp(base, brandTeal(Theme.of(context).brightness), 0.9)!
+        : base;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color ?? colors.primary,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [base, end],
+        ),
         borderRadius: radius,
         boxShadow: glow
             ? const [
@@ -140,7 +154,7 @@ class GlassBead extends StatelessWidget {
   /// the bottom. Public so the contrast test checks text on the lightest part.
   static Color fill(Brightness brightness) => brightness == Brightness.dark
       ? const Color(0x0FFFFFFF)
-      : const Color(0x80FFFFFF);
+      : const Color(0x38FFFFFF);
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +196,7 @@ class GlassBead extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.white.withValues(alpha: dark ? 0.12 : 0.5),
+                Colors.white.withValues(alpha: dark ? 0.12 : 0.32),
                 Colors.white.withValues(alpha: 0),
               ],
               stops: const [0, 0.35],

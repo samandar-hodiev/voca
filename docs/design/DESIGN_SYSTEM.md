@@ -164,10 +164,18 @@ outline icons at rest, and the selected destination in a lighter pill of liquid 
 (lit across the top, a touch deeper at the bottom) with its icon filled. Voca keeps its
 own destinations, icons and labels; only the design comes from the reference.
 
-**Brand colour.** A deep emerald (`#0A6E4F` light, `#34D399` dark). Filled controls run
-it from a lighter top down towards black, which is where the brand gets its depth; a label
-only ever sits on the colour itself or darker, so it keeps its contrast. The background
-fields keep their own indigo, so the page does not move when the brand does.
+**Brand colour.** A clean emerald (`#047857` light, `#34D399` dark). Filled controls run it
+diagonally into teal (`#0F766E` light, `#2DD4BF` dark) with a soft light across the top
+and only a whisper of shade at the bottom: a gradient, not a slab. Labels keep 5.5:1 on
+both ends. The background fields keep their own indigo, so the page does not move when the
+brand does.
+
+**Selected choice.** A soft emerald-to-teal wash fading from left to right and a fine
+gradient rim, like the selected row in the reference card, instead of a flat fill and a
+heavy outline.
+
+**Clear elements inside cards.** Wells (sound symbols) are thin clear glass. Badges carry
+half their tone, with the darker text of each pair so it reads on glass.
 
 **One radius.** Every element uses the same corner radius, 20 (`VocaRadius.element`).
 Anything shorter than 40 comes out as a capsule, because a corner larger than half a side
@@ -177,9 +185,10 @@ is scaled to fit. Only the tab bar and its pill are capsules by design.
 card's longer side (between 70 and 170 points), so wide, short cards get light that runs
 along their long edges instead of a dab at the corner.
 
-**Tab bar.** Clear glass: a thin tint, a moderate blur that turns what passes under it
-into soft colour, a thin light rim, and a see-through pill behind the selected
-destination.
+**Tab bar.** Clear glass with a body: a thin tint, a moderate blur that turns what passes
+under it into soft colour, a bright sheen and rim along the top, light gathered inside the
+edge, and a fine outline with a soft shadow so it stands off a light page. The selected
+destination sits in a pill of liquid glass with a faint emerald-to-teal tint.
 
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own

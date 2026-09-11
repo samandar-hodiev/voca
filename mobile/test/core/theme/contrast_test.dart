@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/core/theme/app_colors.dart';
 import 'package:voca/core/theme/app_glass.dart';
+import 'package:voca/core/widgets/app_badge.dart';
 import 'package:voca/core/widgets/glass_surface.dart';
 import 'package:voca/core/widgets/liquid_background.dart';
 import 'package:voca/core/widgets/liquid_bottom_bar.dart';
@@ -246,15 +247,43 @@ void main() {
           LiquidDrop.colourStop,
           lessThanOrEqualTo(LiquidDrop.labelBandTop),
         );
-        final worst = brightness == Brightness.dark
-            ? Color.lerp(colors.primary, Colors.black, LiquidDrop.shadeDark)!
-            : colors.primary;
-        final ratio = contrastRatio(colors.onPrimary, worst);
-        expect(
-          ratio,
-          greaterThanOrEqualTo(aaBody),
-          reason: 'label on the button is ${ratio.toStringAsFixed(2)}:1',
-        );
+        final teal = LiquidDrop.brandTeal(brightness);
+        for (final fill in [
+          colors.primary,
+          Color.lerp(colors.primary, teal, 0.9)!,
+        ]) {
+          final worst = brightness == Brightness.dark
+              ? Color.lerp(fill, Colors.black, LiquidDrop.shadeDark)!
+              : fill;
+          final ratio = contrastRatio(colors.onPrimary, worst);
+          expect(
+            ratio,
+            greaterThanOrEqualTo(aaBody),
+            reason: 'label on the button is ${ratio.toStringAsFixed(2)}:1',
+          );
+        }
+      });
+
+      test('badge text on its half-tone glass meets AA', () {
+        for (final (tone, fill, text) in [
+          ('neutral', colors.border, colors.textSecondary),
+          ('primary', colors.primaryMuted, colors.onPrimaryMuted),
+          ('success', colors.successMuted, colors.onSuccessMuted),
+          ('warning', colors.warningMuted, colors.onWarningMuted),
+          ('error', colors.errorMuted, colors.onErrorMuted),
+        ]) {
+          expectReadable(
+            '$tone badge',
+            text,
+            (b) => Color.alphaBlend(
+              fill.withValues(alpha: AppBadge.tintAlpha),
+              Color.alphaBlend(
+                GlassBead.fill(brightness),
+                throughGlass(glass.tint, b),
+              ),
+            ),
+          );
+        }
       });
 
       test('tab labels on the clear bar meet AA', () {

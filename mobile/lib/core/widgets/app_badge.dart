@@ -25,21 +25,25 @@ class AppBadge extends StatelessWidget {
   final BadgeTone tone;
   final IconData? icon;
 
+  /// How much of its tone a badge carries: half, so the glass behind shows through.
+  /// Public so the contrast test checks every tone at this strength on glass.
+  @visibleForTesting
+  static const tintAlpha = 0.5;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
     final (background, foreground) = switch (tone) {
       BadgeTone.neutral => (colors.border, colors.textSecondary),
-      BadgeTone.primary => (colors.primaryMuted, colors.primary),
+      BadgeTone.primary => (colors.primaryMuted, colors.onPrimaryMuted),
       BadgeTone.success => (colors.successMuted, colors.onSuccessMuted),
       BadgeTone.warning => (colors.warningMuted, colors.onWarningMuted),
       BadgeTone.error => (colors.errorMuted, colors.onErrorMuted),
     };
 
-    // A glass pill carrying its tone. The tone is opaque, so the text keeps exactly the
-    // contrast the badge pairs are tested for.
+    // A clear glass pill carrying half its tone (contrast_test checks every tone on glass).
     return GlassBead(
-      tint: background,
+      tint: background.withValues(alpha: tintAlpha),
       padding: const EdgeInsets.symmetric(
         horizontal: VocaSpacing.xs,
         vertical: VocaSpacing.xxs,

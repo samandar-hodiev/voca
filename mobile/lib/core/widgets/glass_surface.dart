@@ -37,6 +37,11 @@ class GlassSurface extends StatelessWidget {
     this.edgeGlow = true,
     this.blurSigma,
     this.highlight,
+    this.tintGradient,
+    this.rimTop,
+    this.rimBottom,
+    this.edgeLight,
+    this.shadows,
   });
 
   final Widget child;
@@ -67,6 +72,18 @@ class GlassSurface extends StatelessWidget {
 
   /// Overrides the soft light across the top of the pane.
   final Color? highlight;
+
+  /// A gradient laid into the glass over the tint, for a pane that belongs to a state,
+  /// such as a selected choice.
+  final Gradient? tintGradient;
+
+  /// Override the rim's colour at the top and bottom, the light gathered inside the rim,
+  /// and the shadow. The tab bar uses them to read as a thick piece of clear glass on a
+  /// light page, where the theme's white rim alone would disappear.
+  final Color? rimTop;
+  final Color? rimBottom;
+  final Color? edgeLight;
+  final List<BoxShadow>? shadows;
 
   /// The corner light, per theme: a teal between the brand indigo and the green in the
   /// background, as in the reference.
@@ -116,26 +133,31 @@ class GlassSurface extends StatelessWidget {
         borderRadius: radius,
       ),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              highlight ?? glass.highlight,
-              (highlight ?? glass.highlight).withValues(alpha: 0),
-            ],
-            stops: const [0, 0.5],
-          ),
-        ),
-        child: CustomPaint(
-          painter: _EdgeLens(
+        decoration: BoxDecoration(gradient: tintGradient, borderRadius: radius),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
             borderRadius: radius,
-            color: glass.borderTop.withValues(alpha: glass.borderTop.a * 0.55),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                highlight ?? glass.highlight,
+                (highlight ?? glass.highlight).withValues(alpha: 0),
+              ],
+              stops: const [0, 0.5],
+            ),
           ),
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-            child: child,
+          child: CustomPaint(
+            painter: _EdgeLens(
+              borderRadius: radius,
+              color:
+                  edgeLight ??
+                  glass.borderTop.withValues(alpha: glass.borderTop.a * 0.55),
+            ),
+            child: Padding(
+              padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+              child: child,
+            ),
           ),
         ),
       ),
@@ -168,8 +190,8 @@ class GlassSurface extends StatelessWidget {
               painter: _RimLight(
                 borderRadius: radius,
                 width: borderWidth,
-                top: glass.borderTop,
-                bottom: glass.borderBottom,
+                top: rimTop ?? glass.borderTop,
+                bottom: rimBottom ?? glass.borderBottom,
                 glow: edgeGlow ? cornerLight(brightness) : null,
               ),
             ),
@@ -194,7 +216,10 @@ class GlassSurface extends StatelessWidget {
     // The shadow is painted outside the pane only. Under translucent glass an ordinary
     // shadow shows through and turns the pane grey.
     return CustomPaint(
-      painter: _OuterShadow(borderRadius: radius, shadows: glass.shadows),
+      painter: _OuterShadow(
+        borderRadius: radius,
+        shadows: shadows ?? glass.shadows,
+      ),
       child: surface,
     );
   }

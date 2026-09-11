@@ -72,9 +72,17 @@ class SelectionCard extends StatelessWidget {
                 // Barely there on purpose. A fill heavy enough to hide the field behind it
                 // is a white card, whatever it is called. Selection is carried by the ring
                 // and the check mark, so the selected pane only has to shift hue.
-                tint: selected
-                    ? colors.primary.withValues(alpha: glass.selectionOpacity)
-                    : glass.tint.withValues(alpha: glass.controlOpacity),
+                tint: glass.tint.withValues(alpha: glass.controlOpacity),
+                tintGradient: selected
+                    ? LinearGradient(
+                        colors: [
+                          colors.primary.withValues(alpha: 0.18),
+                          LiquidDrop.brandTeal(
+                            Theme.of(context).brightness,
+                          ).withValues(alpha: 0.04),
+                        ],
+                      )
+                    : null,
                 padding: const EdgeInsets.symmetric(
                   horizontal: VocaSpacing.md,
                   vertical: VocaSpacing.sm,
@@ -189,7 +197,17 @@ class SelectionCard extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: radius,
-                      border: Border.all(color: colors.primary, width: 2),
+                      border: GradientBoxBorder(
+                        width: 1.5,
+                        gradient: LinearGradient(
+                          colors: [
+                            colors.primary,
+                            LiquidDrop.brandTeal(
+                              Theme.of(context).brightness,
+                            ).withValues(alpha: 0.35),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),

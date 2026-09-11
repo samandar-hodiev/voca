@@ -14,9 +14,9 @@ import 'package:flutter/material.dart';
 /// directly, because a value has no meaning and cannot be themed.
 abstract final class _Palette {
   // Indigo accent.
-  static const emerald50 = Color(0xFFD6F5E8);
-  static const emerald700 = Color(0xFF0A6E4F);
-  static const emerald800 = Color(0xFF085A40);
+  static const emerald50 = Color(0xFFD1FAE5);
+  static const emerald700 = Color(0xFF047857);
+  static const emerald800 = Color(0xFF065F46);
 
   // Neutrals.
   static const white = Color(0xFFFFFFFF);
@@ -141,8 +141,8 @@ class VocaColors extends ThemeExtension<VocaColors> {
 
   /// Light theme. The default; Voca's direction is bright, calm and spacious.
   static const light = VocaColors(
-    // A deep emerald. Filled controls run it from a lighter top down towards black
-    // (LiquidDrop), which is where the brand's depth comes from. White on it is 6.3:1.
+    // A clean emerald. Filled controls run it diagonally into teal with a soft light
+    // across the top (LiquidDrop): a gradient, not a slab. White on both ends is 5.5:1.
     primary: _Palette.emerald700,
     onPrimary: _Palette.white,
     primaryPressed: _Palette.emerald800,
