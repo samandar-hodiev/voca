@@ -101,15 +101,9 @@ class LiquidDrop extends StatelessWidget {
           ),
           border: GradientBoxBorder(
             width: 0.8,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withValues(alpha: 0.45),
-                Colors.white.withValues(alpha: 0.06),
-                Colors.white.withValues(alpha: 0.18),
-              ],
-              stops: const [0, 0.55, 1],
+            gradient: specularRim(
+              Colors.white.withValues(alpha: 0.6),
+              Colors.white.withValues(alpha: 0.08),
             ),
           ),
         ),
@@ -176,13 +170,9 @@ class GlassBead extends StatelessWidget {
           borderRadius: radius,
           border: GradientBoxBorder(
             width: 0.8,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: dark
-                  ? const [Color(0x40FFFFFF), Color(0x0DFFFFFF)]
-                  : const [Color(0xE6FFFFFF), Color(0x14000000)],
-            ),
+            gradient: dark
+                ? specularRim(const Color(0x59FFFFFF), const Color(0x0DFFFFFF))
+                : specularRim(const Color(0xFFFFFFFF), const Color(0x1A000000)),
           ),
         ),
         child: body,

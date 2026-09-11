@@ -141,6 +141,17 @@ The tab bar is a floating capsule of clear glass. Destinations are plain icons a
 the selected one gets a lighter glass lens behind it, which slides to a new destination,
 stretching a little and settling with a slight overshoot. Buttons are capsules.
 
+Details taken from Apple's Liquid Glass:
+
+- **Specular rim.** The hairline rim carries two highlights, the brighter top-left where
+  the light comes from and a fainter one bottom-right where it leaves (`specularRim`).
+- **Lensing.** Light gathers just inside the rim and fades inward, never behind text.
+- **Saturation.** What is seen through blurred glass is made 1.8x more saturated, so
+  colour glows through instead of turning grey.
+- **Touch light.** Pressing a glass control makes it glow softly from the point of
+  contact (`GlassTouchLight`). There is no Material ripple anywhere in the app.
+- **Scroll edge.** Content scrolling up under the status bar fades out.
+
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own
 shadow.

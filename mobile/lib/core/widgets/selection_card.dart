@@ -21,6 +21,7 @@ import '../theme/app_typography.dart';
 import 'app_badge.dart';
 import 'glass_surface.dart';
 import 'liquid_drop.dart';
+import 'glass_touch_light.dart';
 
 class SelectionCard extends StatelessWidget {
   const SelectionCard({
@@ -61,116 +62,119 @@ class SelectionCard extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: Stack(
           children: [
-            GlassSurface(
+            GlassTouchLight(
               borderRadius: radius,
-              // Selected thickens the pane and pulls it toward the brand colour, so the
-              // choice reads even before the check mark is noticed.
-              // Barely there on purpose. A fill heavy enough to hide the field behind it
-              // is a white card, whatever it is called. Selection is carried by the ring
-              // and the check mark, so the selected pane only has to shift hue.
-              tint: selected
-                  ? colors.primary.withValues(alpha: glass.selectionOpacity)
-                  : glass.tint.withValues(alpha: glass.controlOpacity),
-              padding: const EdgeInsets.symmetric(
-                horizontal: VocaSpacing.md,
-                vertical: VocaSpacing.sm,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Row(
-                  children: [
-                    if (leading != null) ...[
-                      SizedBox(
-                        width: 44,
-                        child: selected
-                            ? LiquidDrop(
-                                glow: false,
-                                borderRadius: VocaRadius.smallAll,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: VocaSpacing.xxs,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    leading!,
-                                    style: text.label.copyWith(
-                                      color: colors.onPrimary,
+              child: GlassSurface(
+                borderRadius: radius,
+                // Selected thickens the pane and pulls it toward the brand colour, so the
+                // choice reads even before the check mark is noticed.
+                // Barely there on purpose. A fill heavy enough to hide the field behind it
+                // is a white card, whatever it is called. Selection is carried by the ring
+                // and the check mark, so the selected pane only has to shift hue.
+                tint: selected
+                    ? colors.primary.withValues(alpha: glass.selectionOpacity)
+                    : glass.tint.withValues(alpha: glass.controlOpacity),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VocaSpacing.md,
+                  vertical: VocaSpacing.sm,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: [
+                      if (leading != null) ...[
+                        SizedBox(
+                          width: 44,
+                          child: selected
+                              ? LiquidDrop(
+                                  glow: false,
+                                  borderRadius: VocaRadius.smallAll,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: VocaSpacing.xxs,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      leading!,
+                                      style: text.label.copyWith(
+                                        color: colors.onPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : GlassBead(
+                                  borderRadius: VocaRadius.smallAll,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: VocaSpacing.xxs,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      leading!,
+                                      style: text.label.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              )
-                            : GlassBead(
-                                borderRadius: VocaRadius.smallAll,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: VocaSpacing.xxs,
-                                ),
-                                child: Center(
+                        ),
+                        const SizedBox(width: VocaSpacing.sm),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
                                   child: Text(
-                                    leading!,
-                                    style: text.label.copyWith(
-                                      color: colors.textSecondary,
+                                    title,
+                                    style: text.subtitle.copyWith(
+                                      color: colors.textPrimary,
                                     ),
                                   ),
                                 ),
-                              ),
-                      ),
-                      const SizedBox(width: VocaSpacing.sm),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  title,
-                                  style: text.subtitle.copyWith(
-                                    color: colors.textPrimary,
+                                if (badge != null) ...[
+                                  const SizedBox(width: VocaSpacing.xs),
+                                  AppBadge(
+                                    label: badge!,
+                                    tone: BadgeTone.primary,
                                   ),
-                                ),
-                              ),
-                              if (badge != null) ...[
-                                const SizedBox(width: VocaSpacing.xs),
-                                AppBadge(
-                                  label: badge!,
-                                  tone: BadgeTone.primary,
-                                ),
+                                ],
                               ],
-                            ],
-                          ),
-                          if (subtitle != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              subtitle!,
-                              style: text.caption.copyWith(
-                                color: colors.textSecondary,
-                              ),
                             ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle!,
+                                style: text.caption.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: VocaSpacing.xs),
-                    AnimatedOpacity(
-                      duration: VocaMotion.respectReducedMotion(
-                        context,
-                        VocaMotion.quick,
-                      ),
-                      opacity: selected ? 1 : 0,
-                      child: SizedBox.square(
-                        dimension: 22,
-                        child: LiquidDrop(
-                          glow: false,
-                          child: Icon(
-                            Icons.check_rounded,
-                            color: colors.onPrimary,
-                            size: 14,
+                      const SizedBox(width: VocaSpacing.xs),
+                      AnimatedOpacity(
+                        duration: VocaMotion.respectReducedMotion(
+                          context,
+                          VocaMotion.quick,
+                        ),
+                        opacity: selected ? 1 : 0,
+                        child: SizedBox.square(
+                          dimension: 22,
+                          child: LiquidDrop(
+                            glow: false,
+                            child: Icon(
+                              Icons.check_rounded,
+                              color: colors.onPrimary,
+                              size: 14,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

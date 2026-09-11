@@ -24,6 +24,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
+import 'glass_touch_light.dart';
 
 class GlassActionButton extends StatefulWidget {
   const GlassActionButton({
@@ -147,7 +148,14 @@ class _GlassActionButtonState extends State<GlassActionButton> {
             VocaMotion.instant,
           ),
           curve: VocaMotion.standardCurve,
-          child: SizedBox(width: double.infinity, child: surface),
+          child: SizedBox(
+            width: double.infinity,
+            child: GlassTouchLight(
+              borderRadius: VocaRadius.pillAll,
+              enabled: _enabled,
+              child: surface,
+            ),
+          ),
         ),
       ),
     );

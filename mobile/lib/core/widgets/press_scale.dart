@@ -7,6 +7,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../theme/app_motion.dart';
+import 'glass_touch_light.dart';
+import '../theme/app_radius.dart';
 
 class PressScale extends StatefulWidget {
   const PressScale({
@@ -14,10 +16,14 @@ class PressScale extends StatefulWidget {
     required this.child,
     this.onTap,
     this.semanticLabel,
+    this.borderRadius = VocaRadius.largeAll,
   });
 
   final Widget child;
   final VoidCallback? onTap;
+
+  /// The shape of what is pressed, so the light a finger leaves stays inside it.
+  final BorderRadius borderRadius;
 
   /// Announced to screen readers. Required in practice for anything without a visible
   /// label of its own.
@@ -53,7 +59,11 @@ class _PressScaleState extends State<PressScale> {
             VocaMotion.instant,
           ),
           curve: VocaMotion.standardCurve,
-          child: widget.child,
+          child: GlassTouchLight(
+            borderRadius: widget.borderRadius,
+            enabled: widget.onTap != null,
+            child: widget.child,
+          ),
         ),
       ),
     );

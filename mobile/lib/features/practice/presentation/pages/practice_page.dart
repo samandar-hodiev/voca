@@ -230,6 +230,7 @@ class _Pill extends StatelessWidget {
       selected: selected,
       child: PressScale(
         semanticLabel: '$label darajasi',
+        borderRadius: VocaRadius.pillAll,
         onTap: onTap,
         child: AnimatedSwitcher(
           duration: VocaMotion.respectReducedMotion(context, VocaMotion.quick),

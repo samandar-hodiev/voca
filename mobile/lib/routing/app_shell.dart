@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/widgets/liquid_background.dart';
 import '../core/widgets/liquid_bottom_bar.dart';
+import '../core/theme/app_colors.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
@@ -60,12 +61,46 @@ class AppShell extends StatelessWidget {
         // The same quiet wash as every other screen. The liquid is on the cards and
         // controls in front of it, not in the background.
         intensity: 1,
-        child: navigationShell,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [navigationShell, const _ScrollEdge()],
+        ),
       ),
       bottomNavigationBar: LiquidBottomBar(
         items: _items,
         currentIndex: navigationShell.currentIndex,
         onTap: _onTap,
+      ),
+    );
+  }
+}
+
+/// The iOS scroll edge: content scrolling up under the status bar fades out instead of
+/// running into the clock and the battery.
+class _ScrollEdge extends StatelessWidget {
+  const _ScrollEdge();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: MediaQuery.paddingOf(context).top + 20,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colors.background.withValues(alpha: 0.92),
+                colors.background.withValues(alpha: 0),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

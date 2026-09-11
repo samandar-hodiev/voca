@@ -21,6 +21,7 @@ import '../theme/app_typography.dart';
 import 'glass_surface.dart';
 import 'liquid_drop.dart';
 import '../theme/app_glass.dart';
+import 'glass_touch_light.dart';
 
 enum _Emphasis { primary, secondary, text }
 
@@ -227,18 +228,22 @@ class _VocaButtonState extends State<_VocaButton> {
             // ink. The label sits in the middle band, clear of the highlight and caustic.
             ? SizedBox(
                 width: widget.expand ? double.infinity : null,
-                child: LiquidDrop(
-                  color: background,
+                child: GlassTouchLight(
                   borderRadius: VocaRadius.pillAll,
-                  glow: _enabled && !_pressed,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: VocaSpacing.lg,
-                    vertical: VocaSpacing.sm,
-                  ),
-                  child: ConstrainedBox(
-                    // 48 is the accessible minimum touch target on both platforms.
-                    constraints: const BoxConstraints(minHeight: 32),
-                    child: Align(alignment: Alignment.center, child: content),
+                  enabled: _enabled,
+                  child: LiquidDrop(
+                    color: background,
+                    borderRadius: VocaRadius.pillAll,
+                    glow: _enabled && !_pressed,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VocaSpacing.lg,
+                      vertical: VocaSpacing.sm,
+                    ),
+                    child: ConstrainedBox(
+                      // 48 is the accessible minimum touch target on both platforms.
+                      constraints: const BoxConstraints(minHeight: 32),
+                      child: Align(alignment: Alignment.center, child: content),
+                    ),
                   ),
                 ),
               )
@@ -276,18 +281,22 @@ class _VocaButtonState extends State<_VocaButton> {
     final fill = glass.controlOpacity + (_pressed ? 0.22 : 0);
     return SizedBox(
       width: widget.expand ? double.infinity : null,
-      child: GlassSurface(
-        borderRadius: VocaRadius.mediumAll,
-        tint: glass.tint.withValues(alpha: fill.clamp(0.0, 1.0)),
-        borderWidth: 1.2,
-        showShadow: _enabled && !_pressed,
-        padding: const EdgeInsets.symmetric(
-          horizontal: VocaSpacing.lg,
-          vertical: VocaSpacing.sm,
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 32),
-          child: Align(alignment: Alignment.center, child: content),
+      child: GlassTouchLight(
+        borderRadius: VocaRadius.pillAll,
+        enabled: _enabled,
+        child: GlassSurface(
+          borderRadius: VocaRadius.mediumAll,
+          tint: glass.tint.withValues(alpha: fill.clamp(0.0, 1.0)),
+          borderWidth: 1.2,
+          showShadow: _enabled && !_pressed,
+          padding: const EdgeInsets.symmetric(
+            horizontal: VocaSpacing.lg,
+            vertical: VocaSpacing.sm,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 32),
+            child: Align(alignment: Alignment.center, child: content),
+          ),
         ),
       ),
     );

@@ -21,6 +21,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
+import 'glass_touch_light.dart';
 
 /// One destination in the bar.
 @immutable
@@ -205,13 +206,9 @@ class _Lens extends StatelessWidget {
         borderRadius: BorderRadius.circular(VocaRadius.pill),
         border: GradientBoxBorder(
           width: 0.8,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: dark
-                ? const [Color(0x4DFFFFFF), Color(0x0DFFFFFF)]
-                : const [Color(0xFFFFFFFF), Color(0x0F000000)],
-          ),
+          gradient: dark
+              ? specularRim(const Color(0x66FFFFFF), const Color(0x0DFFFFFF))
+              : specularRim(const Color(0xFFFFFFFF), const Color(0x14000000)),
         ),
       ),
     );
@@ -251,30 +248,33 @@ class _NavButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: const StadiumBorder(),
-        child: Padding(
-          // With the label this is over the 48 point minimum touch target.
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected ? item.activeIcon : item.icon,
-                size: 24,
-                color: foreground,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.label,
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                softWrap: false,
-                style: text.caption.copyWith(
-                  fontSize: 11,
+        child: GlassTouchLight(
+          borderRadius: BorderRadius.circular(VocaRadius.pill),
+          child: Padding(
+            // With the label this is over the 48 point minimum touch target.
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? item.activeIcon : item.icon,
+                  size: 24,
                   color: foreground,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: text.caption.copyWith(
+                    fontSize: 11,
+                    color: foreground,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

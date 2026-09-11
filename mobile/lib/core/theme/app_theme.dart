@@ -31,6 +31,11 @@ abstract final class VocaTheme {
       brightness: brightness,
       scaffoldBackgroundColor: c.background,
       canvasColor: c.background,
+
+      // No Material ripple: iOS does not ripple, and on glass the press is shown by the
+      // light a finger leaves (GlassTouchLight) and a faint dim.
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: c.textPrimary.withValues(alpha: 0.05),
       textTheme: textTheme,
 
       colorScheme:
@@ -110,8 +115,6 @@ abstract final class VocaTheme {
         behavior: SnackBarBehavior.floating,
         shape: const RoundedRectangleBorder(borderRadius: VocaRadius.mediumAll),
       ),
-
-      splashFactory: InkSparkle.splashFactory,
     );
   }
 }

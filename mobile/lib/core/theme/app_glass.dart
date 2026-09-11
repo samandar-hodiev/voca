@@ -76,33 +76,33 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   final List<BoxShadow> shadows;
 
   static const light = VocaGlass(
-    tint: Color(0x33FFFFFF),
+    tint: Color(0x40FFFFFF),
     controlOpacity: 0.20,
     selectionOpacity: 0.16,
-    highlight: Color(0x40FFFFFF),
-    borderTop: Color(0xB3FFFFFF),
+    highlight: Color(0x4DFFFFFF),
+    borderTop: Color(0xE6FFFFFF),
     borderBottom: Color(0x40FFFFFF),
     blurSigma: 24,
     radius: VocaRadius.xlarge,
     shadows: [
       // GlassSurface paints these outside the pane only; under translucent glass an
       // ordinary shadow would show through and grey it.
-      BoxShadow(color: Color(0x142B2B60), blurRadius: 30, offset: Offset(0, 6)),
+      BoxShadow(color: Color(0x1A2B2B60), blurRadius: 32, offset: Offset(0, 8)),
       BoxShadow(color: Color(0x0D2B2B60), blurRadius: 4, offset: Offset(0, 1)),
     ],
   );
 
   static const dark = VocaGlass(
-    tint: Color(0x661B212C),
+    tint: Color(0x731B212C),
     controlOpacity: 0.40,
     selectionOpacity: 0.34,
-    highlight: Color(0x14FFFFFF),
-    borderTop: Color(0x4DFFFFFF),
+    highlight: Color(0x1AFFFFFF),
+    borderTop: Color(0x66FFFFFF),
     borderBottom: Color(0x1FFFFFFF),
     blurSigma: 24,
     radius: VocaRadius.xlarge,
     shadows: [
-      BoxShadow(color: Color(0x59000000), blurRadius: 30, offset: Offset(0, 8)),
+      BoxShadow(color: Color(0x66000000), blurRadius: 30, offset: Offset(0, 8)),
     ],
   );
 

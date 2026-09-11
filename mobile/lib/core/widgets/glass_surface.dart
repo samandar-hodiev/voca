@@ -11,8 +11,8 @@
 ///   glows through instead of turning grey. That is most of the difference between a
 ///   material and a milky overlay.
 /// * The tint is thin. Separation comes from the blur, the rim and a soft shadow.
-/// * The rim is a hairline that catches the light: brightest along the top, a fainter
-///   return along the bottom, like the edge of a lens.
+/// * The rim is a hairline with two specular highlights, the brighter one top-left
+///   where the light comes from and a fainter one bottom-right where it leaves.
 /// * Light gathers just inside the rim and fades inward, the lensing that makes it liquid.
 /// * No glints, blobs or coloured glows. Those turn glass into a cartoon of glass.
 library;
@@ -55,12 +55,12 @@ class GlassSurface extends StatelessWidget {
 
   final bool showShadow;
 
-  /// The saturation boost applied to what is seen through the pane (1.6), as a colour
+  /// The saturation boost applied to what is seen through the pane (1.8), as a colour
   /// matrix that keeps luminance where it was.
   static const saturation = <double>[
-    1.47244, -0.42912, -0.04332, 0, 0, //
-    -0.12756, 1.17088, -0.04332, 0, 0, //
-    -0.12756, -0.42912, 1.55668, 0, 0, //
+    1.62992, -0.57216, -0.05776, 0, 0, //
+    -0.17008, 1.22784, -0.05776, 0, 0, //
+    -0.17008, -0.57216, 1.74224, 0, 0, //
     0, 0, 0, 1, 0, //
   ];
 
@@ -109,7 +109,7 @@ class GlassSurface extends StatelessWidget {
         child: CustomPaint(
           painter: _EdgeLens(
             borderRadius: radius,
-            color: glass.borderTop.withValues(alpha: glass.borderTop.a * 0.45),
+            color: glass.borderTop.withValues(alpha: glass.borderTop.a * 0.55),
           ),
           child: Padding(
             padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
@@ -145,18 +145,7 @@ class GlassSurface extends StatelessWidget {
                 borderRadius: radius,
                 border: GradientBoxBorder(
                   width: borderWidth,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      glass.borderTop,
-                      glass.borderBottom.withValues(
-                        alpha: glass.borderBottom.a * 0.4,
-                      ),
-                      glass.borderBottom,
-                    ],
-                    stops: const [0, 0.55, 1],
-                  ),
+                  gradient: specularRim(glass.borderTop, glass.borderBottom),
                 ),
               ),
             ),
@@ -208,9 +197,9 @@ class _EdgeLens extends CustomPainter {
         pane,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 8
+          ..strokeWidth = 10
           ..color = color
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       )
       ..restore();
   }
@@ -295,6 +284,17 @@ class _TopEdge extends CustomPainter {
       old.borderRadius != borderRadius ||
       old.inset != inset ||
       old.color != color;
+}
+
+/// The rim of Liquid Glass: two specular highlights, the brighter along the top-left where
+/// the light comes from and a fainter one bottom-right where it leaves, with the edge
+/// dimmer in between. It is the one detail that most makes a pane read as glass.
+Gradient specularRim(Color bright, Color dim) {
+  final soft = Color.lerp(dim, bright, 0.55)!;
+  return SweepGradient(
+    colors: [dim, soft, dim, bright, dim, dim],
+    stops: const [0, 0.125, 0.375, 0.625, 0.875, 1],
+  );
 }
 
 /// A border whose colour follows a gradient.
