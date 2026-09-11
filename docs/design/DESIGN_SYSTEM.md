@@ -152,6 +152,17 @@ Details taken from Apple's Liquid Glass:
   contact (`GlassTouchLight`). There is no Material ripple anywhere in the app.
 - **Scroll edge.** Content scrolling up under the status bar fades out.
 
+Cards follow a reference the product owner chose: dark smoked glass (a near-black tint
+in dark mode) with a dim hairline rim, and a teal light pooling at the top-right and
+bottom-left corners that spills a little past the edge. The light stays near its corner.
+Controls, the tab bar and selection cards keep a plain hairline, so a screen has one
+kind of lit object.
+
+The tab bar follows a reference tab bar: a tall clear capsule with a thin light rim,
+outline icons at rest, and the selected destination in a lighter pill of liquid glass
+(lit across the top, a touch deeper at the bottom) with its icon filled. Voca keeps its
+own destinations, icons and labels; only the design comes from the reference.
+
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own
 shadow.

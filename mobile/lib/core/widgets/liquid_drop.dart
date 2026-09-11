@@ -38,14 +38,14 @@ class LiquidDrop extends StatelessWidget {
   final bool glow;
 
   /// How much white the top edge carries, per theme.
-  static const topLightenLight = 0.14;
-  static const topLightenDark = 0.16;
+  static const topLightenLight = 0.18;
+  static const topLightenDark = 0.20;
 
   /// Where the bottom starts to deepen, and how much. Together with the lighter top this
   /// is the little volume a filled control has, without any gloss.
   static const shadeStart = 0.72;
-  static const shadeLight = 0.10;
-  static const shadeDark = 0.14;
+  static const shadeLight = 0.12;
+  static const shadeDark = 0.16;
   static const labelBandBottom = 0.70;
 
   /// Where, as a fraction of the height, the light at the top has faded out. A label's
@@ -175,7 +175,22 @@ class GlassBead extends StatelessWidget {
                 : specularRim(const Color(0xFFFFFFFF), const Color(0x1A000000)),
           ),
         ),
-        child: body,
+        // A little volume: light gathered across the top of the well.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: dark ? 0.12 : 0.5),
+                Colors.white.withValues(alpha: 0),
+              ],
+              stops: const [0, 0.35],
+            ),
+          ),
+          child: body,
+        ),
       ),
     );
 

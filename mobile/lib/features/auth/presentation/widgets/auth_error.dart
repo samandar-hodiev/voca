@@ -65,6 +65,7 @@ class AuthErrorBanner extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: VocaSpacing.md),
         child: GlassSurface(
+          edgeGlow: false,
           blur: false,
           showShadow: false,
           tint: colors.errorMuted,

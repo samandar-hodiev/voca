@@ -259,14 +259,12 @@ void main() {
             : LiquidBottomBar.lightGlassAlpha;
         Color bar(Color b) =>
             throughGlass(glass.tint.withValues(alpha: alpha), b);
-        Color lens(Color b) =>
-            Color.alphaBlend(LiquidBottomBar.lensFill(brightness), bar(b));
-        expectReadable('inactive label', colors.textSecondary, bar);
-        expectReadable(
-          'selected label on the lens',
-          colors.onPrimaryMuted,
-          lens,
+        Color lens(Color b) => Color.alphaBlend(
+          LiquidBottomBar.lensTopLight(brightness),
+          Color.alphaBlend(LiquidBottomBar.lensFill(brightness), bar(b)),
         );
+        expectReadable('inactive label', colors.textSecondary, bar);
+        expectReadable('selected label on the pill', colors.textPrimary, lens);
       });
     });
   }

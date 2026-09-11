@@ -93,11 +93,11 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   );
 
   static const dark = VocaGlass(
-    tint: Color(0x731B212C),
+    tint: Color(0x990A0E14),
     controlOpacity: 0.40,
     selectionOpacity: 0.34,
     highlight: Color(0x1AFFFFFF),
-    borderTop: Color(0x66FFFFFF),
+    borderTop: Color(0x40FFFFFF),
     borderBottom: Color(0x1FFFFFFF),
     blurSigma: 24,
     radius: VocaRadius.xlarge,

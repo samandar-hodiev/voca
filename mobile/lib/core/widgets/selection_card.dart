@@ -65,6 +65,7 @@ class SelectionCard extends StatelessWidget {
             GlassTouchLight(
               borderRadius: radius,
               child: GlassSurface(
+                edgeGlow: false,
                 borderRadius: radius,
                 // Selected thickens the pane and pulls it toward the brand colour, so the
                 // choice reads even before the check mark is noticed.

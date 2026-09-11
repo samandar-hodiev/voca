@@ -78,6 +78,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
     final tint = glass.tint.withValues(alpha: fillAlpha);
 
     final surface = GlassSurface(
+      edgeGlow: false,
       borderRadius: VocaRadius.pillAll,
       tint: tint,
       borderWidth: _enabled ? 1.4 : 1,

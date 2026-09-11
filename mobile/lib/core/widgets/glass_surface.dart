@@ -1,22 +1,22 @@
-/// Glass surface primitives, after the iOS Liquid Glass material.
+/// Glass surface primitives.
 ///
 /// Two widgets, not a family: [GlassSurface] is the primitive and [GlassCard] is the
 /// padded card everything else should reach for.
 ///
-/// What makes glass read as glass on iOS is restraint rather than decoration:
+/// The look follows Apple's Liquid Glass and a reference card the product owner chose,
+/// dark smoked glass with light pooling at two corners:
 ///
-///   backdrop blur + saturation  ->  thin tint  ->  soft top light  ->  hairline rim
-///
-/// * What shows through the pane is blurred AND made more saturated, so colour behind it
-///   glows through instead of turning grey. That is most of the difference between a
-///   material and a milky overlay.
-/// * The tint is thin. Separation comes from the blur, the rim and a soft shadow.
-/// * The rim is a hairline with two specular highlights, the brighter one top-left
-///   where the light comes from and a fainter one bottom-right where it leaves.
-/// * Light gathers just inside the rim and fades inward, the lensing that makes it liquid.
-/// * No glints, blobs or coloured glows. Those turn glass into a cartoon of glass.
+/// * What shows through is blurred and made more saturated, so colour glows through
+///   instead of turning grey.
+/// * The tint is thin in light and a near-black smoke in dark.
+/// * The rim is a dim hairline. On cards, light pools at two opposite corners, top-right
+///   and bottom-left, and spills a little past the edge. That corner light is what makes
+///   a card read as a lit piece of glass rather than a box with a border.
+/// * Light gathers just inside the rim, the lensing that makes it liquid.
+/// * No glints, blobs or coloured fills. Those turn glass into a cartoon of glass.
 library;
 
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -35,14 +35,14 @@ class GlassSurface extends StatelessWidget {
     this.showShadow = true,
     this.tint,
     this.borderWidth = 1,
+    this.edgeGlow = true,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
 
-  /// Overrides the fill. A control that sits directly on the background wants a thinner
-  /// tint than a content card does. Null uses the theme's tint.
+  /// Overrides the fill. Null uses the theme's tint.
   final Color? tint;
 
   /// Rim thickness.
@@ -54,6 +54,18 @@ class GlassSurface extends StatelessWidget {
   final bool blur;
 
   final bool showShadow;
+
+  /// Whether light pools at the top-right and bottom-left corners. On for cards, sheets
+  /// and dialogs; off for controls and the tab bar, whose rim is a plain hairline, so a
+  /// screen has one kind of lit object rather than a dozen.
+  final bool edgeGlow;
+
+  /// The corner light, per theme: a teal between the brand indigo and the green in the
+  /// background, as in the reference.
+  static Color cornerLight(Brightness brightness) =>
+      brightness == Brightness.dark
+      ? const Color(0xE64FE3D0)
+      : const Color(0x8C14B8A6);
 
   /// The saturation boost applied to what is seen through the pane (1.8), as a colour
   /// matrix that keeps luminance where it was.
@@ -84,12 +96,12 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glass = context.vocaGlass;
+    final brightness = Theme.of(context).brightness;
     final radius = borderRadius ?? BorderRadius.circular(glass.radius);
 
-    // The pane: a thin tint, then soft light fading down from the top edge.
-    //
-    // Two stacked decorations on purpose. BoxDecoration ignores `color` the moment a
-    // `gradient` is set, so painting both in one decoration silently drops the tint.
+    // The pane: a thin tint, soft light fading down from the top edge, and light
+    // gathering at the rim. Stacked decorations on purpose: BoxDecoration ignores
+    // `color` the moment a `gradient` is set.
     Widget pane = DecoratedBox(
       decoration: BoxDecoration(
         color: tint ?? glass.tint,
@@ -105,7 +117,6 @@ class GlassSurface extends StatelessWidget {
             stops: const [0, 0.5],
           ),
         ),
-        // Light gathering at the rim, painted behind the content.
         child: CustomPaint(
           painter: _EdgeLens(
             borderRadius: radius,
@@ -132,21 +143,23 @@ class GlassSurface extends StatelessWidget {
       );
     }
 
-    // The hairline rim, painted over the clipped pane. Passthrough, so a pane given a
-    // fixed size (a card stretched to match its neighbour) fills it.
+    // The rim is painted over the clipped pane and is allowed past it, so the corner
+    // light can spill over the edge. Passthrough, so a pane given a fixed size (a card
+    // stretched to match its neighbour) fills it.
     final surface = Stack(
       fit: StackFit.passthrough,
+      clipBehavior: Clip.none,
       children: [
         ClipRRect(borderRadius: radius, child: pane),
         Positioned.fill(
           child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
+            child: CustomPaint(
+              painter: _RimLight(
                 borderRadius: radius,
-                border: GradientBoxBorder(
-                  width: borderWidth,
-                  gradient: specularRim(glass.borderTop, glass.borderBottom),
-                ),
+                width: borderWidth,
+                top: glass.borderTop,
+                bottom: glass.borderBottom,
+                glow: edgeGlow ? cornerLight(brightness) : null,
               ),
             ),
           ),
@@ -176,10 +189,88 @@ class GlassSurface extends StatelessWidget {
   }
 }
 
+/// The rim: a dim hairline, a little brighter along the top, and when [glow] is given,
+/// light pooling at the top-right and bottom-left corners with a soft bloom that spills
+/// both ways across the edge.
+class _RimLight extends CustomPainter {
+  const _RimLight({
+    required this.borderRadius,
+    required this.width,
+    required this.top,
+    required this.bottom,
+    required this.glow,
+  });
+
+  final BorderRadius borderRadius;
+  final double width;
+  final Color top;
+  final Color bottom;
+  final Color? glow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final rect = Offset.zero & size;
+    final rim = borderRadius.toRRect(rect.deflate(width / 2));
+
+    canvas.drawRRect(
+      rim,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [top, bottom],
+        ).createShader(rect),
+    );
+
+    final light = glow;
+    if (light == null) return;
+    // The light stays near its corner, as in the reference, rather than running
+    // the length of a small card's edge.
+    final reach = math.min(size.shortestSide * 0.5, 110.0);
+    for (final corner in [rect.topRight, rect.bottomLeft]) {
+      final area = Rect.fromCircle(center: corner, radius: reach);
+      // The bloom: the same light, blurred, spilling across the edge.
+      canvas.drawRRect(
+        rim,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
+          ..shader = RadialGradient(
+            colors: [
+              light.withValues(alpha: light.a * 0.55),
+              light.withValues(alpha: 0),
+            ],
+          ).createShader(area),
+      );
+      // The lit hairline itself.
+      canvas.drawRRect(
+        rim,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = width * 1.3
+          ..shader = RadialGradient(
+            colors: [light, light.withValues(alpha: 0)],
+          ).createShader(area),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RimLight old) =>
+      old.borderRadius != borderRadius ||
+      old.width != width ||
+      old.top != top ||
+      old.bottom != bottom ||
+      old.glow != glow;
+}
+
 /// Light bending at the rim: a soft brightening just inside the edge that fades inward,
-/// the way a thick piece of glass gathers light along its border. It is what makes a clear
-/// pane read as liquid glass rather than a line drawing of one. Kept to the edge, inside
-/// the padding, so it never sits behind text.
+/// the way a thick piece of glass gathers light along its border. Kept to the edge,
+/// inside the padding, so it never sits behind text.
 class _EdgeLens extends CustomPainter {
   const _EdgeLens({required this.borderRadius, required this.color});
 
@@ -286,9 +377,8 @@ class _TopEdge extends CustomPainter {
       old.color != color;
 }
 
-/// The rim of Liquid Glass: two specular highlights, the brighter along the top-left where
-/// the light comes from and a fainter one bottom-right where it leaves, with the edge
-/// dimmer in between. It is the one detail that most makes a pane read as glass.
+/// The rim of a small glass control: two specular highlights, the brighter top-left where
+/// the light comes from and a fainter one bottom-right, with the edge dimmer in between.
 Gradient specularRim(Color bright, Color dim) {
   final soft = Color.lerp(dim, bright, 0.55)!;
   return SweepGradient(

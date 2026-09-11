@@ -285,6 +285,7 @@ class _VocaButtonState extends State<_VocaButton> {
         borderRadius: VocaRadius.pillAll,
         enabled: _enabled,
         child: GlassSurface(
+          edgeGlow: false,
           borderRadius: VocaRadius.mediumAll,
           tint: glass.tint.withValues(alpha: fill.clamp(0.0, 1.0)),
           borderWidth: 1.2,

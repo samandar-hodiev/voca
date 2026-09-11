@@ -158,6 +158,7 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
           // The verified address, shown but not editable: changing it here would discard
           // the verification that was just completed.
           GlassSurface(
+            edgeGlow: false,
             blur: false,
             showShadow: false,
             tint: colors.successMuted,
