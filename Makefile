@@ -28,14 +28,25 @@ admin:
 #
 # Edit code in this repository; this target copies it before each run.
 #
-# CocoaPods output is excluded from the delete pass. It is generated inside the run
-# directory and does not exist in this repository, so without these excludes every sync
-# would wipe Pods while leaving the Xcode project still referencing them, and the build
-# would fail with "Module not found" for whichever plugin Xcode reached first.
+# Everything the iOS build generates is excluded from the delete pass, because it is
+# produced inside the run directory and does not exist in this repository. Without the
+# excludes every sync wipes it while leaving the Xcode project still referencing it, and
+# the build fails with missing modules or undefined Flutter symbols.
+#
+# Adding or removing a dependency invalidates all of it, so the generated state is thrown
+# away whenever pubspec.yaml changes. Getting that wrong costs an afternoon of chasing
+# linker errors that have nothing to do with the code being written.
 mobile-sync:
 	@mkdir -p $(MOBILE_RUN_DIR)
+	@if ! cmp -s mobile/pubspec.yaml $(MOBILE_RUN_DIR)/pubspec.yaml; then \
+		echo "pubspec o'zgardi: iOS generatsiyasi tozalanmoqda"; \
+		rm -rf $(MOBILE_RUN_DIR)/ios/Pods $(MOBILE_RUN_DIR)/ios/Podfile.lock \
+			$(MOBILE_RUN_DIR)/ios/.symlinks $(MOBILE_RUN_DIR)/ios/Flutter/ephemeral \
+			$(MOBILE_RUN_DIR)/build $(MOBILE_RUN_DIR)/.dart_tool; \
+	fi
 	@rsync -a --delete --exclude build --exclude .dart_tool --exclude .idea \
 		--exclude ios/Pods --exclude ios/.symlinks --exclude ios/Podfile.lock \
+		--exclude ios/Flutter/ephemeral \
 		--exclude macos/Pods --exclude macos/Podfile.lock \
 		mobile/ $(MOBILE_RUN_DIR)/
 	@xattr -cr /tmp/voca-run 2>/dev/null || true

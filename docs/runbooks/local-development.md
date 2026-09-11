@@ -503,3 +503,12 @@ signing certificate's SHA-1 and SHA-256 fingerprints, and put `google-services.j
 The button stays disabled until BOTH halves are in place: the backend reporting the
 capability, and Firebase actually starting in the app. A button that opens a picker it
 cannot finish is worse than one that says it is coming.
+
+### The configuration file is not in the repository
+
+`mobile/ios/Runner/GoogleService-Info.plist` is gitignored, but the Xcode project
+references it. A fresh clone therefore builds only after that file is downloaded from the
+Firebase console and put in place. Registering it in the Xcode project is already done and
+is committed; only the file itself is missing.
+
+If the build stops with a missing input file naming that plist, that is what happened.

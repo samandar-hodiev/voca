@@ -38,22 +38,29 @@ class AuthEntryPage extends ConsumerStatefulWidget {
   ConsumerState<AuthEntryPage> createState() => _AuthEntryPageState();
 }
 
-class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
-  bool _googleBusy = false;
+/// Which way in is currently running.
+///
+/// One value rather than a flag per button, because only one can be in flight at a time
+/// and the spinner has to sit on the button that was actually tapped. The controller's
+/// shared busy flag cannot answer that: it says something is happening, not what.
+enum _Attempt { google, guest }
 
-  /// Starts the Google flow and goes to the product if it succeeds.
+class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
+  _Attempt? _attempt;
+
+  /// Runs one way in, showing the spinner on its own button.
   ///
   /// The screen owns none of the sequence. Picker, Firebase, backend verification and
-  /// session storage all live behind the controller, so this method only guards against a
-  /// second tap and decides where to go afterwards.
-  Future<void> _signInWithGoogle() async {
-    if (_googleBusy) return;
-    setState(() => _googleBusy = true);
+  /// session storage all live behind the controller, so this only guards against a second
+  /// tap and decides where to go afterwards.
+  Future<void> _start(_Attempt attempt, Future<bool> Function() run) async {
+    if (_attempt != null) return;
+    setState(() => _attempt = attempt);
     try {
-      final ok = await ref.read(authControllerProvider.notifier).signInWithGoogle();
+      final ok = await run();
       if (ok && mounted) context.go(Routes.home);
     } finally {
-      if (mounted) setState(() => _googleBusy = false);
+      if (mounted) setState(() => _attempt = null);
     }
   }
 
@@ -67,7 +74,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
     // Until the server answers, optional methods stay disabled. Enabling them optimistically
     // would show a working button that fails on the first tap.
     final caps = capabilities.valueOrNull ?? const Capabilities();
-    final busy = state.isBusy || _googleBusy;
+    final busy = state.isBusy || _attempt != null;
 
     // Both halves have to be there. The server decides whether it can verify a token, and
     // the app decides whether it can produce one: without the platform configuration file
@@ -77,7 +84,8 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
 
     return SetupScaffold(
       title: 'Voca akkauntingizni yarating',
-      subtitle: 'Natijalaringiz saqlanadi va barcha qurilmalarda mavjud bo‘ladi.',
+      subtitle:
+          'Natijalaringiz saqlanadi va barcha qurilmalarda mavjud bo‘ladi.',
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
@@ -85,23 +93,40 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
           GlassActionButton(
             label: 'Google bilan kirish',
             icon: const GoogleMark(),
-            isLoading: _googleBusy,
+            isLoading: _attempt == _Attempt.google,
             unavailableNote: googleReady ? null : 'Tez orada',
-            onPressed: googleReady && !busy ? () => unawaited(_signInWithGoogle()) : null,
+            onPressed: googleReady && !busy
+                ? () => unawaited(
+                    _start(
+                      _Attempt.google,
+                      ref
+                          .read(authControllerProvider.notifier)
+                          .signInWithGoogle,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: VocaSpacing.sm),
 
           GlassActionButton(
             label: 'Email bilan kirish',
-            icon: Icon(Icons.mail_outline_rounded, size: 20, color: colors.primary),
-            onPressed: busy ? null : () => unawaited(context.push(Routes.emailSignUp)),
+            icon: Icon(
+              Icons.mail_outline_rounded,
+              size: 20,
+              color: colors.primary,
+            ),
+            onPressed: busy
+                ? null
+                : () => unawaited(context.push(Routes.emailSignUp)),
           ),
           const SizedBox(height: VocaSpacing.sm),
 
           const SizedBox(height: VocaSpacing.lg),
 
           TextButton(
-            onPressed: busy ? null : () => unawaited(context.push(Routes.login)),
+            onPressed: busy
+                ? null
+                : () => unawaited(context.push(Routes.login)),
             child: Text.rich(
               TextSpan(
                 text: 'Akkauntingiz bormi? ',
@@ -122,16 +147,20 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
 
           GlassActionButton(
             label: 'Mehmon sifatida kirish',
-            icon: Icon(Icons.person_outline_rounded, size: 20, color: colors.textSecondary),
-            isLoading: state.isBusy,
+            icon: Icon(
+              Icons.person_outline_rounded,
+              size: 20,
+              color: colors.textSecondary,
+            ),
+            isLoading: _attempt == _Attempt.guest,
             onPressed: busy
                 ? null
-                : () async {
-                    final ok = await ref
-                        .read(authControllerProvider.notifier)
-                        .continueAsGuest();
-                    if (ok && context.mounted) context.go(Routes.home);
-                  },
+                : () => unawaited(
+                    _start(
+                      _Attempt.guest,
+                      ref.read(authControllerProvider.notifier).continueAsGuest,
+                    ),
+                  ),
           ),
           const SizedBox(height: VocaSpacing.sm),
           Text(
