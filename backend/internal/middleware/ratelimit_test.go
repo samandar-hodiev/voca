@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -111,5 +112,35 @@ func TestRateLimitForgetsIdleClients(t *testing.T) {
 	if len(limiter.buckets) >= before {
 		t.Errorf("buckets = %d, want the expired ones dropped (was %d)",
 			len(limiter.buckets), before)
+	}
+}
+
+// The limit keys on ClientIP, and ClientIP is only as honest as the proxy configuration.
+// With no trusted proxy, a caller rotating X-Forwarded-For must still land in one bucket;
+// otherwise the limit that stops address enumeration does nothing.
+func TestRateLimitIgnoresSpoofedForwardingHeaders(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	if err := r.SetTrustedProxies(nil); err != nil {
+		t.Fatalf("SetTrustedProxies: %v", err)
+	}
+	r.Use(RateLimit(RateLimitConfig{Requests: 3, Window: time.Minute}))
+	r.GET("/x", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	blocked := 0
+	for i := 0; i < 10; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/x", nil)
+		req.RemoteAddr = "203.0.113.7:4000"
+		req.Header.Set("X-Forwarded-For", fmt.Sprintf("10.0.0.%d", i))
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code == http.StatusTooManyRequests {
+			blocked++
+		}
+	}
+
+	if blocked != 7 {
+		t.Fatalf("blocked %d of 10 with a rotating header, want 7: the header must not "+
+			"buy a fresh bucket", blocked)
 	}
 }

@@ -76,6 +76,14 @@ type Config struct {
 	// never reveals a code. Ignored entirely in production.
 	EmailOutboxDir string
 
+	// TrustedProxies lists the addresses whose X-Forwarded-For header is believed. Empty
+	// means none, so a client's address is the connection's own address.
+	//
+	// Getting this wrong silently disables the rate limit: when every proxy is trusted, a
+	// caller can put any value in X-Forwarded-For and get a fresh bucket on every request.
+	// Set it to the load balancer's address once there is one.
+	TrustedProxies []string
+
 	// AuthRateLimitPerMin bounds how often one address may call the auth endpoints.
 	// It is what keeps "this email is taken" from becoming a way to walk a list of
 	// addresses and learn who is a customer.
@@ -135,6 +143,7 @@ func Load() (Config, error) {
 		SMTPFrom:            strings.TrimSpace(os.Getenv("SMTP_FROM")),
 		SMTPFromName:        strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
 		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
+		TrustedProxies:      splitAndTrim(os.Getenv("TRUSTED_PROXIES")),
 		AuthRateLimitPerMin: getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 20),
 		AvatarDir:           getEnv("AVATAR_DIR", "tmp/avatars"),
 		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),

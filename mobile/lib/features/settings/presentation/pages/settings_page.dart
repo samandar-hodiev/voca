@@ -5,8 +5,15 @@
 /// their features arrive.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/di/providers.dart';
+import '../../../../core/widgets/glass_action_button.dart';
+import '../../../../routing/routes.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -62,7 +69,9 @@ class SettingsPage extends ConsumerWidget {
                       const SizedBox(height: VocaSpacing.xxs),
                       Text(
                         'Ilova qanday ko‘rinishini tanlang.',
-                        style: text.caption.copyWith(color: colors.textSecondary),
+                        style: text.caption.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: VocaSpacing.md),
 
@@ -77,6 +86,11 @@ class SettingsPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: VocaSpacing.sm),
                       ],
+
+                      const SizedBox(height: VocaSpacing.xl),
+                      Text('Hisob', style: text.subtitle),
+                      const SizedBox(height: VocaSpacing.md),
+                      const _SignOutButton(),
                     ],
                   ),
                 ),
@@ -108,14 +122,45 @@ const _appearanceOptions = [
     'Tizim bo‘yicha',
     'Telefon sozlamasiga ergashadi',
   ),
-  _Appearance(
-    ThemeMode.light,
-    'Yorug‘',
-    'Doim yorug‘ ko‘rinish',
-  ),
-  _Appearance(
-    ThemeMode.dark,
-    'Qorong‘i',
-    'Doim qorong‘i ko‘rinish',
-  ),
+  _Appearance(ThemeMode.light, 'Yorug‘', 'Doim yorug‘ ko‘rinish'),
+  _Appearance(ThemeMode.dark, 'Qorong‘i', 'Doim qorong‘i ko‘rinish'),
 ];
+
+/// Ends the session and returns to the way in.
+///
+/// Its own widget so the spinner belongs to this button alone and a second tap cannot
+/// start a second sign-out while the first is still clearing storage.
+class _SignOutButton extends ConsumerStatefulWidget {
+  const _SignOutButton();
+
+  @override
+  ConsumerState<_SignOutButton> createState() => _SignOutButtonState();
+}
+
+class _SignOutButtonState extends ConsumerState<_SignOutButton> {
+  bool _busy = false;
+
+  Future<void> _signOut() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      // Both sessions end here: Voca's, and the Google one. Leaving the Google session
+      // behind would make the next sign-in silently reuse this account.
+      await ref.read(signOutProvider)();
+      if (mounted) context.go(Routes.authEntry);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    return GlassActionButton(
+      label: 'Hisobdan chiqish',
+      icon: Icon(Icons.logout_rounded, size: 20, color: colors.error),
+      isLoading: _busy,
+      onPressed: _busy ? null : () => unawaited(_signOut()),
+    );
+  }
+}

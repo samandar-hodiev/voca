@@ -1065,3 +1065,61 @@ func TestSplitDisplayName(t *testing.T) {
 		}
 	}
 }
+
+// Somebody who keeps typing a registered address into sign-up must not be able to make
+// Voca mail its owner over and over. The answer to the app stays the same either way, so
+// the throttle cannot be observed from outside.
+func TestStartEmailVerification_NoticeIsSentOncePerWindow(t *testing.T) {
+	svc, repo, mail := newService(t)
+	repo.addUser("taken@voca.dev", "password123")
+
+	for i := 0; i < 5; i++ {
+		err := svc.StartEmailVerification(context.Background(), "taken@voca.dev")
+		if got := codeOf(t, err); got != apperr.CodeEmailAlreadyExists {
+			t.Fatalf("attempt %d gave %s, want EMAIL_ALREADY_EXISTS every time", i+1, got)
+		}
+	}
+
+	notices := 0
+	for _, m := range mail.sent {
+		if m.Template == TemplateAccountExists {
+			notices++
+		}
+	}
+	if notices != 1 {
+		t.Fatalf("sent %d notices for five attempts, want exactly one", notices)
+	}
+}
+
+func TestNoticeThrottleWindow(t *testing.T) {
+	var th noticeThrottle
+	now := time.Now()
+	window := 15 * time.Minute
+
+	if !th.allow("a@b.com", now, window) {
+		t.Fatal("the first notice should be allowed")
+	}
+	if th.allow("a@b.com", now.Add(time.Minute), window) {
+		t.Fatal("a second notice inside the window should be refused")
+	}
+	if !th.allow("other@b.com", now.Add(time.Minute), window) {
+		t.Fatal("a different address must not be affected")
+	}
+	if !th.allow("a@b.com", now.Add(window+time.Second), window) {
+		t.Fatal("a notice after the window should be allowed again")
+	}
+}
+
+// A Google or guest account has no password. Trying one with a password must look exactly
+// like a wrong password, not like an error, and not like an instant refusal.
+func TestLogin_AccountWithoutAPasswordIsJustWrongCredentials(t *testing.T) {
+	svc, repo, _ := newService(t)
+	repo.addUser("social@voca.dev", "unused")
+	u, _ := repo.UserByEmail(context.Background(), "social@voca.dev")
+	delete(repo.hashes, u.ID) // what a Google-created account looks like
+
+	_, err := svc.Login(context.Background(), "social@voca.dev", "anything123")
+	if got := codeOf(t, err); got != apperr.CodeInvalidCredentials {
+		t.Fatalf("got %s, want INVALID_CREDENTIALS", got)
+	}
+}

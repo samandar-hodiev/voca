@@ -175,6 +175,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		DevhookHandler: devhookHandler,
 		AuthHandler:    auth.NewHandler(authService),
 		RequireAuth:    middleware.RequireAuth(jwtVerifier{issuer}),
+		TrustedProxies: cfg.TrustedProxies,
 		AuthRateLimit: middleware.RateLimit(middleware.RateLimitConfig{
 			Requests: cfg.AuthRateLimitPerMin,
 			Window:   time.Minute,

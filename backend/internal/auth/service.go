@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -58,6 +59,46 @@ type Service struct {
 	avatars AvatarStore
 	policy  Policy
 	log     *slog.Logger
+
+	// notices bounds how often one address is told that somebody tried to sign up with
+	// it. Without a bound, anybody can make Voca mail a registered address as fast as the
+	// rate limit allows, which harasses the owner and burns the provider's daily quota
+	// until sign-up stops working for everyone.
+	notices noticeThrottle
+}
+
+// noticeThrottle remembers when each address was last sent a notice.
+//
+// In process, like the rate limiter, and with the same caveat: a second API instance
+// would allow a notice per instance. That is the trigger for moving it to Redis alongside
+// the rate limit counters.
+type noticeThrottle struct {
+	mu   sync.Mutex
+	last map[string]time.Time
+}
+
+// allow reports whether a notice may go to key now, and records it if so.
+func (t *noticeThrottle) allow(key string, now time.Time, window time.Duration) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.last == nil {
+		t.last = map[string]time.Time{}
+	}
+	if sent, ok := t.last[key]; ok && now.Sub(sent) < window {
+		return false
+	}
+
+	// Forget addresses whose window has passed, so the map does not grow with every
+	// address that was ever typed into the sign-up form.
+	for k, sent := range t.last {
+		if now.Sub(sent) >= window {
+			delete(t.last, k)
+		}
+	}
+
+	t.last[key] = now
+	return true
 }
 
 // NewService builds the service. A nil google verifier is allowed: Google sign-in then
@@ -98,11 +139,18 @@ func (s *Service) StartEmailVerification(ctx context.Context, rawEmail string) e
 		// should learn that an attempt was made. That message carries no code and no
 		// sign-in link, so it cannot let in whoever typed the address. A failure to send
 		// it must not change the answer the app gets.
-		if err := s.email.Send(ctx, EmailMessage{
-			To:       email,
-			Template: TemplateAccountExists,
-		}); err != nil {
-			s.log.Error("account_exists_email_failed", slog.String("error", err.Error()))
+		//
+		// At most once per resend window per address. The answer to the app does not
+		// change when a notice is skipped, so the throttle cannot be observed from outside.
+		if s.notices.allow(email, time.Now(), s.policy.ResendWindow) {
+			if err := s.email.Send(ctx, EmailMessage{
+				To:       email,
+				Template: TemplateAccountExists,
+			}); err != nil {
+				s.log.Error("account_exists_email_failed", slog.String("error", err.Error()))
+			}
+		} else {
+			s.log.Info("account_exists_notice_throttled")
 		}
 
 		return apperr.New(apperr.CodeEmailAlreadyExists, http.StatusConflict,
@@ -373,7 +421,14 @@ func (s *Service) Login(ctx context.Context, rawEmail, plain string) (Session, e
 
 	hash, err := s.repo.PasswordHash(ctx, user.ID)
 	if err != nil {
-		return Session{}, invalidCredentials()
+		if errors.Is(err, ErrNotFound) {
+			// A guest or a Google account has no password. Hash anyway so it takes as long
+			// as a wrong password does; answering at once would reveal that the address
+			// belongs to an account that signs in some other way.
+			_, _ = password.Hash("timing-equalizer-value")
+			return Session{}, invalidCredentials()
+		}
+		return Session{}, apperr.Internal(err)
 	}
 	if err := password.Verify(plain, hash); err != nil {
 		return Session{}, invalidCredentials()

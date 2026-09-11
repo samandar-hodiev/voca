@@ -28,6 +28,10 @@ type Dependencies struct {
 	Capabilities   Capabilities
 	RequireAuth    gin.HandlerFunc
 	AuthRateLimit  gin.HandlerFunc
+
+	// TrustedProxies are the only addresses whose X-Forwarded-For is believed. Nil
+	// trusts none.
+	TrustedProxies []string
 	DB             *database.Pool
 
 	// AvatarDir and AvatarPrefix let the router serve uploaded pictures back. Serving
@@ -52,6 +56,17 @@ type Capabilities struct {
 // NewRouter builds the HTTP router.
 func NewRouter(deps Dependencies) *gin.Engine {
 	r := gin.New()
+
+	// Gin trusts every proxy unless told otherwise, which means ClientIP returns whatever a
+	// caller writes in X-Forwarded-For. The per-client rate limit keys on ClientIP, so with
+	// the default any caller gets a fresh bucket per request by rotating that header, and
+	// the limit ADR-018 depends on does nothing. Trust only what is configured.
+	if err := r.SetTrustedProxies(deps.TrustedProxies); err != nil {
+		deps.Logger.Error("trusted_proxies_invalid",
+			slog.String("error", err.Error()),
+			slog.String("fallback", "trusting no proxy"))
+		_ = r.SetTrustedProxies(nil)
+	}
 
 	// Order matters. RequestID first so every later line and every error carries a
 	// correlation ID. Recovery before Logger so a panic is still logged as a request.

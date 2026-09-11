@@ -108,10 +108,17 @@ abstract final class AppRouter {
         GoRoute(
           path: Routes.home,
           name: Routes.homeName,
-          builder: (_, __) => const PlaceholderScreen(
+          builder: (context, _) => PlaceholderScreen(
             title: 'Home',
             description: 'The learner dashboard will be built here.',
             icon: Icons.home_outlined,
+            actions: [
+              IconButton(
+                tooltip: 'Sozlamalar',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => context.push(Routes.settings),
+              ),
+            ],
           ),
         ),
         GoRoute(
@@ -119,7 +126,8 @@ abstract final class AppRouter {
           name: Routes.practiceName,
           builder: (_, __) => const PlaceholderScreen(
             title: 'Practice',
-            description: 'Word practice and the recording flow will be built here.',
+            description:
+                'Word practice and the recording flow will be built here.',
             icon: Icons.mic_none_rounded,
           ),
         ),
@@ -128,7 +136,8 @@ abstract final class AppRouter {
           name: Routes.progressName,
           builder: (_, __) => const PlaceholderScreen(
             title: 'Progress',
-            description: 'Streaks, daily progress and weak sounds will be built here.',
+            description:
+                'Streaks, daily progress and weak sounds will be built here.',
             icon: Icons.insights_outlined,
           ),
         ),
