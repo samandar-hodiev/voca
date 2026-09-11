@@ -20,7 +20,6 @@ abstract final class _Palette {
 
   // Neutrals.
   static const white = Color(0xFFFFFFFF);
-  static const gray50 = Color(0xFFF7F8FA);
   static const gray200 = Color(0xFFE5E7EB);
   static const gray300 = Color(0xFFD1D5DB);
   static const gray600 = Color(0xFF4B5563);
@@ -147,7 +146,9 @@ class VocaColors extends ThemeExtension<VocaColors> {
     primaryPressed: _Palette.indigo600,
     primaryMuted: _Palette.indigo50,
     onPrimaryMuted: Color(0xFF4338CA),
-    background: _Palette.gray50,
+    // A pale mint rather than near-white: white glass needs something to sit on, and on
+    // a white page it disappears. The green sits with the teal corner light on cards.
+    background: Color(0xFFEDF5F1),
     surface: _Palette.white,
     surfaceElevated: _Palette.white,
     textPrimary: _Palette.gray900,

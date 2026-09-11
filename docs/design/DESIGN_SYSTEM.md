@@ -38,7 +38,7 @@ Semantic names only. A raw hex value outside the token file is a bug.
 | `primaryPressed` | `#4A4AE0` | Held state of a primary control |
 | `primaryMuted` | `#EEEEFE` | Quiet accent wash, selected rows |
 | `onPrimary` | `#FFFFFF` | Content on `primary` |
-| `background` | `#F7F8FA` | The page |
+| `background` | `#EDF5F1` (dark `#0B0F17`) | The page. Light leans mint green, so white glass has colour to sit on and reads as glass |
 | `surface` | `#FFFFFF` | Cards and sheets |
 | `textPrimary` | `#111827` | Body and headings |
 | `textSecondary` | `#374151` (dark `#CBD0D8`) | Supporting text. Darker than the usual gray-500 because it sits on the coloured background and on glass; `contrast_test` checks it over every background field |
@@ -128,8 +128,9 @@ The direction is Apple's iOS Liquid Glass, and what defines it is restraint: no 
 highlight blobs, no coloured glows, no candy gradients. Those turned an earlier version
 into a cartoon of glass.
 
-The background is a still, barely-there wash: two indigo fields and a quiet green one,
-blurred together (`LiquidBackground`). It never moves.
+The background is a still wash of blurred colour fields (`LiquidBackground`) and never
+moves. Dark keeps two indigo fields and a quiet green one. Light sits on a pale mint page
+with teal, green and a touch of indigo, so white glass in front of it is visible.
 
 | Piece | Looks like | Used for |
 |---|---|---|

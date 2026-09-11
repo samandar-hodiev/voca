@@ -186,7 +186,7 @@ void main() {
         ('dark', VocaColors.dark, VocaGlass.dark, Brightness.dark),
       ]) {
     group('$name theme, over the background', () {
-      final fields = LiquidBackground.fields(colors);
+      final fields = LiquidBackground.fields(colors, brightness);
       final backdrops = <(String, Color)>[
         for (final (i, (color, _, _)) in fields.indexed)
           ('centre of field $i', Color.alphaBlend(color, colors.background)),

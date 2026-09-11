@@ -33,23 +33,51 @@ class LiquidBackground extends StatelessWidget {
   /// against.
   final double intensity;
 
-  /// The three fields at full strength: colour at its centre, where, and how large as a
-  /// fraction of the shorter screen side. Public so the contrast test reads the real
-  /// values.
+  /// The three fields at full strength, per theme: colour at its centre, where, and how
+  /// large as a fraction of the shorter screen side. Public so the contrast test reads
+  /// the real values.
+  ///
+  /// Light leans green, with teal and a touch of the brand indigo, so the white glass in
+  /// front has colour to sit on. Dark keeps its indigo wash with a quiet green.
   @visibleForTesting
-  static List<(Color, Alignment, double)> fields(VocaColors colors) => [
-    (
-      colors.primary.withValues(alpha: 0.22),
-      const Alignment(-0.7, -0.42),
-      0.55,
-    ),
-    (
-      colors.success.withValues(alpha: 0.13),
-      const Alignment(0.79, -0.04),
-      0.45,
-    ),
-    (colors.primary.withValues(alpha: 0.16), const Alignment(0.1, 0.72), 0.6),
-  ];
+  static List<(Color, Alignment, double)> fields(
+    VocaColors colors,
+    Brightness brightness,
+  ) => brightness == Brightness.dark
+      ? [
+          (
+            colors.primary.withValues(alpha: 0.22),
+            const Alignment(-0.7, -0.42),
+            0.55,
+          ),
+          (
+            colors.success.withValues(alpha: 0.13),
+            const Alignment(0.79, -0.04),
+            0.45,
+          ),
+          (
+            colors.primary.withValues(alpha: 0.16),
+            const Alignment(0.1, 0.72),
+            0.6,
+          ),
+        ]
+      : [
+          (
+            colors.primary.withValues(alpha: 0.14),
+            const Alignment(-0.75, -0.5),
+            0.55,
+          ),
+          (
+            const Color(0xFF14B8A6).withValues(alpha: 0.24),
+            const Alignment(0.8, -0.1),
+            0.55,
+          ),
+          (
+            const Color(0xFF22C55E).withValues(alpha: 0.18),
+            const Alignment(0.05, 0.75),
+            0.65,
+          ),
+        ];
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +92,7 @@ class LiquidBackground extends StatelessWidget {
             imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
             child: CustomPaint(
               painter: _FieldPainter(
-                fields: fields(colors),
+                fields: fields(colors, Theme.of(context).brightness),
                 strength: intensity.clamp(0.0, 1.0),
               ),
               size: Size.infinite,
