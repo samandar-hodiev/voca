@@ -1,19 +1,13 @@
-/// The bottom navigation for the signed-in app.
+/// The bottom navigation for the signed-in app, after the iOS 26 tab bar.
 ///
-/// A floating pill of clear glass holding four liquid drops. The pill is kept thin on
-/// purpose, so the liquid behind the page shows through it; the drops carry the weight.
+/// A floating capsule of clear glass. The destinations sit in it as plain icons and
+/// labels; the selected one gets a lighter lens of glass behind it. When the selection
+/// moves, the lens slides to the new destination, stretching a little on the way and
+/// settling with a slight overshoot, the way the iOS lens flows between tabs.
 ///
-/// * Each destination sits in a small glass bead: a lit face up and to the left, a rim,
-///   a shadow underneath, and a faint bright spot at the bottom where the light that
-///   passed through it lands. That last detail is most of what makes a circle read as a
-///   drop.
-/// * The selected destination is marked by a drop of brand-coloured liquid that travels
-///   between the beads. On the way it stretches along the direction it moves and settles
-///   with a slight overshoot, which is how liquid moves and a sliding tab does not.
-///
-/// The active item is marked three ways, never by colour alone: the brand drop, a filled
-/// icon, and its label in the heavier weight. With reduced motion the drop moves in one
-/// step, without stretching.
+/// The active item is marked three ways, never by colour alone: the lens, a filled icon,
+/// and its label in the heavier weight and the accent colour. With reduced motion the
+/// lens moves in one step.
 library;
 
 import 'dart:math' as math;
@@ -27,7 +21,6 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
-import 'liquid_drop.dart';
 
 /// One destination in the bar.
 @immutable
@@ -55,13 +48,18 @@ class LiquidBottomBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  /// How much of the theme's glass tint the bar carries. Far thinner than a card: the
-  /// bar holds no body text, only short labels in the strong text colours, and those stay
-  /// readable over the liquid with no tint at all (contrast_test).
+  /// How much of the theme's glass tint the bar carries: clear, as iOS draws it. The
+  /// labels stay readable over the background with no tint at all (contrast_test).
   @visibleForTesting
-  static const lightGlassAlpha = 0.26;
+  static const lightGlassAlpha = 0.42;
   @visibleForTesting
-  static const darkGlassAlpha = 0.40;
+  static const darkGlassAlpha = 0.55;
+
+  /// The lens behind the selected destination, per theme.
+  @visibleForTesting
+  static Color lensFill(Brightness brightness) => brightness == Brightness.dark
+      ? const Color(0x1AFFFFFF)
+      : const Color(0xA6FFFFFF);
 
   @override
   State<LiquidBottomBar> createState() => _LiquidBottomBarState();
@@ -69,27 +67,27 @@ class LiquidBottomBar extends StatefulWidget {
 
 class _LiquidBottomBarState extends State<LiquidBottomBar>
     with SingleTickerProviderStateMixin {
+  // A gentle overshoot: the lens flows past its target by a hair and settles.
+  static const _settle = Cubic(0.34, 1.26, 0.64, 1);
+
   late final AnimationController _travel = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 560),
+    duration: const Duration(milliseconds: 460),
     value: 1,
   );
 
-  // Where the drop is travelling from and to, as item positions. Fractional mid-flight.
+  // Where the lens is travelling from and to, as item positions. Fractional mid-flight.
   late double _from = widget.currentIndex.toDouble();
   late double _to = _from;
 
-  // easeOutBack overshoots a little and comes back: the drop sloshes past its target
-  // and settles, instead of stopping dead.
   double get _position =>
-      lerpDouble(_from, _to, Curves.easeOutBack.transform(_travel.value))!;
+      lerpDouble(_from, _to, _settle.transform(_travel.value))!;
 
   @override
   void didUpdateWidget(LiquidBottomBar old) {
     super.didUpdateWidget(old);
     if (old.currentIndex == widget.currentIndex) return;
-    // Start from wherever the drop is now, so a second tap mid-flight redirects it
-    // instead of snapping it back.
+    // Start from wherever the lens is now, so a second tap mid-flight redirects it.
     _from = _position;
     _to = widget.currentIndex.toDouble();
     if (MediaQuery.disableAnimationsOf(context)) {
@@ -114,7 +112,7 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
       top: false,
       minimum: const EdgeInsets.only(bottom: VocaSpacing.xs),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.lg),
         child: GlassSurface(
           borderRadius: BorderRadius.circular(VocaRadius.pill),
           tint: glass.tint.withValues(
@@ -122,8 +120,7 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
                 ? LiquidBottomBar.darkGlassAlpha
                 : LiquidBottomBar.lightGlassAlpha,
           ),
-          borderWidth: 1.2,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+          padding: const EdgeInsets.all(4),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = constraints.maxWidth / widget.items.length;
@@ -132,11 +129,9 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
                 builder: (context, _) {
                   final position = _position;
                   return Stack(
-                    clipBehavior: Clip.none,
                     children: [
-                      _drop(position, itemWidth),
+                      _lens(position, itemWidth),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           for (var i = 0; i < widget.items.length; i++)
                             Expanded(
@@ -166,22 +161,59 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
     );
   }
 
-  /// The brand drop at [position], stretched by how fast and how far it is moving.
-  Widget _drop(double position, double itemWidth) {
+  /// The lens at [position], a little wider while it moves.
+  Widget _lens(double position, double itemWidth) {
     final t = _travel.value.clamp(0.0, 1.0);
     final distance = (_to - _from).abs().clamp(0.0, 3.0);
-    // Stretch peaks mid-flight and grows with the distance. The drop thins a little as
-    // it lengthens, so its volume looks conserved.
-    final stretch = math.sin(math.pi * t) * distance * itemWidth * 0.3;
-    final width = math.min(_NavButton.dropSize + stretch, itemWidth * 1.5);
-    final height = _NavButton.dropSize - math.min(stretch * 0.08, 6.0);
+    final stretch = math.min(
+      math.sin(math.pi * t) * distance * itemWidth * 0.22,
+      itemWidth * 0.8,
+    );
+    final width = itemWidth + stretch;
 
     return Positioned(
       left: (position + 0.5) * itemWidth - width / 2,
-      top: _NavButton.dropTop + (_NavButton.dropSize - height) / 2,
+      top: 0,
+      bottom: 0,
       width: width,
-      height: height,
-      child: const IgnorePointer(child: ExcludeSemantics(child: LiquidDrop())),
+      child: const IgnorePointer(child: ExcludeSemantics(child: _Lens())),
+    );
+  }
+}
+
+/// The lighter glass behind the selected destination.
+class _Lens extends StatelessWidget {
+  const _Lens();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final dark = brightness == Brightness.dark;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            LiquidBottomBar.lensFill(brightness),
+            LiquidBottomBar.lensFill(
+              brightness,
+            ).withValues(alpha: LiquidBottomBar.lensFill(brightness).a * 0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(VocaRadius.pill),
+        border: GradientBoxBorder(
+          width: 0.8,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: dark
+                ? const [Color(0x4DFFFFFF), Color(0x0DFFFFFF)]
+                : const [Color(0xFFFFFFFF), Color(0x0F000000)],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -194,13 +226,10 @@ class _NavButton extends StatelessWidget {
     required this.onTap,
   });
 
-  static const dropSize = 40.0;
-  static const dropTop = 7.0;
-
   final LiquidNavItem item;
   final bool selected;
 
-  /// How much of this item the brand drop covers right now, 0 to 1.
+  /// How much of this item the lens covers right now, 0 to 1.
   final double coverage;
   final VoidCallback onTap;
 
@@ -208,11 +237,10 @@ class _NavButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
     final text = context.vocaText;
-    // The icon turns as the drop reaches it, not when the tap lands, so it is never
-    // white on clear glass while the drop is still on its way.
-    final iconColor = Color.lerp(
+    // The colour follows the lens, so the accent arrives with it rather than ahead of it.
+    final foreground = Color.lerp(
       colors.textSecondary,
-      colors.onPrimary,
+      colors.onPrimaryMuted,
       coverage,
     )!;
 
@@ -224,41 +252,26 @@ class _NavButton extends StatelessWidget {
         onTap: onTap,
         customBorder: const StadiumBorder(),
         child: Padding(
-          // With the label this is well over the 48 point minimum touch target.
-          padding: const EdgeInsets.only(top: dropTop, bottom: 6),
+          // With the label this is over the 48 point minimum touch target.
+          padding: const EdgeInsets.symmetric(vertical: 7),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox.square(
-                dimension: dropSize,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // The bead fades as the brand drop arrives, so the two never show
-                    // at once.
-                    Positioned.fill(
-                      child: Opacity(
-                        opacity: 1 - coverage,
-                        child: const GlassBead(),
-                      ),
-                    ),
-                    Icon(
-                      selected ? item.activeIcon : item.icon,
-                      size: 22,
-                      color: iconColor,
-                    ),
-                  ],
-                ),
+              Icon(
+                selected ? item.activeIcon : item.icon,
+                size: 24,
+                color: foreground,
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 item.label,
                 maxLines: 1,
                 overflow: TextOverflow.fade,
                 softWrap: false,
                 style: text.caption.copyWith(
-                  color: selected ? colors.textPrimary : colors.textSecondary,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 11,
+                  color: foreground,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
             ],

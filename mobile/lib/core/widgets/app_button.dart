@@ -229,7 +229,7 @@ class _VocaButtonState extends State<_VocaButton> {
                 width: widget.expand ? double.infinity : null,
                 child: LiquidDrop(
                   color: background,
-                  borderRadius: VocaRadius.mediumAll,
+                  borderRadius: VocaRadius.pillAll,
                   glow: _enabled && !_pressed,
                   padding: const EdgeInsets.symmetric(
                     horizontal: VocaSpacing.lg,
@@ -259,7 +259,7 @@ class _VocaButtonState extends State<_VocaButton> {
                 ),
                 decoration: BoxDecoration(
                   color: background,
-                  borderRadius: VocaRadius.mediumAll,
+                  borderRadius: VocaRadius.pillAll,
                   border: border == null ? null : Border.all(color: border),
                 ),
                 alignment: Alignment.center,

@@ -1,22 +1,21 @@
-/// Glass surface primitives.
+/// Glass surface primitives, after the iOS Liquid Glass material.
 ///
 /// Two widgets, not a family: [GlassSurface] is the primitive and [GlassCard] is the
 /// padded card everything else should reach for.
 ///
-/// The surface is built from four layers, and all four are needed for it to read as
-/// glass rather than as a pale card:
+/// What makes glass read as glass on iOS is restraint rather than decoration:
 ///
-///   backdrop blur  ->  translucent tint  ->  lit top face  ->  gradient rim
+///   backdrop blur + saturation  ->  thin tint  ->  soft top light  ->  hairline rim
 ///
-/// and two details that give it thickness, which is what separates a pane of glass from
-/// a tinted sticker: a glint where the light first strikes it, and a second, fainter edge
-/// just inside the rim.
-///
-/// Use glass to lift ONE thing off the page. A screen where every surface is glass has no
-/// hierarchy, and it is exactly the template look the product is trying not to have.
+/// * What shows through the pane is blurred AND made more saturated, so colour behind it
+///   glows through instead of turning grey. That is most of the difference between a
+///   material and a milky overlay.
+/// * The tint is thin. Separation comes from the blur, the rim and a soft shadow.
+/// * The rim is a hairline that catches the light: brightest along the top, a fainter
+///   return along the bottom, like the edge of a lens.
+/// * No glints, blobs or coloured glows. Those turn glass into a cartoon of glass.
 library;
 
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -41,105 +40,92 @@ class GlassSurface extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
 
-  /// Overrides the fill. A control that sits directly on the liquid field wants a
-  /// thinner tint than a content card does, so more of the colour behind reads through
-  /// it. Null uses the theme's tint.
+  /// Overrides the fill. A control that sits directly on the background wants a thinner
+  /// tint than a content card does. Null uses the theme's tint.
   final Color? tint;
 
-  /// Rim thickness. A control reads as a distinct object with a slightly heavier rim
-  /// than a large card needs.
+  /// Rim thickness.
   final double borderWidth;
 
-  /// Whether to apply a backdrop blur. Turn it off inside long scrolling lists: many
+  /// Whether to blur what is behind. Turn it off inside long scrolling lists: many
   /// simultaneous [BackdropFilter]s are the fastest way to make a mid-range Android
   /// device stutter.
   final bool blur;
 
   final bool showShadow;
 
-  /// The shade that deepens toward the bottom of a pane, which is what makes it read as
-  /// a thick block of glass rather than a sheet. Public so the contrast test includes it.
-  static Color depthShade(Brightness brightness) =>
-      brightness == Brightness.dark
-      ? const Color(0x33000000)
-      : const Color(0x0F1E1B6E);
+  /// The saturation boost applied to what is seen through the pane (1.6), as a colour
+  /// matrix that keeps luminance where it was.
+  static const saturation = <double>[
+    1.47244, -0.42912, -0.04332, 0, 0, //
+    -0.12756, 1.17088, -0.04332, 0, 0, //
+    -0.12756, -0.42912, 1.55668, 0, 0, //
+    0, 0, 0, 1, 0, //
+  ];
+
+  /// [color] as it looks through the pane's saturation boost. Public so the contrast test
+  /// uses exactly what the pane does.
+  @visibleForTesting
+  static Color saturate(Color color) {
+    double channel(int row) =>
+        (saturation[row * 5] * color.r +
+                saturation[row * 5 + 1] * color.g +
+                saturation[row * 5 + 2] * color.b)
+            .clamp(0.0, 1.0);
+    return Color.from(
+      alpha: color.a,
+      red: channel(0),
+      green: channel(1),
+      blue: channel(2),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final glass = context.vocaGlass;
-    final shade = depthShade(Theme.of(context).brightness);
     final radius = borderRadius ?? BorderRadius.circular(glass.radius);
 
-    // The pane itself: translucent fill, then a highlight that fades down the surface so
-    // the top face reads as lit.
+    // The pane: a thin tint, then soft light fading down from the top edge.
     //
-    // These are two stacked decorations on purpose. BoxDecoration ignores `color` the
-    // moment a `gradient` is set, so painting both in one decoration silently drops the
-    // tint and leaves only the white highlight — which is exactly how a glass surface
-    // ends up looking like a plain pale card, and how a coloured button loses its colour.
+    // Two stacked decorations on purpose. BoxDecoration ignores `color` the moment a
+    // `gradient` is set, so painting both in one decoration silently drops the tint.
     Widget pane = DecoratedBox(
       decoration: BoxDecoration(
         color: tint ?? glass.tint,
         borderRadius: radius,
       ),
-      // Depth: the lower half of the pane darkens slightly, as light passing down through
-      // a thick piece of glass does.
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [shade.withValues(alpha: 0), shade],
-            stops: const [0.5, 1],
+            colors: [glass.highlight, glass.highlight.withValues(alpha: 0)],
+            stops: const [0, 0.5],
           ),
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [glass.highlight, Colors.transparent],
-              stops: const [0, 0.55],
-            ),
-          ),
-          // The glint is painted behind the content and kept to the top edge, inside the
-          // padding, so it never sits under a line of text. Passthrough keeps the content's
-          // constraints exactly what they were without the stack.
-          child: Stack(
-            fit: StackFit.passthrough,
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(painter: _Glint(color: glass.borderTop)),
-                ),
-              ),
-              Padding(
-                padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-                child: child,
-              ),
-            ],
-          ),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+          child: child,
         ),
       ),
     );
 
     if (blur) {
       pane = BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: glass.blurSigma,
-          sigmaY: glass.blurSigma,
+        filter: ImageFilter.compose(
+          outer: const ColorFilter.matrix(saturation),
+          inner: ImageFilter.blur(
+            sigmaX: glass.blurSigma,
+            sigmaY: glass.blurSigma,
+          ),
         ),
         child: pane,
       );
     }
 
-    // The rim, painted over the clipped pane. A gradient rather than a flat line: real
-    // glass is bright where light enters and dim where it leaves, and that difference is
-    // most of what makes an edge look like glass.
-    // Passthrough, so a pane given a fixed size (a card stretched to match its neighbour)
-    // fills it instead of shrinking to its content inside a full-size rim.
+    // The hairline rim, painted over the clipped pane. Passthrough, so a pane given a
+    // fixed size (a card stretched to match its neighbour) fills it.
     final surface = Stack(
       fit: StackFit.passthrough,
       children: [
@@ -152,9 +138,16 @@ class GlassSurface extends StatelessWidget {
                 border: GradientBoxBorder(
                   width: borderWidth,
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [glass.borderTop, glass.borderBottom],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      glass.borderTop,
+                      glass.borderBottom.withValues(
+                        alpha: glass.borderBottom.a * 0.4,
+                      ),
+                      glass.borderBottom,
+                    ],
+                    stops: const [0, 0.55, 1],
                   ),
                 ),
               ),
@@ -164,9 +157,9 @@ class GlassSurface extends StatelessWidget {
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
-              painter: _InnerEdge(
+              painter: _TopEdge(
                 borderRadius: radius,
-                inset: borderWidth + 1,
+                inset: borderWidth + 0.5,
                 color: glass.borderTop,
               ),
             ),
@@ -177,13 +170,90 @@ class GlassSurface extends StatelessWidget {
 
     if (!showShadow) return surface;
 
-    // The shadow is cast by a box behind the clip, so it is not blurred along with the
-    // backdrop.
-    return DecoratedBox(
-      decoration: BoxDecoration(borderRadius: radius, boxShadow: glass.shadows),
+    // The shadow is painted outside the pane only. Under translucent glass an ordinary
+    // shadow shows through and turns the pane grey.
+    return CustomPaint(
+      painter: _OuterShadow(borderRadius: radius, shadows: glass.shadows),
       child: surface,
     );
   }
+}
+
+/// Paints [shadows] around a pane and never under it.
+class _OuterShadow extends CustomPainter {
+  const _OuterShadow({required this.borderRadius, required this.shadows});
+
+  final BorderRadius borderRadius;
+  final List<BoxShadow> shadows;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final outside = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(rect.inflate(200)),
+      Path()..addRRect(borderRadius.toRRect(rect)),
+    );
+    canvas
+      ..save()
+      ..clipPath(outside);
+    for (final shadow in shadows) {
+      canvas.drawRRect(
+        borderRadius.toRRect(
+          rect.shift(shadow.offset).inflate(shadow.spreadRadius),
+        ),
+        Paint()
+          ..color = shadow.color
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, shadow.blurSigma),
+      );
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_OuterShadow old) =>
+      old.borderRadius != borderRadius || old.shadows != shadows;
+}
+
+/// A second, fainter line just inside the rim along the top, gone by a third of the way
+/// down. Two edges a hair apart are what give a pane its thickness.
+class _TopEdge extends CustomPainter {
+  const _TopEdge({
+    required this.borderRadius,
+    required this.inset,
+    required this.color,
+  });
+
+  final BorderRadius borderRadius;
+  final double inset;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    if (rect.width <= inset * 2 || rect.height <= inset * 2) return;
+    canvas.drawRRect(
+      borderRadius.toRRect(rect).deflate(inset),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: color.a * 0.5),
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.3],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TopEdge old) =>
+      old.borderRadius != borderRadius ||
+      old.inset != inset ||
+      old.color != color;
 }
 
 /// A border whose colour follows a gradient.
@@ -235,90 +305,6 @@ class GradientBoxBorder extends BoxBorder {
   @override
   ShapeBorder scale(double t) =>
       GradientBoxBorder(gradient: gradient, width: width * t);
-}
-
-/// The bright spot where light first strikes a pane: a soft oval along the top-left edge.
-class _Glint extends CustomPainter {
-  const _Glint({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-    final band = Rect.fromLTWH(
-      size.width * 0.06,
-      2.5,
-      size.width * 0.5,
-      math.min(10, size.height * 0.22),
-    );
-    canvas.drawOval(
-      band,
-      Paint()
-        ..color = color
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_Glint old) => old.color != color;
-}
-
-/// A second, fainter line just inside the rim, bright along the top and gone a third of
-/// the way down, with a dimmer return along the bottom where light that crossed the pane
-/// comes out. Two edges a hair apart are what make a pane read as having thickness.
-class _InnerEdge extends CustomPainter {
-  const _InnerEdge({
-    required this.borderRadius,
-    required this.inset,
-    required this.color,
-  });
-
-  final BorderRadius borderRadius;
-  final double inset;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    if (rect.width <= inset * 2 || rect.height <= inset * 2) return;
-    canvas.drawRRect(
-      borderRadius.toRRect(rect).deflate(inset),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: color.a * 0.7),
-            color.withValues(alpha: 0),
-          ],
-          stops: const [0, 0.35],
-        ).createShader(rect),
-    );
-    canvas.drawRRect(
-      borderRadius.toRRect(rect).deflate(inset),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0),
-            color.withValues(alpha: color.a * 0.3),
-          ],
-          stops: const [0.8, 1],
-        ).createShader(rect),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_InnerEdge old) =>
-      old.borderRadius != borderRadius ||
-      old.inset != inset ||
-      old.color != color;
 }
 
 /// A glass surface with card padding. The default choice for grouped content.

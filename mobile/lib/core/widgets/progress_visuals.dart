@@ -45,19 +45,10 @@ class AnimatedProgressBar extends StatelessWidget {
           height: height,
           child: Stack(
             children: [
-              // A groove in the glass, darker along its top edge where it is in shadow.
+              // A quiet track, as iOS draws one: the text colour at a whisper.
               Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color.lerp(colors.border, colors.textPrimary, 0.14)!,
-                        colors.border,
-                      ],
-                    ),
-                  ),
+                child: ColoredBox(
+                  color: colors.textPrimary.withValues(alpha: 0.08),
                 ),
               ),
               FractionallySizedBox(
@@ -108,7 +99,7 @@ class ProgressRing extends StatelessWidget {
           painter: _RingPainter(
             value: v,
             stroke: stroke,
-            track: colors.border,
+            track: colors.textPrimary.withValues(alpha: 0.08),
             fill: color ?? colors.primary,
           ),
           child: Center(child: inner),
@@ -144,25 +135,10 @@ class _RingPainter extends CustomPainter {
     canvas.drawArc(arcRect, 0, math.pi * 2, false, base..color = track);
     if (value <= 0) return;
 
-    final sweep = math.pi * 2 * value;
-
-    // A soft glow of the liquid's own colour under the tube.
     canvas.drawArc(
       arcRect,
       -math.pi / 2,
-      sweep,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..strokeCap = StrokeCap.round
-        ..color = fill.withValues(alpha: 0.35)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-    );
-    canvas.drawArc(
-      arcRect,
-      -math.pi / 2,
-      sweep,
+      math.pi * 2 * value,
       false,
       base
         ..shader = SweepGradient(
@@ -170,20 +146,6 @@ class _RingPainter extends CustomPainter {
           endAngle: math.pi * 1.5,
           colors: [fill.withValues(alpha: 0.7), fill],
         ).createShader(rect),
-    );
-
-    // A thin lighter line along the outer edge, which makes the stroke read as a round
-    // tube of liquid rather than a flat band.
-    canvas.drawArc(
-      rect.deflate(stroke * 0.3),
-      -math.pi / 2,
-      sweep,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke * 0.28
-        ..strokeCap = StrokeCap.round
-        ..color = Colors.white.withValues(alpha: 0.45),
     );
   }
 

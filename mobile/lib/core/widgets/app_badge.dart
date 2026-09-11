@@ -7,9 +7,9 @@ library;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'liquid_drop.dart';
 
 enum BadgeTone { neutral, primary, success, warning, error }
 
@@ -36,14 +36,13 @@ class AppBadge extends StatelessWidget {
       BadgeTone.error => (colors.errorMuted, colors.onErrorMuted),
     };
 
-    return Container(
+    // A glass pill carrying its tone. The tone is opaque, so the text keeps exactly the
+    // contrast the badge pairs are tested for.
+    return GlassBead(
+      tint: background,
       padding: const EdgeInsets.symmetric(
         horizontal: VocaSpacing.xs,
         vertical: VocaSpacing.xxs,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: VocaRadius.pillAll,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

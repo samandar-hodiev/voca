@@ -178,8 +178,8 @@ void main() {
 
   // The background behind every screen. Text sits straight on it (onboarding, the section
   // titles in the tabs) and on glass over it, so text is checked where each colour field
-  // is strongest and where all of them stack. The numbers come from the widgets
-  // themselves, so a stronger background that text cannot bear fails here.
+  // is strongest and where all of them stack. Glass sees the background through its
+  // saturation boost, so that is applied too. The numbers come from the widgets.
   for (final (name, colors, glass, brightness)
       in <(String, VocaColors, VocaGlass, Brightness)>[
         ('light', VocaColors.light, VocaGlass.light, Brightness.light),
@@ -214,38 +214,38 @@ void main() {
         }
       }
 
+      Color throughGlass(Color tint, Color b) =>
+          Color.alphaBlend(tint, GlassSurface.saturate(b));
+
       test('text straight on the background meets AA', () {
         expectReadable('primary text', colors.textPrimary, (b) => b);
         expectReadable('secondary text', colors.textSecondary, (b) => b);
       });
 
-      // The tint over an unblurred field, plus the depth shade at the bottom of the pane,
-      // is the worst case: the real card also blurs the field into the page around it.
-      test('text on a glass card meets AA, down to its shaded bottom edge', () {
-        Color card(Color b) => Color.alphaBlend(
-          GlassSurface.depthShade(brightness),
-          Color.alphaBlend(glass.tint, b),
-        );
+      test('text on a glass card meets AA', () {
+        Color card(Color b) => throughGlass(glass.tint, b);
         expectReadable('primary text', colors.textPrimary, card);
         expectReadable('secondary text', colors.textSecondary, card);
       });
 
-      // The label sits in the middle band of the liquid button. The lighter top of the
-      // liquid and its highlight both have to be gone before that band starts, and the
-      // lightest colour left behind the label must still carry it.
-      test('primary button label on its liquid meets AA', () {
+      test('text in a clear glass well meets AA', () {
+        Color well(Color b) => Color.alphaBlend(GlassBead.fill(brightness), b);
+        expectReadable('primary text', colors.textPrimary, well);
+        expectReadable('secondary text', colors.textSecondary, well);
+      });
+
+      // The label sits in the middle of the tinted button, below where the light at the
+      // top has faded out, so what is behind it is the plain colour.
+      test('primary button label on its tint meets AA', () {
         expect(
-          LiquidShine.highlightBottom,
+          LiquidDrop.colourStop,
           lessThanOrEqualTo(LiquidDrop.labelBandTop),
-          reason: 'the highlight must end above the label',
         );
-        final top = brightness == Brightness.dark
-            ? LiquidDrop.topLightenDark
-            : LiquidDrop.topLightenLight;
-        final faded = (1 - LiquidDrop.labelBandTop / LiquidDrop.colourStop)
-            .clamp(0.0, 1.0);
-        final fill = Color.lerp(colors.primary, Colors.white, top * faded)!;
-        final ratio = contrastRatio(colors.onPrimary, fill);
+        expect(
+          LiquidDrop.shadeStart,
+          greaterThanOrEqualTo(LiquidDrop.labelBandBottom),
+        );
+        final ratio = contrastRatio(colors.onPrimary, colors.primary);
         expect(
           ratio,
           greaterThanOrEqualTo(aaBody),
@@ -258,9 +258,15 @@ void main() {
             ? LiquidBottomBar.darkGlassAlpha
             : LiquidBottomBar.lightGlassAlpha;
         Color bar(Color b) =>
-            Color.alphaBlend(glass.tint.withValues(alpha: alpha), b);
-        expectReadable('active label', colors.textPrimary, bar);
+            throughGlass(glass.tint.withValues(alpha: alpha), b);
+        Color lens(Color b) =>
+            Color.alphaBlend(LiquidBottomBar.lensFill(brightness), bar(b));
         expectReadable('inactive label', colors.textSecondary, bar);
+        expectReadable(
+          'selected label on the lens',
+          colors.onPrimaryMuted,
+          lens,
+        );
       });
     });
   }

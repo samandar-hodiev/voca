@@ -124,18 +124,28 @@ the tint is opaque enough that body text on glass still meets contrast requireme
 
 ### Liquid and glass on the UI
 
+The direction is Apple's iOS Liquid Glass, and what defines it is restraint: no glossy
+highlight blobs, no coloured glows, no candy gradients. Those turned an earlier version
+into a cartoon of glass.
+
 The background is a still, barely-there wash: two indigo fields and a quiet green one,
-blurred together (`LiquidBackground`). It never moves. The material lives on the UI in
-front of it, through two primitives in `liquid_drop.dart`:
+blurred together (`LiquidBackground`). It never moves.
 
-| Primitive | Looks like | Used for |
+| Piece | Looks like | Used for |
 |---|---|---|
-| `LiquidDrop` | coloured liquid: lighter top, deeper bottom, highlight, caustic, glow | primary buttons, the selected tab, selected pills, progress fills, chart columns, check marks, avatar initials |
-| `GlassBead` | clear glass: lit face, rim, shadow, highlight, caustic | resting tabs, filter pills, sound symbols, code cells, icon wells, the avatar ring, page dots |
+| `GlassSurface` | blur plus a saturation boost of what is behind, a thin tint, soft light fading from the top, a hairline rim brightest along the top, a soft shadow | cards, lists, sheets, dialogs, the tab bar, glass buttons |
+| `LiquidDrop` | glass tinted with a colour: a faint light across the top, a slightly deeper bottom, a hairline rim; the label band in the middle stays the plain colour | the primary button, filled icon wells, progress fills, chart columns, check marks, avatar initials |
+| `GlassBead` | clear glass: a thin fill fading from the top, a hairline rim | filter pills, sound symbols, code cells, the avatar ring, page dots |
 
-Cards and lists are `GlassSurface` panes. They darken slightly toward the bottom and carry
-a second inner edge, so they read as thick glass rather than a flat sheet. Highlights stay
-in the top band and caustics in the bottom band, never behind a label.
+The tab bar is a floating capsule of clear glass. Destinations are plain icons and labels;
+the selected one gets a lighter glass lens behind it, which slides to a new destination,
+stretching a little and settling with a slight overshoot. Buttons are capsules.
+
+Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
+through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own
+shadow.
+
+Contrast is checked against all of it, including the saturation boost (`contrast_test`).
 
 Glass is deliberately **not** used in the admin. Translucency behind a dense data table
 hurts readability for no benefit.

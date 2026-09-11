@@ -160,7 +160,6 @@ class _Bar extends StatelessWidget {
                     color: goalMet
                         ? colors.primary
                         : Color.lerp(colors.primary, colors.surface, 0.55),
-                    glow: goalMet,
                     borderRadius: BorderRadius.circular(VocaRadius.small),
                   ),
                 ),

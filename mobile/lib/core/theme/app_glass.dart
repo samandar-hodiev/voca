@@ -76,26 +76,19 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   final List<BoxShadow> shadows;
 
   static const light = VocaGlass(
-    tint: Color(0x59FFFFFF),
+    tint: Color(0x66FFFFFF),
     controlOpacity: 0.20,
     selectionOpacity: 0.16,
-    highlight: Color(0x66FFFFFF),
+    highlight: Color(0x40FFFFFF),
     borderTop: Color(0xB3FFFFFF),
-    borderBottom: Color(0x1F5B5BF7),
+    borderBottom: Color(0x40FFFFFF),
     blurSigma: 24,
     radius: VocaRadius.xlarge,
     shadows: [
-      BoxShadow(
-        color: Color(0x1A2B2B60),
-        blurRadius: 40,
-        spreadRadius: -6,
-        offset: Offset(0, 18),
-      ),
-      BoxShadow(
-        color: Color(0x0D2B2B60),
-        blurRadius: 8,
-        offset: Offset(0, 2),
-      ),
+      // GlassSurface paints these outside the pane only; under translucent glass an
+      // ordinary shadow would show through and grey it.
+      BoxShadow(color: Color(0x142B2B60), blurRadius: 30, offset: Offset(0, 6)),
+      BoxShadow(color: Color(0x0D2B2B60), blurRadius: 4, offset: Offset(0, 1)),
     ],
   );
 
@@ -103,18 +96,13 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
     tint: Color(0xD91B212C),
     controlOpacity: 0.52,
     selectionOpacity: 0.34,
-    highlight: Color(0x1AFFFFFF),
-    borderTop: Color(0x3DFFFFFF),
-    borderBottom: Color(0x14FFFFFF),
+    highlight: Color(0x14FFFFFF),
+    borderTop: Color(0x4DFFFFFF),
+    borderBottom: Color(0x1FFFFFFF),
     blurSigma: 24,
     radius: VocaRadius.xlarge,
     shadows: [
-      BoxShadow(
-        color: Color(0x80000000),
-        blurRadius: 40,
-        spreadRadius: -6,
-        offset: Offset(0, 18),
-      ),
+      BoxShadow(color: Color(0x59000000), blurRadius: 30, offset: Offset(0, 8)),
     ],
   );
 
@@ -149,7 +137,11 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
     return VocaGlass(
       tint: Color.lerp(tint, other.tint, t)!,
       controlOpacity: _lerpDouble(controlOpacity, other.controlOpacity, t),
-      selectionOpacity: _lerpDouble(selectionOpacity, other.selectionOpacity, t),
+      selectionOpacity: _lerpDouble(
+        selectionOpacity,
+        other.selectionOpacity,
+        t,
+      ),
       highlight: Color.lerp(highlight, other.highlight, t)!,
       borderTop: Color.lerp(borderTop, other.borderTop, t)!,
       borderBottom: Color.lerp(borderBottom, other.borderBottom, t)!,

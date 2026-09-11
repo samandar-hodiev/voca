@@ -77,7 +77,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
     final tint = glass.tint.withValues(alpha: fillAlpha);
 
     final surface = GlassSurface(
-      borderRadius: BorderRadius.circular(VocaRadius.large),
+      borderRadius: VocaRadius.pillAll,
       tint: tint,
       borderWidth: _enabled ? 1.4 : 1,
       showShadow: _enabled && !_pressed,
@@ -116,7 +116,9 @@ class _GlassActionButtonState extends State<GlassActionButton> {
                     if (widget.unavailableNote != null)
                       Text(
                         widget.unavailableNote!,
-                        style: text.caption.copyWith(color: colors.textDisabled),
+                        style: text.caption.copyWith(
+                          color: colors.textDisabled,
+                        ),
                       ),
                   ],
                 ),
@@ -140,7 +142,10 @@ class _GlassActionButtonState extends State<GlassActionButton> {
         // key, so the movement is small enough to feel rather than watch.
         child: AnimatedScale(
           scale: _pressed ? 0.985 : 1,
-          duration: VocaMotion.respectReducedMotion(context, VocaMotion.instant),
+          duration: VocaMotion.respectReducedMotion(
+            context,
+            VocaMotion.instant,
+          ),
           curve: VocaMotion.standardCurve,
           child: SizedBox(width: double.infinity, child: surface),
         ),
