@@ -41,7 +41,7 @@ Semantic names only. A raw hex value outside the token file is a bug.
 | `background` | `#F7F8FA` | The page |
 | `surface` | `#FFFFFF` | Cards and sheets |
 | `textPrimary` | `#111827` | Body and headings |
-| `textSecondary` | `#6B7280` | Supporting text |
+| `textSecondary` | `#374151` (dark `#CBD0D8`) | Supporting text. Darker than the usual gray-500 because it sits on the liquid; `contrast_test` checks it over every body of the liquid |
 | `textDisabled` | `#D1D5DB` | Unavailable content |
 | `border` | `#E5E7EB` | Hairline separation |
 | `borderStrong` | `#D1D5DB` | Input outlines |

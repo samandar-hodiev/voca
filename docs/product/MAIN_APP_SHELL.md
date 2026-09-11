@@ -67,8 +67,11 @@ because every screen that shows one of them shows the others.
 - Cards fade and lift in once, staggered by position (`Reveal`). Nothing loops.
 - Tappable cards shrink slightly on press (`PressScale`).
 - Progress rings and bars animate from zero the first time they appear.
-- The active bar item scales its icon and lights its capsule.
-- With reduced motion, all of it is skipped and content simply appears.
+- The bar is clear glass with a glass bead per destination. The selected one is a drop of
+  brand-coloured liquid that travels between the beads, stretching as it moves and
+  settling with a slight overshoot.
+- With reduced motion, all of it is skipped: content simply appears and the drop moves in
+  one step.
 
 The liquid background is the only continuous animation, and it predates this screen.
 
@@ -78,7 +81,9 @@ The liquid background is the only continuous animation, and it predates this scr
   changes carry a sign and an arrow, and a met daily goal has a check mark.
 - Charts, rings and stat cards announce a spoken summary instead of their parts.
 - IPA symbols are announced as "θ tovushi" rather than spelled out character by character.
-- Touch targets are at least 44 points; bar items and list rows are 56.
+- Touch targets are at least 44 points; bar items are over 70 and list rows are 56.
+- The active destination is marked three ways: the brand drop, a filled icon and a bold
+  label.
 
 ## Test anchors
 

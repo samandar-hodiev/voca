@@ -12,6 +12,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/core/theme/app_colors.dart';
+import 'package:voca/core/theme/app_glass.dart';
+import 'package:voca/core/widgets/liquid_background.dart';
+import 'package:voca/core/widgets/liquid_bottom_bar.dart';
 
 /// Relative luminance per WCAG 2.1.
 double _luminance(Color c) {
@@ -127,10 +130,7 @@ void main() {
     ('dark', VocaColors.dark),
   ]) {
     group('$name theme, signed-in surfaces', () {
-      for (final (what, alpha) in [
-        ('sound symbol chip', 0.12),
-        ('active tab capsule', 0.14),
-      ]) {
+      for (final (what, alpha) in [('sound symbol chip', 0.12)]) {
         test('text on the $what stays readable', () {
           for (final (where, base) in [
             ('surface', colors.surface),
@@ -173,4 +173,80 @@ void main() {
       });
     });
   }
+
+  // The liquid behind every screen. Text sits straight on it (onboarding, the section
+  // titles in the tabs) and on glass over it, and the liquid moves, so every colour it
+  // can put behind a letter is checked: each body at full strength, under its shaded
+  // side, and under its highlight. The numbers come from the widget itself, so making
+  // the liquid stronger than text can bear fails here rather than on somebody's phone.
+  for (final (name, colors, glass, dark)
+      in <(String, VocaColors, VocaGlass, bool)>[
+        ('light', VocaColors.light, VocaGlass.light, false),
+        ('dark', VocaColors.dark, VocaGlass.dark, true),
+      ]) {
+    group('$name theme, over the liquid', () {
+      final liquid = LiquidPalette.of(colors, dark: dark);
+      final backdrops = <(String, Color)>[
+        for (final (i, hue) in liquid.hues.indexed)
+          for (final (layer, over) in <(String, Color?)>[
+            ('body', null),
+            ('shaded side', liquid.shade),
+            ('highlight', Colors.white.withValues(alpha: liquid.highlight)),
+          ])
+            (
+              '$layer of body $i',
+              _paint(
+                colors.background,
+                hue.withValues(alpha: liquid.bodyOpacity),
+                over,
+              ),
+            ),
+      ];
+
+      void expectReadable(
+        String what,
+        Color text,
+        Color Function(Color backdrop) surface,
+      ) {
+        for (final (where, backdrop) in backdrops) {
+          final ratio = contrastRatio(text, surface(backdrop));
+          expect(
+            ratio,
+            greaterThanOrEqualTo(aaBody),
+            reason: '$what over the $where is ${ratio.toStringAsFixed(2)}:1',
+          );
+        }
+      }
+
+      test('text straight on the liquid meets AA', () {
+        expectReadable('primary text', colors.textPrimary, (b) => b);
+        expectReadable('secondary text', colors.textSecondary, (b) => b);
+      });
+
+      // Compositing the tint over an unblurred body is the worst case: the real card
+      // blurs the body into the page around it, which only moves it towards the plain
+      // background.
+      test('text on a glass card over the liquid meets AA', () {
+        Color card(Color b) => Color.alphaBlend(glass.tint, b);
+        expectReadable('primary text', colors.textPrimary, card);
+        expectReadable('secondary text', colors.textSecondary, card);
+      });
+
+      test('tab labels on the clear bar meet AA', () {
+        final alpha = dark
+            ? LiquidBottomBar.darkGlassAlpha
+            : LiquidBottomBar.lightGlassAlpha;
+        Color bar(Color b) =>
+            Color.alphaBlend(glass.tint.withValues(alpha: alpha), b);
+        expectReadable('active label', colors.textPrimary, bar);
+        expectReadable('inactive label', colors.textSecondary, bar);
+      });
+    });
+  }
+}
+
+/// [body] painted on [page], then [over] on top of that if given.
+Color _paint(Color page, Color body, Color? over) {
+  final painted = Color.alphaBlend(body, page);
+  return over == null ? painted : Color.alphaBlend(over, painted);
 }

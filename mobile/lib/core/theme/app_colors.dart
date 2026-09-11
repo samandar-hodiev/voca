@@ -23,8 +23,8 @@ abstract final class _Palette {
   static const gray50 = Color(0xFFF7F8FA);
   static const gray200 = Color(0xFFE5E7EB);
   static const gray300 = Color(0xFFD1D5DB);
-  static const gray500 = Color(0xFF6B7280);
   static const gray600 = Color(0xFF4B5563);
+  static const gray700 = Color(0xFF374151);
   static const gray900 = Color(0xFF111827);
   static const gray950 = Color(0xFF0B0F17);
 
@@ -151,7 +151,10 @@ class VocaColors extends ThemeExtension<VocaColors> {
     surface: _Palette.white,
     surfaceElevated: _Palette.white,
     textPrimary: _Palette.gray900,
-    textSecondary: _Palette.gray500,
+    // Darker than the usual gray-500: secondary text sits on the liquid and on glass
+    // over it, and gray-500 drops to 2.5:1 on a body of the liquid. This clears 4.5:1 on
+    // every colour the liquid can put behind it (contrast_test).
+    textSecondary: _Palette.gray700,
     textDisabled: _Palette.gray300,
     border: _Palette.gray200,
     borderStrong: _Palette.gray300,
@@ -182,7 +185,9 @@ class VocaColors extends ThemeExtension<VocaColors> {
     surface: Color(0xFF141922),
     surfaceElevated: Color(0xFF1B212C),
     textPrimary: Color(0xFFF3F4F6),
-    textSecondary: Color(0xFF9CA3AF),
+    // Lighter than gray-400 for the same reason as in light: over the liquid, gray-400
+    // falls to about 3:1.
+    textSecondary: Color(0xFFCBD0D8),
     textDisabled: _Palette.gray600,
     border: Color(0xFF232A36),
     borderStrong: Color(0xFF323B4A),

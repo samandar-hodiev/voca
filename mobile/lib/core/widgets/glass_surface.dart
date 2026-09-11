@@ -8,10 +8,15 @@
 ///
 ///   backdrop blur  ->  translucent tint  ->  lit top face  ->  gradient rim
 ///
+/// and two details that give it thickness, which is what separates a pane of glass from
+/// a tinted sticker: a glint where the light first strikes it, and a second, fainter edge
+/// just inside the rim.
+///
 /// Use glass to lift ONE thing off the page. A screen where every surface is glass has no
 /// hierarchy, and it is exactly the template look the product is trying not to have.
 library;
 
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -79,16 +84,32 @@ class GlassSurface extends StatelessWidget {
             stops: const [0, 0.55],
           ),
         ),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-          child: child,
+        // The glint is painted behind the content and kept to the top edge, inside the
+        // padding, so it never sits under a line of text. Passthrough keeps the content's
+        // constraints exactly what they were without the stack.
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _Glint(color: glass.borderTop)),
+              ),
+            ),
+            Padding(
+              padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+              child: child,
+            ),
+          ],
         ),
       ),
     );
 
     if (blur) {
       pane = BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: glass.blurSigma, sigmaY: glass.blurSigma),
+        filter: ImageFilter.blur(
+          sigmaX: glass.blurSigma,
+          sigmaY: glass.blurSigma,
+        ),
         child: pane,
       );
     }
@@ -112,6 +133,17 @@ class GlassSurface extends StatelessWidget {
                     colors: [glass.borderTop, glass.borderBottom],
                   ),
                 ),
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: _InnerEdge(
+                borderRadius: radius,
+                inset: borderWidth + 1,
+                color: glass.borderTop,
               ),
             ),
           ),
@@ -181,6 +213,74 @@ class GradientBoxBorder extends BoxBorder {
       GradientBoxBorder(gradient: gradient, width: width * t);
 }
 
+/// The bright spot where light first strikes a pane: a soft oval along the top-left edge.
+class _Glint extends CustomPainter {
+  const _Glint({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final band = Rect.fromLTWH(
+      size.width * 0.06,
+      2.5,
+      size.width * 0.5,
+      math.min(10, size.height * 0.22),
+    );
+    canvas.drawOval(
+      band,
+      Paint()
+        ..color = color
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_Glint old) => old.color != color;
+}
+
+/// A second, fainter line just inside the rim, bright along the top and gone a third of
+/// the way down. Two edges a hair apart are what make a pane read as having thickness.
+class _InnerEdge extends CustomPainter {
+  const _InnerEdge({
+    required this.borderRadius,
+    required this.inset,
+    required this.color,
+  });
+
+  final BorderRadius borderRadius;
+  final double inset;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    if (rect.width <= inset * 2 || rect.height <= inset * 2) return;
+    canvas.drawRRect(
+      borderRadius.toRRect(rect).deflate(inset),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: color.a * 0.7),
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.35],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_InnerEdge old) =>
+      old.borderRadius != borderRadius ||
+      old.inset != inset ||
+      old.color != color;
+}
+
 /// A glass surface with card padding. The default choice for grouped content.
 class GlassCard extends StatelessWidget {
   const GlassCard({
@@ -213,16 +313,16 @@ class GlassCard extends StatelessWidget {
     if (onTap != null) {
       card = Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: card,
-        ),
+        child: InkWell(onTap: onTap, borderRadius: radius, child: card),
       );
     }
 
     if (semanticLabel != null) {
-      card = Semantics(label: semanticLabel, button: onTap != null, child: card);
+      card = Semantics(
+        label: semanticLabel,
+        button: onTap != null,
+        child: card,
+      );
     }
 
     return card;
