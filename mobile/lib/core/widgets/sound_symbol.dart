@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'liquid_drop.dart';
+import '../theme/app_radius.dart';
 
 class SoundSymbol extends StatelessWidget {
   const SoundSymbol({super.key, required this.symbol, this.size = 44});
@@ -27,7 +28,7 @@ class SoundSymbol extends StatelessWidget {
       excludeSemantics: true,
       child: GlassBead(
         size: size,
-        borderRadius: BorderRadius.circular(size * 0.32),
+        borderRadius: VocaRadius.largeAll,
         tint: colors.primary.withValues(alpha: 0.10),
         child: FittedBox(
           fit: BoxFit.scaleDown,

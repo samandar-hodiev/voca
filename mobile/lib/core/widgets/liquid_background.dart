@@ -46,7 +46,7 @@ class LiquidBackground extends StatelessWidget {
   ) => brightness == Brightness.dark
       ? [
           (
-            colors.primary.withValues(alpha: 0.22),
+            _indigoDark.withValues(alpha: 0.22),
             const Alignment(-0.7, -0.42),
             0.55,
           ),
@@ -56,14 +56,14 @@ class LiquidBackground extends StatelessWidget {
             0.45,
           ),
           (
-            colors.primary.withValues(alpha: 0.16),
+            _indigoDark.withValues(alpha: 0.16),
             const Alignment(0.1, 0.72),
             0.6,
           ),
         ]
       : [
           (
-            colors.primary.withValues(alpha: 0.14),
+            _indigoLight.withValues(alpha: 0.14),
             const Alignment(-0.75, -0.5),
             0.55,
           ),
@@ -78,6 +78,11 @@ class LiquidBackground extends StatelessWidget {
             0.65,
           ),
         ];
+
+  // The background keeps its own indigo whatever the brand colour is, so the look of the
+  // page does not move when the brand does.
+  static const _indigoLight = Color(0xFF5B5BF7);
+  static const _indigoDark = Color(0xFF7C7CFF);
 
   @override
   Widget build(BuildContext context) {

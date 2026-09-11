@@ -152,13 +152,17 @@ void main() {
         });
       }
 
-      // The reason the token exists: plain brand text would fail on the same tint.
-      test('plain brand text would not have been enough', () {
+      // The reason the token exists: on a brand tint the muted token always reads better
+      // than plain brand text would.
+      test('the muted brand token beats plain brand text on a brand tint', () {
         final tint = Color.alphaBlend(
           colors.primary.withValues(alpha: 0.14),
           colors.surface,
         );
-        expect(contrastRatio(colors.primary, tint), lessThan(aaBody));
+        expect(
+          contrastRatio(colors.onPrimaryMuted, tint),
+          greaterThan(contrastRatio(colors.primary, tint)),
+        );
       });
 
       test('captions stay readable on the elevated score card', () {
@@ -234,18 +238,18 @@ void main() {
         expectReadable('secondary text', colors.textSecondary, well);
       });
 
-      // The label sits in the middle of the tinted button, below where the light at the
-      // top has faded out, so what is behind it is the plain colour.
-      test('primary button label on its tint meets AA', () {
+      // The label sits on the colour or deeper: the light at the top has faded by the
+      // label's band, and below it the liquid only darkens. In dark mode the label is
+      // dark, so the deepest point, the bottom edge, is the one to check.
+      test('primary button label on its liquid meets AA', () {
         expect(
           LiquidDrop.colourStop,
           lessThanOrEqualTo(LiquidDrop.labelBandTop),
         );
-        expect(
-          LiquidDrop.shadeStart,
-          greaterThanOrEqualTo(LiquidDrop.labelBandBottom),
-        );
-        final ratio = contrastRatio(colors.onPrimary, colors.primary);
+        final worst = brightness == Brightness.dark
+            ? Color.lerp(colors.primary, Colors.black, LiquidDrop.shadeDark)!
+            : colors.primary;
+        final ratio = contrastRatio(colors.onPrimary, worst);
         expect(
           ratio,
           greaterThanOrEqualTo(aaBody),

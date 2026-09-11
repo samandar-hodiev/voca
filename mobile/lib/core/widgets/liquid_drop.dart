@@ -41,12 +41,12 @@ class LiquidDrop extends StatelessWidget {
   static const topLightenLight = 0.18;
   static const topLightenDark = 0.20;
 
-  /// Where the bottom starts to deepen, and how much. Together with the lighter top this
-  /// is the little volume a filled control has, without any gloss.
-  static const shadeStart = 0.72;
-  static const shadeLight = 0.12;
-  static const shadeDark = 0.16;
-  static const labelBandBottom = 0.70;
+  /// How much black the colour is mixed with by the bottom edge, per theme. From the
+  /// lighter top it deepens all the way down, so a filled control reads as a body of
+  /// colour with depth rather than a flat chip. Behind a label it is only ever the colour
+  /// or darker; the contrast test checks the dark theme's dark label at the very bottom.
+  static const shadeLight = 0.40;
+  static const shadeDark = 0.30;
 
   /// Where, as a fraction of the height, the light at the top has faded out. A label's
   /// band starts at [labelBandTop], so everything behind a label is the plain colour.
@@ -94,10 +94,9 @@ class LiquidDrop extends StatelessWidget {
             colors: [
               Colors.white.withValues(alpha: top),
               Colors.white.withValues(alpha: 0),
-              Colors.black.withValues(alpha: 0),
               Colors.black.withValues(alpha: dark ? shadeDark : shadeLight),
             ],
-            stops: const [0, colourStop, shadeStart, 1],
+            stops: const [0, colourStop, 1],
           ),
           border: GradientBoxBorder(
             width: 0.8,

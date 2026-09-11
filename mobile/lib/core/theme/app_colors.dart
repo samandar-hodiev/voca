@@ -14,9 +14,9 @@ import 'package:flutter/material.dart';
 /// directly, because a value has no meaning and cannot be themed.
 abstract final class _Palette {
   // Indigo accent.
-  static const indigo50 = Color(0xFFEEEEFE);
-  static const indigo500 = Color(0xFF5B5BF7);
-  static const indigo600 = Color(0xFF4A4AE0);
+  static const emerald50 = Color(0xFFD6F5E8);
+  static const emerald700 = Color(0xFF0A6E4F);
+  static const emerald800 = Color(0xFF085A40);
 
   // Neutrals.
   static const white = Color(0xFFFFFFFF);
@@ -141,11 +141,13 @@ class VocaColors extends ThemeExtension<VocaColors> {
 
   /// Light theme. The default; Voca's direction is bright, calm and spacious.
   static const light = VocaColors(
-    primary: _Palette.indigo500,
+    // A deep emerald. Filled controls run it from a lighter top down towards black
+    // (LiquidDrop), which is where the brand's depth comes from. White on it is 6.3:1.
+    primary: _Palette.emerald700,
     onPrimary: _Palette.white,
-    primaryPressed: _Palette.indigo600,
-    primaryMuted: _Palette.indigo50,
-    onPrimaryMuted: Color(0xFF4338CA),
+    primaryPressed: _Palette.emerald800,
+    primaryMuted: _Palette.emerald50,
+    onPrimaryMuted: Color(0xFF064E3B),
     // A pale mint rather than near-white: white glass needs something to sit on, and on
     // a white page it disappears. The green sits with the teal corner light on cards.
     background: Color(0xFFEDF5F1),
@@ -177,11 +179,11 @@ class VocaColors extends ThemeExtension<VocaColors> {
   /// mode today without unreadable text. Refining it is a design task; the token set it
   /// fills in will not change.
   static const dark = VocaColors(
-    primary: Color(0xFF7C7CFF),
+    primary: Color(0xFF34D399),
     onPrimary: _Palette.gray950,
-    primaryPressed: Color(0xFF7373F0),
-    primaryMuted: Color(0xFF1E1E3A),
-    onPrimaryMuted: Color(0xFFB4B4FF),
+    primaryPressed: Color(0xFF10B981),
+    primaryMuted: Color(0xFF0B2E24),
+    onPrimaryMuted: Color(0xFF6EE7B7),
     background: _Palette.gray950,
     surface: Color(0xFF141922),
     surfaceElevated: Color(0xFF1B212C),

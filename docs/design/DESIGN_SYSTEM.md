@@ -34,9 +34,9 @@ Semantic names only. A raw hex value outside the token file is a bug.
 
 | Token | Light | Meaning |
 |-------|-------|---------|
-| `primary` | `#5B5BF7` | Brand accent, primary action, focus |
-| `primaryPressed` | `#4A4AE0` | Held state of a primary control |
-| `primaryMuted` | `#EEEEFE` | Quiet accent wash, selected rows |
+| `primary` | `#0A6E4F` | Brand accent, primary action, focus |
+| `primaryPressed` | `#085A40` | Held state of a primary control |
+| `primaryMuted` | `#D6F5E8` | Quiet accent wash, selected rows |
 | `onPrimary` | `#FFFFFF` | Content on `primary` |
 | `background` | `#EDF5F1` (dark `#0B0F17`) | The page. Light leans mint green, so white glass has colour to sit on and reads as glass |
 | `surface` | `#FFFFFF` | Cards and sheets |
@@ -163,6 +163,23 @@ The tab bar follows a reference tab bar: a tall clear capsule with a thin light 
 outline icons at rest, and the selected destination in a lighter pill of liquid glass
 (lit across the top, a touch deeper at the bottom) with its icon filled. Voca keeps its
 own destinations, icons and labels; only the design comes from the reference.
+
+**Brand colour.** A deep emerald (`#0A6E4F` light, `#34D399` dark). Filled controls run
+it from a lighter top down towards black, which is where the brand gets its depth; a label
+only ever sits on the colour itself or darker, so it keeps its contrast. The background
+fields keep their own indigo, so the page does not move when the brand does.
+
+**One radius.** Every element uses the same corner radius, 20 (`VocaRadius.element`).
+Anything shorter than 40 comes out as a capsule, because a corner larger than half a side
+is scaled to fit. Only the tab bar and its pill are capsules by design.
+
+**Corner light length.** The teal light at a card's corners reaches about a third of the
+card's longer side (between 70 and 170 points), so wide, short cards get light that runs
+along their long edges instead of a dab at the corner.
+
+**Tab bar.** Clear glass: a thin tint, a moderate blur that turns what passes under it
+into soft colour, a thin light rim, and a see-through pill behind the selected
+destination.
 
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own

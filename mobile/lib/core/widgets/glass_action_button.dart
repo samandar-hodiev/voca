@@ -79,7 +79,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
 
     final surface = GlassSurface(
       edgeGlow: false,
-      borderRadius: VocaRadius.pillAll,
+      borderRadius: VocaRadius.largeAll,
       tint: tint,
       borderWidth: _enabled ? 1.4 : 1,
       showShadow: _enabled && !_pressed,
@@ -152,7 +152,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
           child: SizedBox(
             width: double.infinity,
             child: GlassTouchLight(
-              borderRadius: VocaRadius.pillAll,
+              borderRadius: VocaRadius.largeAll,
               enabled: _enabled,
               child: surface,
             ),

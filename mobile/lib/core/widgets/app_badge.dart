@@ -51,11 +51,15 @@ class AppBadge extends StatelessWidget {
             Icon(icon, size: 12, color: foreground),
             const SizedBox(width: VocaSpacing.xxs),
           ],
-          Text(
-            label,
-            style: context.vocaText.caption.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.vocaText.caption.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

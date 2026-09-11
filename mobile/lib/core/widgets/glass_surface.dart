@@ -16,7 +16,6 @@
 /// * No glints, blobs or coloured fills. Those turn glass into a cartoon of glass.
 library;
 
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -36,6 +35,8 @@ class GlassSurface extends StatelessWidget {
     this.tint,
     this.borderWidth = 1,
     this.edgeGlow = true,
+    this.blurSigma,
+    this.highlight,
   });
 
   final Widget child;
@@ -59,6 +60,13 @@ class GlassSurface extends StatelessWidget {
   /// and dialogs; off for controls and the tab bar, whose rim is a plain hairline, so a
   /// screen has one kind of lit object rather than a dozen.
   final bool edgeGlow;
+
+  /// Overrides how strongly what is behind is blurred. The tab bar blurs less, so what
+  /// passes under it stays recognisable and the bar reads as clear glass.
+  final double? blurSigma;
+
+  /// Overrides the soft light across the top of the pane.
+  final Color? highlight;
 
   /// The corner light, per theme: a teal between the brand indigo and the green in the
   /// background, as in the reference.
@@ -113,7 +121,10 @@ class GlassSurface extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [glass.highlight, glass.highlight.withValues(alpha: 0)],
+            colors: [
+              highlight ?? glass.highlight,
+              (highlight ?? glass.highlight).withValues(alpha: 0),
+            ],
             stops: const [0, 0.5],
           ),
         ),
@@ -135,8 +146,8 @@ class GlassSurface extends StatelessWidget {
         filter: ImageFilter.compose(
           outer: const ColorFilter.matrix(saturation),
           inner: ImageFilter.blur(
-            sigmaX: glass.blurSigma,
-            sigmaY: glass.blurSigma,
+            sigmaX: blurSigma ?? glass.blurSigma,
+            sigmaY: blurSigma ?? glass.blurSigma,
           ),
         ),
         child: pane,
@@ -227,9 +238,9 @@ class _RimLight extends CustomPainter {
 
     final light = glow;
     if (light == null) return;
-    // The light stays near its corner, as in the reference, rather than running
-    // the length of a small card's edge.
-    final reach = math.min(size.shortestSide * 0.5, 110.0);
+    // Scaled by the longer side, so a wide, short element gets light that runs a proper
+    // way along its long edge instead of a dab at the corner.
+    final reach = (size.longestSide * 0.34).clamp(70.0, 170.0);
     for (final corner in [rect.topRight, rect.bottomLeft]) {
       final area = Rect.fromCircle(center: corner, radius: reach);
       // The bloom: the same light, blurred, spilling across the edge.

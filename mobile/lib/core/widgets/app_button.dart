@@ -229,11 +229,11 @@ class _VocaButtonState extends State<_VocaButton> {
             ? SizedBox(
                 width: widget.expand ? double.infinity : null,
                 child: GlassTouchLight(
-                  borderRadius: VocaRadius.pillAll,
+                  borderRadius: VocaRadius.largeAll,
                   enabled: _enabled,
                   child: LiquidDrop(
                     color: background,
-                    borderRadius: VocaRadius.pillAll,
+                    borderRadius: VocaRadius.largeAll,
                     glow: _enabled && !_pressed,
                     padding: const EdgeInsets.symmetric(
                       horizontal: VocaSpacing.lg,
@@ -264,7 +264,7 @@ class _VocaButtonState extends State<_VocaButton> {
                 ),
                 decoration: BoxDecoration(
                   color: background,
-                  borderRadius: VocaRadius.pillAll,
+                  borderRadius: VocaRadius.largeAll,
                   border: border == null ? null : Border.all(color: border),
                 ),
                 alignment: Alignment.center,
@@ -282,7 +282,7 @@ class _VocaButtonState extends State<_VocaButton> {
     return SizedBox(
       width: widget.expand ? double.infinity : null,
       child: GlassTouchLight(
-        borderRadius: VocaRadius.pillAll,
+        borderRadius: VocaRadius.largeAll,
         enabled: _enabled,
         child: GlassSurface(
           edgeGlow: false,

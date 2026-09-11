@@ -3,7 +3,8 @@
 /// The design follows a reference tab bar the product owner chose, on top of Apple's
 /// Liquid Glass: a
 /// tall capsule of clear glass with a thin light rim, outline icons at rest, and the
-/// selected destination sitting in a lighter pill of glass with its icon filled. The
+/// selected destination sitting in a lighter, see-through pill of glass with its icon
+/// filled. The bar blurs what passes under it only lightly, so it reads as clear glass. The
 /// pill is a small body of liquid glass, lit across the top and a touch deeper at the
 /// bottom, and it slides to a new destination, stretching a little on the way and
 /// settling with a slight overshoot.
@@ -56,15 +57,15 @@ class LiquidBottomBar extends StatefulWidget {
   /// How much of the theme's glass tint the bar carries: clear. The labels stay readable
   /// over the background with no tint at all (contrast_test).
   @visibleForTesting
-  static const lightGlassAlpha = 0.42;
+  static const lightGlassAlpha = 0.14;
   @visibleForTesting
-  static const darkGlassAlpha = 0.55;
+  static const darkGlassAlpha = 0.32;
 
   /// The pill behind the selected destination, per theme.
   @visibleForTesting
   static Color lensFill(Brightness brightness) => brightness == Brightness.dark
-      ? const Color(0x21FFFFFF)
-      : const Color(0x99FFFFFF);
+      ? const Color(0x24FFFFFF)
+      : const Color(0x59FFFFFF);
 
   /// The light across the top of the pill, per theme. Public so the contrast test checks
   /// the selected label on the pill's lightest part.
@@ -72,7 +73,7 @@ class LiquidBottomBar extends StatefulWidget {
   static Color lensTopLight(Brightness brightness) =>
       brightness == Brightness.dark
       ? const Color(0x1AFFFFFF)
-      : const Color(0x73FFFFFF);
+      : const Color(0x4DFFFFFF);
 
   @override
   State<LiquidBottomBar> createState() => _LiquidBottomBarState();
@@ -128,6 +129,8 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
         padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.lg),
         child: GlassSurface(
           edgeGlow: false,
+          blurSigma: 20,
+          highlight: Color(dark ? 0x0FFFFFFF : 0x1FFFFFFF),
           borderRadius: BorderRadius.circular(VocaRadius.pill),
           tint: glass.tint.withValues(
             alpha: dark
@@ -228,7 +231,7 @@ class _Pill extends StatelessWidget {
           border: GradientBoxBorder(
             gradient: dark
                 ? specularRim(const Color(0x66FFFFFF), const Color(0x14FFFFFF))
-                : specularRim(const Color(0xFFFFFFFF), const Color(0x1A000000)),
+                : specularRim(const Color(0xE6FFFFFF), const Color(0x40FFFFFF)),
           ),
         ),
       ),

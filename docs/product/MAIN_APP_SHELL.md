@@ -68,7 +68,7 @@ because every screen that shows one of them shows the others.
 - Tappable cards shrink slightly on press (`PressScale`).
 - Progress rings and bars animate from zero the first time they appear.
 - The bar is a capsule of clear glass, after the iOS tab bar. The selected destination
-  gets a lighter glass lens that slides to a new one, stretching a little and settling
+  gets a lighter, see-through glass pill that slides to a new one, stretching a little and settling
   with a slight overshoot.
 - With reduced motion, all of it is skipped: content simply appears and the lens moves in
   one step.
@@ -82,8 +82,8 @@ The background is still. Nothing on these screens loops.
 - Charts, rings and stat cards announce a spoken summary instead of their parts.
 - IPA symbols are announced as "θ tovushi" rather than spelled out character by character.
 - Touch targets are at least 44 points; bar items are over 70 and list rows are 56.
-- The active destination is marked three ways: the lens, a filled icon and a bold label
-  in the accent colour.
+- The active destination is marked three ways: the glass pill, a filled icon and a bold
+  label.
 
 ## Signing out
 
