@@ -4,7 +4,7 @@
 
 MOBILE_RUN_DIR := /tmp/voca-run/mobile
 
-.PHONY: help backend admin mobile mobile-fresh mobile-reset test lint
+.PHONY: help backend admin mobile mobile-fresh mobile-reset test lint migrate
 
 BUNDLE_ID := com.voca.voca
 
@@ -15,6 +15,10 @@ help:
 ## backend: run the API on :8082
 backend:
 	$(MAKE) -C backend run
+
+## migrate: apply database migrations; run after pulling new ones
+migrate:
+	$(MAKE) -C backend migrate
 
 ## admin: run the admin dashboard on :3000
 admin:

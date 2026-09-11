@@ -3,11 +3,15 @@
 # The server entrypoint is cmd/api (ARCHITECTURE.md section 28). There is deliberately
 # no cmd/server: competing entrypoints drift apart.
 
-.PHONY: run build test lint fmt vet tidy help
+.PHONY: run build test lint fmt vet tidy help migrate
 
 ## run: start the API server (PORT from .env, default 8082)
 run:
 	go run ./cmd/api
+
+## migrate: apply pending database migrations
+migrate:
+	go run ./cmd/migrate
 
 ## build: compile all packages
 build:

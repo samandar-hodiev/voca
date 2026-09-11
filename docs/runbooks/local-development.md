@@ -18,6 +18,22 @@ curl -I http://localhost:3000/        # 200
 
 ---
 
+## Applying database migrations
+
+The API does not change the schema when it starts. Migrations are applied by a separate
+command, so a deploy decides when the schema moves, not whichever instance boots first:
+
+```sh
+make migrate
+```
+
+Run it after pulling code that adds a file under `backend/migrations/`. It is safe to run
+again; with nothing pending it changes nothing.
+
+A missing migration shows up as a 500 with a constraint violation in the API log. For
+example, before `000002_sign_out_code` is applied, asking for a sign-out code fails
+because the database does not yet accept the `sign_out` purpose.
+
 ## Blocker: iOS builds fail on an iCloud-synced Desktop
 
 **Symptom.** `flutter run` and `flutter build ios` fail with an unhelpful message:
