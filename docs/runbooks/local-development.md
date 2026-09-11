@@ -375,3 +375,45 @@ BREVO_FROM_NAME=Voca
 
 Later, when the product owns a domain, verify it in Brevo or move to Resend and send from
 `no-reply@yourdomain`. A verified domain is what stops the messages landing in spam.
+
+## Sending to every learner, not just to yourself
+
+The decision and its reasoning are in
+[ADR-017](../architecture/adr/ADR-017-email-delivery-requires-a-verified-domain.md). The
+short version: a mail provider will not let anybody send to arbitrary recipients until the
+sender proves they control the sending domain. That rule is what keeps the email system
+usable, and there is no plan or price that skips it.
+
+So the path to ten thousand learners receiving their own codes is:
+
+1. **Buy a domain.** Roughly ten dollars a year. Cloudflare Registrar sells at cost;
+   Namecheap and Porkbun are similar. Any name works, `voca.uz` or `getvoca.com` or
+   anything else, because learners rarely read the sender address.
+2. **Add it to the provider.** In Resend, Domains -> Add Domain. In Brevo, Senders,
+   Domains & Dedicated IPs -> Domains.
+3. **Publish the DNS records they give you.** Three kinds:
+   - **SPF**, a TXT record saying which servers may send as the domain.
+   - **DKIM**, a TXT record holding the public key that signs each message.
+   - **DMARC**, a TXT record saying what a receiving server should do when the first two
+     fail. Start at `p=none`, and tighten later.
+
+   If the domain is on Cloudflare, these are three rows in the DNS tab.
+4. **Wait for verification.** Usually minutes, occasionally a few hours while DNS spreads.
+5. **Point the backend at it.**
+
+```
+RESEND_API_KEY=re_...
+RESEND_FROM=no-reply@yourdomain
+RESEND_FROM_NAME=Voca
+```
+
+From that moment every address a learner types receives its own code.
+
+### What to watch once it is live
+
+- **Reputation builds slowly.** A brand new domain has none, so a sudden burst looks like
+  spam. Volume should climb over the first weeks.
+- **Hard bounces must stop being retried.** Repeatedly mailing an address that does not
+  exist is one of the fastest ways to get a sender blocked.
+- **Watch the free tier ceiling.** Resend allows 3,000 messages a month and Brevo 300 a
+  day. Ten thousand signups a month needs a paid plan, still in the tens of dollars.

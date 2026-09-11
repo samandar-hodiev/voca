@@ -98,7 +98,12 @@ void main() {
   Future<void> tapText(WidgetTester tester, String label) async {
     final finder = find.text(label);
     await waitFor(tester, finder);
-    await tester.tap(finder.first);
+    // The setup screens put their content in a ListView, so a target can sit under the
+    // fold or be half covered. Scrolling it into view first is what makes the tap land on
+    // the control rather than on the list behind it.
+    await tester.ensureVisible(finder.first);
+    await settle(tester, frames: 5);
+    await tester.tap(finder.first, warnIfMissed: false);
     await settle(tester);
   }
 
@@ -131,7 +136,9 @@ void main() {
     // find.text cannot see the word on its own. It is the only TextButton on the screen.
     final loginLink = find.byType(TextButton);
     await waitFor(tester, loginLink);
-    await tester.tap(loginLink.first);
+    await tester.ensureVisible(loginLink.first);
+    await settle(tester, frames: 5);
+    await tester.tap(loginLink.first, warnIfMissed: false);
     await settle(tester);
 
     await waitFor(tester, find.text('Xush kelibsiz'));
