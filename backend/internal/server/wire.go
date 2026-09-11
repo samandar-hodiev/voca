@@ -15,6 +15,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	emailbrevo "github.com/samandar-hodiev/voca/backend/internal/integrations/email/brevo"
+	emailfallback "github.com/samandar-hodiev/voca/backend/internal/integrations/email/fallback"
 	emaillog "github.com/samandar-hodiev/voca/backend/internal/integrations/email/log"
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
@@ -108,6 +109,26 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 	default:
 		log.Warn("email_delivery_unavailable",
 			slog.String("hint", "set BREVO_API_KEY and BREVO_FROM, or RESEND_API_KEY and RESEND_FROM"))
+	}
+
+	// Outside production, a provider that refuses a recipient must not stop development.
+	// Until a domain is verified a mail API will only deliver to the account owner, and
+	// without this every other address fails on the first screen of sign-up. The message
+	// is written to the outbox instead and the flow continues.
+	if !cfg.IsProduction() && cfg.EmailOutboxDir != "" &&
+		(cfg.BrevoConfigured() || cfg.ResendConfigured() || cfg.SMTPConfigured()) {
+
+		box, err := emailoutbox.New(cfg.EmailOutboxDir, cfg.IsProduction(), log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		wrapped, err := emailfallback.New(emailProvider, box, cfg.IsProduction(), log)
+		if err != nil {
+			return Dependencies{}, err
+		}
+		emailProvider = wrapped
+		log.Warn("email_outbox_fallback_enabled",
+			slog.String("hint", "development only: a refused recipient is written to disk"))
 	}
 
 	// Google sign-in verifies tokens against Google's keys. With no client ID configured

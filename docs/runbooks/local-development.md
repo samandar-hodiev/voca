@@ -441,3 +441,26 @@ replacing a picture does not leave the old URL working.
 Object storage is the eventual home. It is a new adapter behind the same `AvatarStore`
 port, and the auth module does not change, because a stored value is a path rather than a
 full URL.
+
+## Testing sign-up with an address that is not yours
+
+A mail provider will not deliver to an arbitrary recipient until a domain is verified, so
+before that is done every address except the account owner's is refused. Without help,
+sign-up stops on the first screen for every test address.
+
+Outside production, a refusal is not fatal. When `EMAIL_OUTBOX_DIR` is set alongside a real
+provider, a refused message is written to the outbox instead and the flow continues:
+
+| Recipient | What happens |
+|---|---|
+| the mail account's own address | a real email arrives |
+| anything else | the code lands in the outbox, readable with `make code` |
+
+The startup log says `email_outbox_fallback_enabled`, and each fallback logs
+`email_fell_back_to_outbox` with the reason, so a restricted provider is never mistaken for
+a working one.
+
+This is development only. The wrapper refuses to run when `APP_ENV=production`, because
+there a provider that will not send is a real failure: quietly writing a customer's
+verification code to a server disk while telling them it was sent would be far worse than
+an error.
