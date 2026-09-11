@@ -464,3 +464,42 @@ This is development only. The wrapper refuses to run when `APP_ENV=production`, 
 there a provider that will not send is a real failure: quietly writing a customer's
 verification code to a server disk while telling them it was sent would be far worse than
 an error.
+
+## Enabling Sign in with Google
+
+The flow is: the app asks Google, hands the credential to Firebase, and forwards the
+resulting Firebase ID token to the backend, which verifies it and answers with a normal
+Voca session. Firebase is the identity provider and nothing more (ADR-019).
+
+**Backend.** One setting, and no secret:
+
+```
+FIREBASE_PROJECT_ID=voca-508308
+```
+
+Verifying an ID token needs only the project ID and Google's public certificates, so there
+is no service account key to store. Check it took effect:
+
+```sh
+curl -s localhost:8082/api/v1/config
+```
+
+`google_sign_in` flips to `true`.
+
+**iOS.** The app needs the platform configuration file, which is the one part that must be
+downloaded rather than configured:
+
+1. Firebase console -> Project settings -> Your apps -> Add app -> iOS.
+2. Bundle ID: `com.voca.voca`. It must match exactly.
+3. Download `GoogleService-Info.plist` and put it at `mobile/ios/Runner/GoogleService-Info.plist`.
+4. Open that file, find `REVERSED_CLIENT_ID`, and register it as a URL scheme in
+   `mobile/ios/Runner/Info.plist` under `CFBundleURLTypes`. Without it the Google sheet
+   opens and never returns, because the browser has no way to hand the result back.
+
+**Android**, when it arrives: add an Android app with package `com.voca.voca`, register the
+signing certificate's SHA-1 and SHA-256 fingerprints, and put `google-services.json` in
+`mobile/android/app/`.
+
+The button stays disabled until BOTH halves are in place: the backend reporting the
+capability, and Firebase actually starting in the app. A button that opens a picker it
+cannot finish is worse than one that says it is coming.

@@ -1045,3 +1045,23 @@ func TestSaveAvatar_RejectedImageIsAValidationError(t *testing.T) {
 		t.Fatalf("got %s, want VALIDATION_ERROR", got)
 	}
 }
+
+// The profile is built from the token's signed claims, never from the request body. A
+// client can send any name it likes, and believing it would let somebody sign in as one
+// identity while presenting somebody else's details.
+func TestSplitDisplayName(t *testing.T) {
+	cases := map[string][2]string{
+		"Samandar Xodiev":        {"Samandar", "Xodiev"},
+		"Samandar":               {"Samandar", ""},
+		"Samandar Alisher Ogli":  {"Samandar", "Alisher Ogli"},
+		"":                       {"", ""},
+		"   ":                    {"", ""},
+		"  Samandar   Xodiev   ": {"Samandar", "Xodiev"},
+	}
+	for input, want := range cases {
+		first, last := splitDisplayName(input)
+		if first != want[0] || last != want[1] {
+			t.Errorf("%q -> (%q, %q), want (%q, %q)", input, first, last, want[0], want[1])
+		}
+	}
+}

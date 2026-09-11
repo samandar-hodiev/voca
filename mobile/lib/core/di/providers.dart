@@ -21,6 +21,9 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../network/dio_client.dart';
 import '../network/interceptors/auth_interceptor.dart';
 import '../storage/key_value_store.dart';
+import '../../features/auth/data/datasources/firebase_google_tokens.dart';
+import '../../features/auth/domain/usecases/sign_in_with_google.dart';
+import '../../features/auth/domain/usecases/sign_out.dart';
 import '../storage/secure_storage.dart';
 
 /// Overridden in [bootstrap] with the flavor's configuration. Reading it without an
@@ -88,3 +91,26 @@ class _RepositoryTokens implements SessionTokens {
   @override
   Future<bool> refreshSession() => _repository.refreshSession();
 }
+
+/// Turns a Google account into a Firebase ID token.
+///
+/// Overridden in tests with a fake, so no test has to reach Google or Firebase.
+final googleIdentityTokenProvider = Provider<GoogleIdentityTokenProvider>((ref) {
+  return FirebaseGoogleTokens();
+});
+
+/// The Google sign-in flow, from account picker to a stored Voca session.
+final signInWithGoogleProvider = Provider<SignInWithGoogle>((ref) {
+  return SignInWithGoogle(
+    ref.watch(googleIdentityTokenProvider),
+    ref.watch(authRepositoryProvider),
+  );
+});
+
+/// Ends both the Voca session and the identity provider's.
+final signOutProvider = Provider<SignOut>((ref) {
+  return SignOut(
+    ref.watch(authRepositoryProvider),
+    ref.watch(googleIdentityTokenProvider),
+  );
+});

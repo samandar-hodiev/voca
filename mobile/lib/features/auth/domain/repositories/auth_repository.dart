@@ -42,12 +42,14 @@ abstract interface class AuthRepository {
   Future<Result<AuthSession>> login(String email, String password);
   Future<Result<AuthSession>> continueAsGuest(OnboardingAnswers? answers);
 
-  /// Signs in with a Google identity token. The token is verified SERVER-SIDE; the app
-  /// only forwards what Google gave it.
+  /// Signs in with a Firebase ID token proving a Google sign-in.
+  ///
+  /// The token is verified SERVER-SIDE and the app only forwards it. No name is sent: the
+  /// backend takes the identity from the token's signed claims and ignores anything this
+  /// app claims about who the person is. Only [answers], which are preferences rather than
+  /// identity, travel with it.
   Future<Result<AuthSession>> signInWithGoogle(
     String idToken, {
-    String firstName,
-    String lastName,
     OnboardingAnswers? answers,
   });
 

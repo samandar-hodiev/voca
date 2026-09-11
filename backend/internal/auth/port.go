@@ -36,11 +36,20 @@ type EmailProvider interface {
 	Send(ctx context.Context, msg EmailMessage) error
 }
 
-// GoogleIdentity is what a verified Google token tells us about a person.
+// GoogleIdentity is what a verified identity token tells us about a person.
+//
+// Every field comes from the token's signed claims. Nothing here is taken from the request
+// body: a client is free to send whatever name it likes, and believing it would let
+// somebody sign in as one identity while presenting another's details.
 type GoogleIdentity struct {
 	Subject       string
 	Email         string
 	EmailVerified bool
+
+	// DisplayName and PhotoURL are best-effort. A Google account usually has both, but a
+	// token without them is still a valid sign-in.
+	DisplayName string
+	PhotoURL    string
 }
 
 // GoogleTokenVerifier checks an ID token issued by Google.

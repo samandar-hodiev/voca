@@ -30,6 +30,9 @@ String authFailureMessage(Failure failure) {
     };
   }
   return switch (failure) {
+    // Backing out is not a failure. Somebody who closed the Google picker knows what they
+    // did, and "sign-in failed" would be both wrong and irritating.
+    CancelledFailure() => '',
     UnauthenticatedFailure() => 'Sessiya tugagan. Qaytadan kiring.',
     NetworkFailure() => 'Internet aloqasi yo‘q.',
     // Sending is the only provider the auth flow talks to, so this is always about an
@@ -48,7 +51,9 @@ class AuthErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (failure == null) return const SizedBox.shrink();
+    if (failure == null || failure is CancelledFailure) {
+      return const SizedBox.shrink();
+    }
 
     final colors = context.vocaColors;
 

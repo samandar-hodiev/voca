@@ -78,12 +78,6 @@ gitpulse-hook:
 email-on:
 	@./scripts/enable-email.sh "$(KEY)" "$(FROM)" $(TO)
 
-## google-on: turn on Sign in with Google
-#
-#   make google-on CLIENT_ID=123-abc.apps.googleusercontent.com
-google-on:
-	@./scripts/enable-google.sh "$(CLIENT_ID)"
-
 ## code: print the newest verification code the backend wrote
 #
 # Only useful while EMAIL_OUTBOX_DIR is set and no SMTP provider is configured, which is

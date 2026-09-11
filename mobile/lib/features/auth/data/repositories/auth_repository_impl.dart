@@ -140,15 +140,14 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthSession>> signInWithGoogle(
     String idToken, {
-    String firstName = '',
-    String lastName = '',
     OnboardingAnswers? answers,
   }) =>
       _guard(() async {
+        // Only the token and the preferences go up. The backend reads the name and the
+        // picture from the token's signed claims, so sending them from here would be
+        // both pointless and a thing to be believed that should not be.
         final session = SessionDto.fromJson(await _remote.google({
           'id_token': idToken,
-          if (firstName.isNotEmpty) 'first_name': firstName,
-          if (lastName.isNotEmpty) 'last_name': lastName,
           ..._answersJson(answers),
         })).toDomain();
         await _persist(session);

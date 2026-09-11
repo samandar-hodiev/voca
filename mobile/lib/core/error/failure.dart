@@ -64,6 +64,15 @@ class ProviderFailure extends Failure {
   const ProviderFailure({required super.message, super.requestId});
 }
 
+/// The person backed out of something rather than anything going wrong.
+///
+/// Its own type because it is the one failure that must produce no error message at all.
+/// Somebody who closes the Google account picker knows what they did, and telling them
+/// "sign-in failed" would be both wrong and irritating.
+class CancelledFailure extends Failure {
+  const CancelledFailure() : super(message: '');
+}
+
 /// Anything not recognised. Treated as retryable but not explained in detail.
 class UnknownFailure extends Failure {
   const UnknownFailure({required super.message, super.requestId});

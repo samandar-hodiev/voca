@@ -42,6 +42,12 @@ dependencies:
   # account cannot be created without one.
   image_picker: ^1.1.2
 
+  # Sign in with Google. Firebase is the identity provider and nothing more: it turns a
+  # Google credential into an ID token this app forwards to the Voca backend, which is
+  # where users, sessions and every business rule actually live (ADR-019).
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+
 dev_dependencies:
   integration_test:
     sdk: flutter

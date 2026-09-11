@@ -687,6 +687,24 @@ func normalizePhone(raw *string) (string, error) {
 	return "+" + d, nil
 }
 
+// splitDisplayName turns "Samandar Xodiev" into its two halves.
+//
+// A display name is one free-text field, so this is a guess rather than a parse: the first
+// word is the given name and whatever follows is the family name. Somebody with one word,
+// or three, still ends up with something usable, which is all the profile needs until they
+// edit it.
+func splitDisplayName(full string) (first, last string) {
+	fields := strings.Fields(full)
+	switch len(fields) {
+	case 0:
+		return "", ""
+	case 1:
+		return fields[0], ""
+	default:
+		return fields[0], strings.Join(fields[1:], " ")
+	}
+}
+
 func validateLevelAndGoal(level, goal *string) error {
 	if level != nil && *level != "" && !ValidLevels[*level] {
 		return apperr.Validation("Unknown English level.")
@@ -763,10 +781,15 @@ func (s *Service) SignInWithGoogle(ctx context.Context, idToken string,
 			return User{}, fmt.Errorf("auth: insert google user: %w", err)
 		}
 
+		// The name and picture come from the verified token, never from the request
+		// body. A client can send any name it likes, and believing it would let somebody
+		// sign in as one identity while presenting somebody else's details.
+		first, last := splitDisplayName(identity.DisplayName)
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO profiles (user_id, first_name, last_name)
-			 VALUES ($1, $2, $3)`,
-			u.ID, nullOrValue(in.FirstName), nullOrValue(in.LastName)); err != nil {
+			`INSERT INTO profiles (user_id, first_name, last_name, avatar_url)
+			 VALUES ($1, $2, $3, $4)`,
+			u.ID, nullOrValue(first), nullOrValue(last),
+			nullOrValue(identity.PhotoURL)); err != nil {
 			return User{}, fmt.Errorf("auth: insert google profile: %w", err)
 		}
 

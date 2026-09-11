@@ -18,8 +18,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/config/firebase_init.dart';
 import '../../../../core/config/remote_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -41,21 +41,16 @@ class AuthEntryPage extends ConsumerStatefulWidget {
 class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
   bool _googleBusy = false;
 
+  /// Starts the Google flow and goes to the product if it succeeds.
+  ///
+  /// The screen owns none of the sequence. Picker, Firebase, backend verification and
+  /// session storage all live behind the controller, so this method only guards against a
+  /// second tap and decides where to go afterwards.
   Future<void> _signInWithGoogle() async {
+    if (_googleBusy) return;
     setState(() => _googleBusy = true);
     try {
-      final account = await GoogleSignIn().signIn();
-      if (account == null) return; // The person dismissed the sheet.
-
-      final tokens = await account.authentication;
-      final idToken = tokens.idToken;
-      if (idToken == null) return;
-
-      // The token goes to our backend, which verifies it against Google's keys. The app
-      // never decides whether a sign-in is genuine.
-      final ok = await ref
-          .read(authControllerProvider.notifier)
-          .signInWithGoogle(idToken, first: account.displayName ?? '');
+      final ok = await ref.read(authControllerProvider.notifier).signInWithGoogle();
       if (ok && mounted) context.go(Routes.home);
     } finally {
       if (mounted) setState(() => _googleBusy = false);
@@ -74,6 +69,12 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
     final caps = capabilities.valueOrNull ?? const Capabilities();
     final busy = state.isBusy || _googleBusy;
 
+    // Both halves have to be there. The server decides whether it can verify a token, and
+    // the app decides whether it can produce one: without the platform configuration file
+    // Firebase never started, and a button that opens a picker it cannot finish is worse
+    // than one that says "coming soon".
+    final googleReady = caps.googleSignIn && isFirebaseReady;
+
     return SetupScaffold(
       title: 'Voca akkauntingizni yarating',
       subtitle: 'Natijalaringiz saqlanadi va barcha qurilmalarda mavjud bo‘ladi.',
@@ -85,8 +86,8 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
             label: 'Google bilan kirish',
             icon: const GoogleMark(),
             isLoading: _googleBusy,
-            unavailableNote: caps.googleSignIn ? null : 'Tez orada',
-            onPressed: caps.googleSignIn && !busy ? () => unawaited(_signInWithGoogle()) : null,
+            unavailableNote: googleReady ? null : 'Tez orada',
+            onPressed: googleReady && !busy ? () => unawaited(_signInWithGoogle()) : null,
           ),
           const SizedBox(height: VocaSpacing.sm),
 

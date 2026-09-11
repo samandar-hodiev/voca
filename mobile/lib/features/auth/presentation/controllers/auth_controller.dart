@@ -86,9 +86,12 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<bool> continueAsGuest() => _run(() => _repo.continueAsGuest(_answers));
 
-  Future<bool> signInWithGoogle(String idToken, {String first = '', String last = ''}) =>
-      _run(() => _repo.signInWithGoogle(idToken,
-          firstName: first, lastName: last, answers: _answers));
+  /// Runs the whole Google flow: account picker, Firebase, then the Voca backend.
+  ///
+  /// The screen calls this and reads the resulting state. It never touches Firebase, and
+  /// it never decides what a failure means.
+  Future<bool> signInWithGoogle() =>
+      _run(() => ref.read(signInWithGoogleProvider)(_answers));
 
   /// Uploads the profile picture for the session that registration just created.
   Future<bool> uploadAvatar(String filePath) =>

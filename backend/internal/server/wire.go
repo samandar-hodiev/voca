@@ -20,7 +20,7 @@ import (
 	emailoutbox "github.com/samandar-hodiev/voca/backend/internal/integrations/email/outbox"
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
-	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
+	firebaseauth "github.com/samandar-hodiev/voca/backend/internal/integrations/firebase"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
@@ -131,12 +131,14 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 			slog.String("hint", "development only: a refused recipient is written to disk"))
 	}
 
-	// Google sign-in verifies tokens against Google's keys. With no client ID configured
-	// it fails closed, and the app reads that from /api/v1/config to disable the button.
-	googleVerifier := googleauth.New(cfg.GoogleClientIDs)
+	// Google sign-in arrives as a Firebase ID token and is verified against Google's
+	// published certificates. With no project configured it fails closed, and the app
+	// reads that from /api/v1/config to disable the button rather than offer one that
+	// cannot succeed.
+	googleVerifier := firebaseauth.New(ctx, cfg.FirebaseProjectID)
 	if !googleVerifier.Configured() {
 		log.Warn("google_signin_unavailable",
-			slog.String("hint", "set GOOGLE_IOS_CLIENT_ID or GOOGLE_ANDROID_CLIENT_ID"))
+			slog.String("hint", "set FIREBASE_PROJECT_ID"))
 	}
 
 	// Avatars are written to a local directory and served back as static files. Object

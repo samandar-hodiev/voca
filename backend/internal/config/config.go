@@ -33,10 +33,13 @@ type Config struct {
 	JWTSecret    string
 	JWTAccessTTL time.Duration
 
-	// GoogleClientIDs are the OAuth audiences this backend accepts, one per platform.
-	// Empty means Google sign-in is unavailable, and the app is told so rather than
-	// shown a button that cannot work.
-	GoogleClientIDs []string
+	// FirebaseProjectID identifies the Firebase project whose ID tokens this backend
+	// accepts. Empty means Google sign-in is unavailable, and the app is told so rather
+	// than shown a button that cannot work.
+	//
+	// No service account key belongs here. Verifying an ID token needs only the project
+	// ID and Google's public certificates.
+	FirebaseProjectID string
 
 	// GitHubWebhookSecret verifies X-Hub-Signature-256 on incoming webhooks.
 	GitHubWebhookSecret string
@@ -108,15 +111,14 @@ func Load() (Config, error) {
 	loadDotEnv("backend/.env")
 
 	cfg := Config{
-		AppEnv:           getEnv("APP_ENV", defaultAppEnv),
-		Port:             getEnv("PORT", defaultPort),
-		LogLevel:         getEnv("LOG_LEVEL", defaultLogLevel),
-		DatabaseURL:      getEnv("DATABASE_URL", defaultDatabaseURL),
-		DatabaseMaxConns: int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
-		JWTSecret:        os.Getenv("JWT_SECRET"),
-		JWTAccessTTL:     getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
-		GoogleClientIDs: splitAndTrim(os.Getenv("GOOGLE_IOS_CLIENT_ID") + "," +
-			os.Getenv("GOOGLE_ANDROID_CLIENT_ID") + "," + os.Getenv("GOOGLE_WEB_CLIENT_ID")),
+		AppEnv:              getEnv("APP_ENV", defaultAppEnv),
+		Port:                getEnv("PORT", defaultPort),
+		LogLevel:            getEnv("LOG_LEVEL", defaultLogLevel),
+		DatabaseURL:         getEnv("DATABASE_URL", defaultDatabaseURL),
+		DatabaseMaxConns:    int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
+		JWTSecret:           os.Getenv("JWT_SECRET"),
+		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
+		FirebaseProjectID:   strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID")),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),

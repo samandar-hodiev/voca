@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/config/firebase_init.dart';
 import 'core/config/app_config.dart';
 import 'core/config/flavor.dart';
 import 'core/di/providers.dart';
@@ -57,6 +58,12 @@ void bootstrap(Flavor flavor) {
 /// [bootstrap] adds around it is error handling that a test does not want anyway.
 Future<Widget> buildApp(Flavor flavor) async {
   final config = AppConfig.forFlavor(flavor);
+
+  // Firebase is initialised here rather than in the sign-in screen, so there is exactly
+  // one initialisation in the process and it has finished before any screen can need it.
+  // A failure is not fatal: Google sign-in becomes unavailable, and every other way into
+  // the product keeps working.
+  await initialiseFirebase();
 
   // Opened before the first frame so it can be read synchronously. It is a local file
   // read and takes a few milliseconds.
