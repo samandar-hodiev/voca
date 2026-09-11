@@ -210,3 +210,20 @@ class GlassBead extends StatelessWidget {
     return size == null ? bead : SizedBox.square(dimension: size, child: bead);
   }
 }
+
+/// The premium green glass of the primary action and the selected tab: a mint-to-emerald
+/// liquid carrying a deep green label. Light and clear, rather than a dark slab of ink.
+abstract final class PremiumGreen {
+  static const start = Color(0xFFA7F3D0);
+  static const end = Color(0xFF34D399);
+  static const pressedStart = Color(0xFF6EE7B7);
+  static const pressedEnd = Color(0xFF10B981);
+
+  /// How much of the colour the glass carries: enough to be green, clear enough that
+  /// what is behind still shows through.
+  static const alpha = 0.88;
+
+  /// The label on the glass. A deep green, which reads on it in both themes
+  /// (contrast_test).
+  static const label = Color(0xFF022C22);
+}

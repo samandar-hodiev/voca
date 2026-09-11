@@ -11,6 +11,8 @@
 ///   request starts.
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -223,24 +225,20 @@ class _VocaButtonState extends State<_VocaButton> {
         onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
         onTap: _enabled ? widget.onPressed : null,
         child: widget.emphasis == _Emphasis.primary
-            // The primary action is a drop of its brand colour: a lit top, a deeper
-            // bottom, a highlight, a caustic and a glow, instead of a flat rectangle of
-            // ink. The label sits in the middle band, clear of the highlight and caustic.
+            // The primary action is a pane of light, premium green glass (_PrimaryGlass).
             ? SizedBox(
                 width: widget.expand ? double.infinity : null,
                 child: GlassTouchLight(
                   borderRadius: VocaRadius.largeAll,
                   enabled: _enabled,
-                  child: LiquidDrop(
-                    color: background,
-                    borderRadius: VocaRadius.largeAll,
-                    glow: _enabled && !_pressed,
+                  child: _PrimaryGlass(
+                    enabled: _enabled,
+                    pressed: _pressed,
                     padding: const EdgeInsets.symmetric(
                       horizontal: VocaSpacing.lg,
                       vertical: VocaSpacing.sm,
                     ),
                     child: ConstrainedBox(
-                      // 48 is the accessible minimum touch target on both platforms.
                       constraints: const BoxConstraints(minHeight: 32),
                       child: Align(alignment: Alignment.center, child: content),
                     ),
@@ -318,9 +316,10 @@ class _VocaButtonState extends State<_VocaButton> {
     }
 
     return switch (widget.emphasis) {
+      // Deep green on the light green glass: white would not read on it.
       _Emphasis.primary => (
         _pressed ? colors.primaryPressed : colors.primary,
-        colors.onPrimary,
+        PremiumGreen.label,
         null,
       ),
       // The darker brand tone: brand-coloured text on clear glass over the background
@@ -332,5 +331,116 @@ class _VocaButtonState extends State<_VocaButton> {
         null,
       ),
     };
+  }
+}
+
+/// The primary action: a pane of light, premium green glass.
+///
+/// What is behind it is blurred and made more saturated, as with every glass surface. The
+/// body is a mint-to-emerald liquid, lit by a specular band across the top and a faint
+/// caustic along the bottom, with a bright rim and a soft green glow beneath. Light and
+/// clear rather than a dark slab of ink, so the one action a screen asks for reads as the
+/// most precious object on it.
+class _PrimaryGlass extends StatelessWidget {
+  const _PrimaryGlass({
+    required this.enabled,
+    required this.pressed,
+    required this.padding,
+    required this.child,
+  });
+
+  final bool enabled;
+  final bool pressed;
+  final EdgeInsetsGeometry padding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    const radius = VocaRadius.largeAll;
+    final (start, end) = !enabled
+        ? (colors.border, colors.border)
+        : pressed
+        ? (PremiumGreen.pressedStart, PremiumGreen.pressedEnd)
+        : (PremiumGreen.start, PremiumGreen.end);
+
+    final glass = ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.compose(
+          outer: const ColorFilter.matrix(GlassSurface.saturation),
+          inner: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                start.withValues(alpha: PremiumGreen.alpha),
+                end.withValues(alpha: PremiumGreen.alpha),
+              ],
+            ),
+          ),
+          // The liquid light: a specular band across the top that has faded before the
+          // label, and a faint caustic along the bottom edge.
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: enabled ? 0.55 : 0.2),
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: enabled ? 0.28 : 0.1),
+                ],
+                stops: const [0, 0.38, 0.78, 1],
+              ),
+            ),
+            child: Padding(padding: padding, child: child),
+          ),
+        ),
+      ),
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: enabled && !pressed
+            ? [
+                BoxShadow(
+                  color: PremiumGreen.end.withValues(alpha: 0.45),
+                  blurRadius: 22,
+                  spreadRadius: -6,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      position: DecorationPosition.background,
+      child: Stack(
+        fit: StackFit.passthrough,
+        children: [
+          glass,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  border: GradientBoxBorder(
+                    width: 1.2,
+                    gradient: specularRim(
+                      Colors.white.withValues(alpha: 0.95),
+                      Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -239,27 +239,22 @@ void main() {
         expectReadable('secondary text', colors.textSecondary, well);
       });
 
-      // The label sits on the colour or deeper: the light at the top has faded by the
-      // label's band, and below it the liquid only darkens. In dark mode the label is
-      // dark, so the deepest point, the bottom edge, is the one to check.
-      test('primary button label on its liquid meets AA', () {
-        expect(
-          LiquidDrop.colourStop,
-          lessThanOrEqualTo(LiquidDrop.labelBandTop),
-        );
-        final teal = LiquidDrop.brandTeal(brightness);
+      // The primary button is light green glass with a deep green label. Checked on both
+      // ends of the glass, resting and pressed, over every background colour.
+      test('primary button label on its green glass meets AA', () {
         for (final fill in [
-          colors.primary,
-          Color.lerp(colors.primary, teal, 0.9)!,
+          PremiumGreen.start,
+          PremiumGreen.end,
+          PremiumGreen.pressedStart,
+          PremiumGreen.pressedEnd,
         ]) {
-          final worst = brightness == Brightness.dark
-              ? Color.lerp(fill, Colors.black, LiquidDrop.shadeDark)!
-              : fill;
-          final ratio = contrastRatio(colors.onPrimary, worst);
-          expect(
-            ratio,
-            greaterThanOrEqualTo(aaBody),
-            reason: 'label on the button is ${ratio.toStringAsFixed(2)}:1',
+          expectReadable(
+            'button label',
+            PremiumGreen.label,
+            (b) => Color.alphaBlend(
+              fill.withValues(alpha: PremiumGreen.alpha),
+              GlassSurface.saturate(b),
+            ),
           );
         }
       });
@@ -297,7 +292,24 @@ void main() {
           Color.alphaBlend(LiquidBottomBar.lensFill(brightness), bar(b)),
         );
         expectReadable('inactive label', colors.textSecondary, bar);
-        expectReadable('selected label on the pill', colors.textPrimary, lens);
+        if (brightness == Brightness.dark) {
+          expectReadable(
+            'selected label on the pill',
+            colors.textPrimary,
+            lens,
+          );
+        } else {
+          for (final fill in [PremiumGreen.start, PremiumGreen.end]) {
+            expectReadable(
+              'selected label on the green pill',
+              PremiumGreen.label,
+              (b) => Color.alphaBlend(
+                fill.withValues(alpha: LiquidBottomBar.greenPillAlpha),
+                bar(b),
+              ),
+            );
+          }
+        }
       });
     });
   }

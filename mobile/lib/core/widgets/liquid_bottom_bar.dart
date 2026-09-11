@@ -58,9 +58,13 @@ class LiquidBottomBar extends StatefulWidget {
   /// How much of the theme's glass tint the bar carries: clear. The labels stay readable
   /// over the background with no tint at all (contrast_test).
   @visibleForTesting
-  static const lightGlassAlpha = 0.22;
+  static const lightGlassAlpha = 0.30;
   @visibleForTesting
   static const darkGlassAlpha = 0.32;
+
+  /// How much of the premium green the selected pill carries in the light theme.
+  @visibleForTesting
+  static const greenPillAlpha = 0.82;
 
   /// The pill behind the selected destination, per theme.
   @visibleForTesting
@@ -130,22 +134,31 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
         padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.lg),
         child: GlassSurface(
           edgeGlow: false,
+          // In light, a frosted body that deepens from white into a whisper of mint, so
+          // the bar reads as a piece of glass on the pale page instead of vanishing.
+          tintGradient: dark
+              ? null
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x40FFFFFF), Color(0x40D1FAE5)],
+                ),
           blurSigma: 20,
-          highlight: Color(dark ? 0x14FFFFFF : 0x59FFFFFF),
+          highlight: Color(dark ? 0x14FFFFFF : 0x8CFFFFFF),
           rimTop: Color(dark ? 0x59FFFFFF : 0xFFFFFFFF),
           rimBottom: Color(dark ? 0x1AFFFFFF : 0x80FFFFFF),
-          edgeLight: Color(dark ? 0x26FFFFFF : 0x99FFFFFF),
+          edgeLight: Color(dark ? 0x26FFFFFF : 0xE6FFFFFF),
           borderWidth: 1.2,
           shadows: [
             BoxShadow(
-              color: Color(dark ? 0x66000000 : 0x1F0F3D2E),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Color(dark ? 0x66000000 : 0x330F3D2E),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
             ),
             BoxShadow(
-              color: Color(dark ? 0x40000000 : 0x1A0F3D2E),
+              color: Color(dark ? 0x40000000 : 0x330F3D2E),
               blurRadius: 1.5,
-              spreadRadius: 0.5,
+              spreadRadius: 0.7,
             ),
           ],
           borderRadius: BorderRadius.circular(VocaRadius.pill),
@@ -227,6 +240,59 @@ class _Pill extends StatelessWidget {
     final radius = BorderRadius.circular(VocaRadius.pill);
 
     final colors = context.vocaColors;
+    if (!dark) {
+      // In light, the pill is the same premium green glass as the primary button: a
+      // mint-to-emerald liquid with a specular band across the top, a caustic along the
+      // bottom, a bright rim and a soft green glow, so the selected tab reads as liquid.
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              PremiumGreen.start.withValues(
+                alpha: LiquidBottomBar.greenPillAlpha,
+              ),
+              PremiumGreen.end.withValues(
+                alpha: LiquidBottomBar.greenPillAlpha,
+              ),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: PremiumGreen.end.withValues(alpha: 0.35),
+              blurRadius: 14,
+              spreadRadius: -3,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.6),
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0.25),
+              ],
+              stops: const [0, 0.45, 0.78, 1],
+            ),
+            border: GradientBoxBorder(
+              width: 1.2,
+              gradient: specularRim(
+                Colors.white,
+                Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final fill = LiquidBottomBar.lensFill(brightness);
     return DecoratedBox(
       // Clear glass with the faintest emerald-to-teal tint, the liquid in the pill.
@@ -293,7 +359,9 @@ class _NavButton extends StatelessWidget {
     // rest the quieter one. The colour follows the pill, so it arrives with it.
     final foreground = Color.lerp(
       colors.textSecondary,
-      colors.textPrimary,
+      Theme.of(context).brightness == Brightness.dark
+          ? colors.textPrimary
+          : PremiumGreen.label,
       coverage,
     )!;
 

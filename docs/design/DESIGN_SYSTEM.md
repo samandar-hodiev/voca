@@ -170,6 +170,11 @@ and only a whisper of shade at the bottom: a gradient, not a slab. Labels keep 5
 both ends. The background fields keep their own indigo, so the page does not move when the
 brand does.
 
+**Primary button.** A pane of light, premium green glass (`PremiumGreen`): the backdrop
+blurred and saturated, a mint-to-emerald liquid body (`#A7F3D0` to `#34D399`), a specular
+band across the top, a caustic along the bottom, a bright rim and a soft green glow. The
+label is a deep green (`#022C22`), which reads on it in both themes; white would not.
+
 **Selected choice.** A soft emerald-to-teal wash fading from left to right and a fine
 gradient rim, like the selected row in the reference card, instead of a flat fill and a
 heavy outline.
@@ -185,10 +190,11 @@ is scaled to fit. Only the tab bar and its pill are capsules by design.
 card's longer side (between 70 and 170 points), so wide, short cards get light that runs
 along their long edges instead of a dab at the corner.
 
-**Tab bar.** Clear glass with a body: a thin tint, a moderate blur that turns what passes
-under it into soft colour, a bright sheen and rim along the top, light gathered inside the
-edge, and a fine outline with a soft shadow so it stands off a light page. The selected
-destination sits in a pill of liquid glass with a faint emerald-to-teal tint.
+**Tab bar.** Clear glass with a body. In light it is a frosted capsule deepening from white
+into a whisper of mint, with a bright sheen and rim, light gathered inside the edge, a
+fine outline and a soft shadow, so it stands off the pale page; the selected destination
+sits in a pill of the same premium green glass as the primary button, with a deep green
+icon and label. In dark it stays a clear smoked capsule with a light glass pill.
 
 Glass shadows fall outside the pane only. Under translucent glass an ordinary shadow shows
 through and turns the pane grey, so `GlassSurface` clips the pane's shape out of its own
