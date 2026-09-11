@@ -27,6 +27,7 @@ import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../l10n/l10n.dart';
 
 class CreateProfilePage extends ConsumerStatefulWidget {
   const CreateProfilePage({super.key});
@@ -57,17 +58,19 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
 
   bool _validate() {
     setState(() {
-      _avatarError = _avatar == null ? 'Profil rasmi kerak.' : null;
-      _firstError = _first.text.trim().isEmpty ? 'Ismingizni kiriting.' : null;
+      _avatarError = _avatar == null ? context.l10n.avatarRequired : null;
+      _firstError = _first.text.trim().isEmpty
+          ? context.l10n.firstNameRequired
+          : null;
       _lastError = _last.text.trim().isEmpty
-          ? 'Familiyangizni kiriting.'
+          ? context.l10n.lastNameRequired
           : null;
       _phoneError = _phoneProblem(_phone.text);
       _passwordError = _password.text.length < 8
-          ? 'Parol kamida 8 ta belgidan iborat bo‘lsin.'
+          ? context.l10n.passwordTooShort
           : null;
       _confirmError = _confirm.text != _password.text
-          ? 'Parollar mos kelmadi.'
+          ? context.l10n.passwordsDontMatch
           : null;
     });
     return [
@@ -85,12 +88,12 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
   /// regardless: a rule that only exists in the app is not a rule.
   String? _phoneProblem(String raw) {
     final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) return 'Telefon raqamni kiriting.';
+    if (digits.isEmpty) return context.l10n.phoneRequired;
     final local = digits.length == 9;
     final withLeadingZero = digits.length == 10 && digits.startsWith('0');
     final international = digits.length >= 11 && digits.length <= 15;
     if (local || withLeadingZero || international) return null;
-    return 'Raqamni to‘g‘ri kiriting, masalan +998 90 123 45 67.';
+    return context.l10n.phoneInvalid;
   }
 
   Future<void> _submit() async {
@@ -111,14 +114,9 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
     final uploaded = await controller.uploadAvatar(_avatar!.path);
     if (!mounted) return;
     if (!uploaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Akkaunt yaratildi, lekin rasm yuklanmadi. '
-            'Uni sozlamalardan qo‘shishingiz mumkin.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.avatarUploadFailed)));
     }
 
     // Registration establishes the session, so the flow ends here rather than sending
@@ -133,8 +131,8 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
     final text = context.vocaText;
 
     return SetupScaffold(
-      title: 'Profilingizni to‘ldiring',
-      primaryLabel: 'Akkaunt yaratish',
+      title: context.l10n.createProfileTitle,
+      primaryLabel: context.l10n.createAccount,
       isBusy: state.isBusy,
       onPrimary: state.isBusy ? null : () => unawaited(_submit()),
       child: Column(
@@ -181,7 +179,7 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
                   ),
                 ),
                 Text(
-                  'Tasdiqlangan',
+                  context.l10n.verified,
                   style: text.caption.copyWith(color: colors.onSuccessMuted),
                 ),
               ],
@@ -190,22 +188,22 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
           const SizedBox(height: VocaSpacing.lg),
 
           AppTextField(
-            label: 'Ism',
+            label: context.l10n.firstNameLabel,
             controller: _first,
             errorText: _firstError,
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Familiya',
+            label: context.l10n.lastNameLabel,
             controller: _last,
             errorText: _lastError,
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Telefon raqami',
-            helperText: 'Masalan +998 90 123 45 67',
+            label: context.l10n.phoneLabel,
+            helperText: context.l10n.phoneHelper,
             controller: _phone,
             errorText: _phoneError,
             keyboardType: TextInputType.phone,
@@ -213,11 +211,11 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Parol',
+            label: context.l10n.passwordLabel,
             controller: _password,
             obscureText: !_showPassword,
             errorText: _passwordError,
-            helperText: 'Kamida 8 ta belgi',
+            helperText: context.l10n.passwordHelper,
             textInputAction: TextInputAction.next,
             suffixIcon: IconButton(
               // Being able to see what was typed prevents more failed sign-ups than
@@ -229,13 +227,13 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
                     : Icons.visibility_outlined,
               ),
               tooltip: _showPassword
-                  ? 'Parolni yashirish'
-                  : 'Parolni ko‘rsatish',
+                  ? context.l10n.passwordHide
+                  : context.l10n.passwordShow,
             ),
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Parolni tasdiqlang',
+            label: context.l10n.passwordConfirmLabel,
             controller: _confirm,
             obscureText: !_showPassword,
             errorText: _confirmError,

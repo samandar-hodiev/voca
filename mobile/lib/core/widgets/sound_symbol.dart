@@ -11,6 +11,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'liquid_drop.dart';
 import '../theme/app_radius.dart';
+import '../../l10n/l10n.dart';
 
 class SoundSymbol extends StatelessWidget {
   const SoundSymbol({super.key, required this.symbol, this.size = 44});
@@ -24,7 +25,7 @@ class SoundSymbol extends StatelessWidget {
     final text = context.vocaText;
 
     return Semantics(
-      label: '$symbol tovushi',
+      label: context.l10n.soundSemantic(symbol),
       excludeSemantics: true,
       child: GlassBead(
         size: size,

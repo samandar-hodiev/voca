@@ -69,6 +69,8 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     await prefs.setBool('onboarding.completed.v1', true);
+    // These flows read Uzbek text; the app itself starts in English.
+    await prefs.setString('appearance.locale.v1', 'uz');
   }
 
   /// Advances time by pumping frames.

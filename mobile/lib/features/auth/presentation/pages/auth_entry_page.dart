@@ -30,6 +30,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 class AuthEntryPage extends ConsumerStatefulWidget {
   const AuthEntryPage({super.key});
@@ -83,18 +84,17 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
     final googleReady = caps.googleSignIn && isFirebaseReady;
 
     return SetupScaffold(
-      title: 'Voca akkauntingizni yarating',
-      subtitle:
-          'Natijalaringiz saqlanadi va barcha qurilmalarda mavjud bo‘ladi.',
+      title: context.l10n.authEntryTitle,
+      subtitle: context.l10n.authEntrySubtitle,
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
 
           GlassActionButton(
-            label: 'Google bilan kirish',
+            label: context.l10n.continueWithGoogle,
             icon: const GoogleMark(),
             isLoading: _attempt == _Attempt.google,
-            unavailableNote: googleReady ? null : 'Tez orada',
+            unavailableNote: googleReady ? null : context.l10n.comingSoon,
             onPressed: googleReady && !busy
                 ? () => unawaited(
                     _start(
@@ -109,7 +109,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
           const SizedBox(height: VocaSpacing.sm),
 
           GlassActionButton(
-            label: 'Email bilan kirish',
+            label: context.l10n.continueWithEmail,
             icon: Icon(
               Icons.mail_outline_rounded,
               size: 20,
@@ -129,11 +129,11 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
                 : () => unawaited(context.push(Routes.login)),
             child: Text.rich(
               TextSpan(
-                text: 'Akkauntingiz bormi? ',
+                text: context.l10n.haveAccount,
                 style: text.bodyMedium.copyWith(color: colors.textSecondary),
                 children: [
                   TextSpan(
-                    text: 'Kirish',
+                    text: context.l10n.signIn,
                     style: text.bodyMedium.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w600,
@@ -146,7 +146,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
           const SizedBox(height: VocaSpacing.md),
 
           GlassActionButton(
-            label: 'Mehmon sifatida kirish',
+            label: context.l10n.continueAsGuest,
             icon: Icon(
               Icons.person_outline_rounded,
               size: 20,
@@ -164,8 +164,7 @@ class _AuthEntryPageState extends ConsumerState<AuthEntryPage> {
           ),
           const SizedBox(height: VocaSpacing.sm),
           Text(
-            'Mehmon sifatida ham mashq qilishingiz mumkin. '
-            'Keyinroq akkaunt yaratsangiz, natijalaringiz saqlanib qoladi.',
+            context.l10n.guestNote,
             style: text.caption.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),

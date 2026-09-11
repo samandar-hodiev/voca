@@ -53,6 +53,9 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
         store ??
             InMemoryKeyValueStore({
               if (onboardingCompleted) 'onboarding.completed.v1': true,
+              // The existing tests read Uzbek text, so they choose Uzbek rather than
+              // depend on the English default. localization_test covers the default.
+              'appearance.locale.v1': 'uz',
             }),
       ),
       secureStoreProvider.overrideWithValue(secure),

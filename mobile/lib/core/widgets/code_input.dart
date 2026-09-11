@@ -14,6 +14,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'liquid_drop.dart';
+import '../../l10n/l10n.dart';
 
 class CodeInput extends StatefulWidget {
   const CodeInput({
@@ -88,7 +89,7 @@ class _CodeInputState extends State<CodeInput> {
           onTap: widget.enabled ? _focus.requestFocus : null,
           behavior: HitTestBehavior.opaque,
           child: Semantics(
-            label: 'Tasdiqlash kodi',
+            label: context.l10n.verificationCode,
             textField: true,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

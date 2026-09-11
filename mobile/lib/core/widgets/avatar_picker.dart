@@ -20,6 +20,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
 import 'liquid_drop.dart';
+import '../../l10n/l10n.dart';
 
 class AvatarPicker extends StatelessWidget {
   const AvatarPicker({
@@ -74,7 +75,7 @@ class AvatarPicker extends StatelessWidget {
                     Icons.photo_camera_outlined,
                     color: colors.primary,
                   ),
-                  title: Text('Suratga olish', style: text.subtitle),
+                  title: Text(context.l10n.takePhoto, style: text.subtitle),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pick(context, ImageSource.camera);
@@ -85,7 +86,10 @@ class AvatarPicker extends StatelessWidget {
                     Icons.photo_library_outlined,
                     color: colors.primary,
                   ),
-                  title: Text('Galereyadan tanlash', style: text.subtitle),
+                  title: Text(
+                    context.l10n.chooseFromGallery,
+                    style: text.subtitle,
+                  ),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pick(context, ImageSource.gallery);
@@ -98,7 +102,7 @@ class AvatarPicker extends StatelessWidget {
                       color: colors.error,
                     ),
                     title: Text(
-                      'Rasmni olib tashlash',
+                      context.l10n.removePhoto,
                       style: text.subtitle.copyWith(color: colors.error),
                     ),
                     onTap: () {
@@ -126,8 +130,8 @@ class AvatarPicker extends StatelessWidget {
         Semantics(
           button: true,
           label: file == null
-              ? 'Profil rasmini tanlash'
-              : 'Profil rasmini almashtirish',
+              ? context.l10n.chooseProfilePhoto
+              : context.l10n.changeProfilePhoto,
           child: GestureDetector(
             onTap: enabled ? () => _openSheet(context) : null,
             child: SizedBox(
@@ -186,7 +190,9 @@ class AvatarPicker extends StatelessWidget {
         const SizedBox(height: VocaSpacing.xs),
         Text(
           errorText ??
-              (file == null ? 'Profil rasmini qo‘shing' : 'Rasm tanlandi'),
+              (file == null
+                  ? context.l10n.addProfilePhoto
+                  : context.l10n.photoSelected),
           style: text.caption.copyWith(
             color: hasError ? colors.error : colors.textSecondary,
           ),

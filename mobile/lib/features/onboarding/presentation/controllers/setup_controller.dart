@@ -19,29 +19,26 @@ class SetupNotifier extends Notifier<OnboardingAnswers> {
   void setDailyGoal(int words) => state = state.copyWith(dailyGoalWords: words);
 }
 
-final setupProvider =
-    NotifierProvider<SetupNotifier, OnboardingAnswers>(SetupNotifier.new);
+final setupProvider = NotifierProvider<SetupNotifier, OnboardingAnswers>(
+  SetupNotifier.new,
+);
 
-/// The levels offered, in order.
+/// The levels offered, in order, as CEFR codes.
 ///
-/// The CEFR code is the stored value; the label is what a person reads. Not everyone
-/// knows what B1 means, so both are always shown together.
-const cefrLevels = <({String code, String label, String description})>[
-  (code: 'A1', label: 'Boshlang‘ich', description: 'Oddiy so‘z va iboralar'),
-  (code: 'A2', label: 'Elementar', description: 'Kundalik oddiy suhbat'),
-  (code: 'B1', label: 'O‘rta', description: 'Tanish mavzularda erkin gaplashaman'),
-  (code: 'B2', label: 'O‘rtadan yuqori', description: 'Murakkab matnlarni tushunaman'),
-  (code: 'C1', label: 'Yuqori', description: 'Deyarli erkin so‘zlashaman'),
-];
+/// The code is the stored value; the name and description a person reads come from the
+/// strings (`cefrLevelName`, `cefrLevelHint`). Not everyone knows what B1 means, so both
+/// are always shown together.
+const cefrLevels = <String>['A1', 'A2', 'B1', 'B2', 'C1'];
 
-/// The learning goals offered. The identifier is stored, the label is shown.
-const learningGoals = <({String id, String label})>[
-  (id: 'pronunciation', label: 'Talaffuzimni yaxshilash'),
-  (id: 'confidence', label: 'Ishonchli gapirish'),
-  (id: 'ielts', label: 'IELTS ga tayyorgarlik'),
-  (id: 'vocabulary', label: 'So‘z boyligini oshirish'),
-  (id: 'work', label: 'Ish uchun ingliz tili'),
-  (id: 'everyday', label: 'Kundalik muloqot'),
+/// The learning goals offered. The identifier is stored; the name a person reads comes
+/// from the strings (`learningGoalName`).
+const learningGoals = <String>[
+  'pronunciation',
+  'confidence',
+  'ielts',
+  'vocabulary',
+  'work',
+  'everyday',
 ];
 
 /// Daily practice options. Ten is recommended: enough to build a habit, small enough to

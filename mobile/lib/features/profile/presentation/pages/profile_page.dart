@@ -30,25 +30,22 @@ import '../../../auth/presentation/widgets/sign_out_button.dart';
 import '../../../onboarding/presentation/controllers/setup_controller.dart';
 import '../../domain/entities/profile.dart';
 import '../controllers/profile_controller.dart';
+import '../../../../l10n/l10n.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
   static const pageKey = ValueKey('profile-page');
 
-  static String _level(String? code) {
-    for (final l in cefrLevels) {
-      if (l.code == code) return '${l.code} · ${l.label}';
-    }
-    return 'Tanlanmagan';
-  }
+  static String _level(AppLocalizations l, String? code) =>
+      code != null && cefrLevels.contains(code)
+      ? '$code · ${l.cefrLevelName(code)}'
+      : l.notChosen;
 
-  static String _goal(String? id) {
-    for (final g in learningGoals) {
-      if (g.id == id) return g.label;
-    }
-    return 'Tanlanmagan';
-  }
+  static String _goal(AppLocalizations l, String? id) =>
+      id != null && learningGoals.contains(id)
+      ? l.learningGoalName(id)
+      : l.notChosen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,7 +54,7 @@ class ProfilePage extends ConsumerWidget {
     return KeyedSubtree(
       key: pageKey,
       child: TabScaffold(
-        title: 'Profil',
+        title: context.l10n.navProfile,
         onRefresh: () async {
           ref.invalidate(profileProvider);
           try {
@@ -83,7 +80,7 @@ class ProfilePage extends ConsumerWidget {
               SizedBox(
                 height: 300,
                 child: ErrorView(
-                  message: 'Profilni yuklab bo‘lmadi.',
+                  message: context.l10n.profileLoadFailed,
                   onRetry: () => ref.invalidate(profileProvider),
                 ),
               ),
@@ -91,9 +88,9 @@ class ProfilePage extends ConsumerWidget {
             data: (p) => [
               Reveal(index: 0, child: _IdentityCard(profile: p)),
               const SizedBox(height: VocaSpacing.xl),
-              const Reveal(
+              Reveal(
                 index: 1,
-                child: SectionHeader(title: 'O‘qish sozlamalari'),
+                child: SectionHeader(title: context.l10n.learningSettings),
               ),
               Reveal(
                 index: 1,
@@ -101,36 +98,42 @@ class ProfilePage extends ConsumerWidget {
                   rows: [
                     _Row(
                       icon: Icons.school_outlined,
-                      label: 'Daraja',
-                      value: _level(p.cefrLevel),
+                      label: context.l10n.levelLabel,
+                      value: _level(context.l10n, p.cefrLevel),
                     ),
                     _Row(
                       icon: Icons.flag_outlined,
-                      label: 'Maqsad',
-                      value: _goal(p.learningGoal),
+                      label: context.l10n.goalLabel,
+                      value: _goal(context.l10n, p.learningGoal),
                     ),
                     _Row(
                       icon: Icons.today_outlined,
-                      label: 'Kunlik maqsad',
+                      label: context.l10n.dailyGoalLabel,
                       value: p.dailyGoalWords == null
-                          ? 'Tanlanmagan'
-                          : '${p.dailyGoalWords} ta so‘z',
+                          ? context.l10n.notChosen
+                          : context.l10n.wordsCount(p.dailyGoalWords!),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: VocaSpacing.xl),
-              const Reveal(index: 2, child: SectionHeader(title: 'Obuna')),
+              Reveal(
+                index: 2,
+                child: SectionHeader(title: context.l10n.subscription),
+              ),
               const Reveal(index: 2, child: _Subscription()),
               const SizedBox(height: VocaSpacing.xl),
-              const Reveal(index: 3, child: SectionHeader(title: 'Ilova')),
+              Reveal(
+                index: 3,
+                child: SectionHeader(title: context.l10n.appSection),
+              ),
               Reveal(
                 index: 3,
                 child: _Group(
                   rows: [
                     _Row(
                       icon: Icons.settings_outlined,
-                      label: 'Sozlamalar',
+                      label: context.l10n.settingsTitle,
                       onTap: () => context.push(Routes.settings),
                     ),
                   ],
@@ -158,12 +161,12 @@ class _IdentityCard extends StatelessWidget {
     final text = context.vocaText;
     final p = profile;
     final name = p.isGuest
-        ? 'Mehmon'
-        : (p.displayName.isEmpty ? 'Ismsiz' : p.displayName);
+        ? context.l10n.guest
+        : (p.displayName.isEmpty ? context.l10n.noName : p.displayName);
     final via = switch (p.provider) {
-      'google' => 'Google orqali',
-      'guest' => 'Mehmon rejimi',
-      _ => 'Email orqali',
+      'google' => context.l10n.viaGoogle,
+      'guest' => context.l10n.guestMode,
+      _ => context.l10n.viaEmail,
     };
 
     return GlassCard(
@@ -198,8 +201,8 @@ class _IdentityCard extends StatelessWidget {
             children: [
               AppBadge(label: via, tone: BadgeTone.primary),
               if (p.isGuest)
-                const AppBadge(
-                  label: 'Natijalar saqlanmaydi',
+                AppBadge(
+                  label: context.l10n.progressNotSaved,
                   tone: BadgeTone.warning,
                   icon: Icons.info_outline_rounded,
                 ),
@@ -232,19 +235,19 @@ class _Subscription extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bepul reja',
+                  context.l10n.freePlan,
                   style: text.subtitle.copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Premium imkoniyatlar tez orada',
+                  context.l10n.premiumSoon,
                   style: text.caption.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
           ),
-          const AppBadge(
-            label: 'Faol',
+          AppBadge(
+            label: context.l10n.active,
             tone: BadgeTone.success,
             icon: Icons.check_rounded,
           ),

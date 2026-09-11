@@ -18,10 +18,12 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../core/widgets/language_button.dart';
 import '../../../../core/widgets/liquid_background.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/onboarding_controller.dart';
 import '../widgets/page_indicator.dart';
+import '../../../../l10n/l10n.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -34,7 +36,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _controller = PageController();
   int _index = 0;
 
-  bool get _isLast => _index == onboardingSlides.length - 1;
+  bool get _isLast => _index == onboardingSlides(context.l10n).length - 1;
 
   @override
   void dispose() {
@@ -77,18 +79,23 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               // Skip stays available on every slide, including the last, so the way out
               // never moves.
               PageContainer(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: VocaTextButton(
-                    label: 'O‘tkazib yuborish',
-                    onPressed: _finish,
-                  ),
+                child: Row(
+                  children: [
+                    // The language can be changed here, before anything else has to
+                    // be read.
+                    const LanguageButton(),
+                    const Spacer(),
+                    VocaTextButton(
+                      label: context.l10n.skip,
+                      onPressed: _finish,
+                    ),
+                  ],
                 ),
               ),
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
-                  itemCount: onboardingSlides.length,
+                  itemCount: onboardingSlides(context.l10n).length,
                   onPageChanged: (i) => setState(() => _index = i),
                   itemBuilder: (context, i) => _Slide(index: i),
                 ),
@@ -96,10 +103,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               PageContainer(
                 child: Column(
                   children: [
-                    PageIndicator(count: onboardingSlides.length, index: _index),
+                    PageIndicator(
+                      count: onboardingSlides(context.l10n).length,
+                      index: _index,
+                    ),
                     const SizedBox(height: VocaSpacing.xl),
                     PrimaryButton(
-                      label: _isLast ? 'Boshlash' : 'Keyingi',
+                      label: _isLast
+                          ? context.l10n.getStarted
+                          : context.l10n.next,
                       onPressed: _next,
                     ),
                     const SizedBox(height: VocaSpacing.lg),
@@ -121,7 +133,7 @@ class _Slide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slide = onboardingSlides[index];
+    final slide = onboardingSlides(context.l10n)[index];
     final colors = context.vocaColors;
     final text = context.vocaText;
 

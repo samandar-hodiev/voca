@@ -20,6 +20,7 @@ import '../../../../core/widgets/code_input.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Asks whether the person really wants to sign out. True only when they confirm.
 Future<bool> askToSignOut(BuildContext context, {required bool isGuest}) async {
@@ -62,32 +63,31 @@ class _ConfirmDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Hisobdan chiqish',
+              context.l10n.signOut,
               style: text.title.copyWith(color: colors.textPrimary),
             ),
             const SizedBox(height: VocaSpacing.sm),
             Text(
-              'Rostdan ham hisobdan chiqmoqchimisiz?',
+              context.l10n.signOutQuestion,
               style: text.body.copyWith(color: colors.textPrimary),
             ),
             const SizedBox(height: VocaSpacing.xs),
             // A guest is told what they lose; anyone else, what happens next.
             Text(
               isGuest
-                  ? 'Mehmon hisobida pochta yo‘q. Chiqqaningizdan keyin natijalaringizga '
-                        'qayta kira olmaysiz.'
-                  : 'Tasdiqlash uchun hisobingiz pochtasiga kod yuboramiz.',
+                  ? context.l10n.signOutGuestWarning
+                  : context.l10n.signOutCodeNote,
               style: text.bodyMedium.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: VocaSpacing.lg),
             PrimaryButton(
-              label: 'Ha, chiqish',
+              label: context.l10n.signOutConfirm,
               onPressed: () => Navigator.of(context).pop(true),
             ),
             const SizedBox(height: VocaSpacing.xs),
             Center(
               child: VocaTextButton(
-                label: 'Bekor qilish',
+                label: context.l10n.cancel,
                 onPressed: () => Navigator.of(context).pop(false),
               ),
             ),
@@ -192,13 +192,13 @@ class _VerifySheetState extends ConsumerState<_VerifySheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Chiqishni tasdiqlash',
+                  context.l10n.signOutVerifyTitle,
                   style: text.title.copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: VocaSpacing.xs),
                 if (_step == _Step.email) ...[
                   Text(
-                    'Hisob ochilgan pochtani kiriting. Unga tasdiqlash kodi yuboramiz.',
+                    context.l10n.signOutEnterEmail,
                     style: text.body.copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: VocaSpacing.md),
@@ -212,11 +212,13 @@ class _VerifySheetState extends ConsumerState<_VerifySheet> {
                     autocorrect: false,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (value) => unawaited(_send(value.trim())),
-                    decoration: const InputDecoration(hintText: 'Pochtangiz'),
+                    decoration: InputDecoration(
+                      hintText: context.l10n.emailHint,
+                    ),
                   ),
                   const SizedBox(height: VocaSpacing.md),
                   PrimaryButton(
-                    label: 'Kod yuborish',
+                    label: context.l10n.sendCode,
                     isLoading: _busy,
                     onPressed: _busy
                         ? null
@@ -225,7 +227,7 @@ class _VerifySheetState extends ConsumerState<_VerifySheet> {
                 ] else ...[
                   Text.rich(
                     TextSpan(
-                      text: '6 xonali kod yuborildi: ',
+                      text: context.l10n.codeSentPrefix,
                       style: text.body.copyWith(color: colors.textSecondary),
                       children: [
                         TextSpan(
@@ -249,8 +251,8 @@ class _VerifySheetState extends ConsumerState<_VerifySheet> {
                   Center(
                     child: VocaTextButton(
                       label: _cooldown > 0
-                          ? 'Qayta yuborish ($_cooldown)'
-                          : 'Qayta yuborish',
+                          ? context.l10n.resendIn(_cooldown)
+                          : context.l10n.resend,
                       onPressed: _cooldown > 0 || _busy
                           ? null
                           : () => unawaited(_send(_sentTo)),
@@ -260,7 +262,7 @@ class _VerifySheetState extends ConsumerState<_VerifySheet> {
                 const SizedBox(height: VocaSpacing.xs),
                 Center(
                   child: VocaTextButton(
-                    label: 'Bekor qilish',
+                    label: context.l10n.cancel,
                     onPressed: _busy
                         ? null
                         : () => Navigator.of(context).pop(false),

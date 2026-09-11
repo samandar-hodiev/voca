@@ -16,6 +16,7 @@ import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/practice_item.dart';
 import '../../domain/entities/word.dart';
 import '../../../../core/widgets/liquid_drop.dart';
+import '../../../../l10n/l10n.dart';
 
 Future<void> showWordPracticeSheet(BuildContext context, Word word) {
   return showModalBottomSheet<void>(
@@ -75,14 +76,17 @@ class _WordPracticeSheet extends StatelessWidget {
             ),
             const SizedBox(height: VocaSpacing.xs),
             Text(
-              word.meaningUz,
+              // The meanings on hand are Uzbek, so only the Uzbek interface shows one.
+              Localizations.localeOf(context).languageCode == 'uz'
+                  ? word.meaningUz
+                  : '',
               style: text.body.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: VocaSpacing.xl),
             Semantics(
               button: true,
               enabled: false,
-              label: 'Ovozni yozib olish, hozircha mavjud emas',
+              label: context.l10n.recordingUnavailable,
               child: ExcludeSemantics(
                 child: SizedBox.square(
                   dimension: 88,
@@ -101,13 +105,13 @@ class _WordPracticeSheet extends StatelessWidget {
             ),
             const SizedBox(height: VocaSpacing.sm),
             Text(
-              'Talaffuzni baholash keyingi bosqichda ulanadi.',
+              context.l10n.scoringComingNext,
               style: text.caption.copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: VocaSpacing.lg),
             SecondaryButton(
-              label: 'Yopish',
+              label: context.l10n.close,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],

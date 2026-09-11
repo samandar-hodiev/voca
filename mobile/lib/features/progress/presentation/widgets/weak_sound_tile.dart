@@ -14,6 +14,7 @@ import '../../../../core/widgets/progress_visuals.dart';
 import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/weak_sound.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../l10n/l10n.dart';
 
 class WeakSoundTile extends StatelessWidget {
   const WeakSoundTile({super.key, required this.sound});
@@ -31,9 +32,11 @@ class WeakSoundTile extends StatelessWidget {
         : colors.success;
 
     return Semantics(
-      label:
-          '/${sound.symbol}/ tovushi, masalan ${sound.example}. '
-          'Aniqlik ${sound.accuracy} foiz',
+      label: context.l10n.weakSoundSemantic(
+        sound.symbol,
+        sound.example,
+        sound.accuracy,
+      ),
       excludeSemantics: true,
       child: GlassSurface(
         blur: false,
@@ -51,7 +54,7 @@ class WeakSoundTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Masalan: ${sound.example}',
+                          context.l10n.forExample(sound.example),
                           style: text.subtitle.copyWith(
                             color: colors.textPrimary,
                           ),

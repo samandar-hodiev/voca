@@ -15,6 +15,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
 import 'liquid_drop.dart';
+import '../../l10n/l10n.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({
@@ -72,7 +73,7 @@ class ErrorView extends StatelessWidget {
               if (onRetry != null) ...[
                 const SizedBox(height: VocaSpacing.xl),
                 SecondaryButton(
-                  label: retryLabel ?? 'Retry',
+                  label: retryLabel ?? context.l10n.retry,
                   onPressed: onRetry,
                   expand: false,
                 ),

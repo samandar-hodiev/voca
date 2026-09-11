@@ -1,0 +1,470 @@
+{
+  "@@locale": "en",
+  "back": "Back",
+  "navHome": "Home",
+  "navPractice": "Practice",
+  "navProgress": "Progress",
+  "navProfile": "Profile",
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "settingsAppearanceHint": "Choose how the app looks.",
+  "settingsLanguage": "Language",
+  "settingsLanguageHint": "Choose the language of the app.",
+  "settingsAccount": "Account",
+  "themeSystem": "System",
+  "themeSystemHint": "Follows your phone's setting",
+  "themeLight": "Light",
+  "themeLightHint": "Always light",
+  "themeDark": "Dark",
+  "themeDarkHint": "Always dark",
+  "languageNameEn": "English",
+  "@languageNameEn": {
+    "description": "Always in its own language, so anyone can find it."
+  },
+  "languageNameUz": "O‘zbekcha",
+  "@languageNameUz": {
+    "description": "Always in its own language, so anyone can find it."
+  },
+  "languageNameRu": "Русский",
+  "@languageNameRu": {
+    "description": "Always in its own language, so anyone can find it."
+  },
+  "continueAction": "Continue",
+  "confirmAction": "Confirm",
+  "sendCode": "Send code",
+  "cancel": "Cancel",
+  "signIn": "Sign in",
+  "emailLabel": "Email",
+  "emailHint": "Your email",
+  "passwordLabel": "Password",
+  "passwordHelper": "At least 8 characters",
+  "passwordHide": "Hide password",
+  "passwordShow": "Show password",
+  "passwordConfirmLabel": "Confirm password",
+  "passwordTooShort": "Your password must be at least 8 characters.",
+  "passwordsDontMatch": "The passwords don’t match.",
+  "codeSentPrefix": "We sent a 6-digit code to ",
+  "@codeSentPrefix": {
+    "description": "Followed by the email address in bold."
+  },
+  "codeSentToEmail": "Code sent to {email}",
+  "@codeSentToEmail": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "resend": "Resend",
+  "resendIn": "Resend ({seconds})",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authEntryTitle": "Create your Voca account",
+  "authEntrySubtitle": "Your progress is saved and available on all your devices.",
+  "continueWithGoogle": "Continue with Google",
+  "comingSoon": "Coming soon",
+  "continueWithEmail": "Continue with email",
+  "haveAccount": "Already have an account? ",
+  "continueAsGuest": "Continue as guest",
+  "guestNote": "You can practise as a guest too. If you create an account later, your progress is kept.",
+  "avatarRequired": "A profile photo is required.",
+  "firstNameRequired": "Enter your first name.",
+  "lastNameRequired": "Enter your last name.",
+  "phoneRequired": "Enter your phone number.",
+  "phoneInvalid": "Enter a valid number, e.g. +998 90 123 45 67.",
+  "avatarUploadFailed": "Your account was created, but the photo didn’t upload. You can add it later in settings.",
+  "createProfileTitle": "Complete your profile",
+  "createAccount": "Create account",
+  "verified": "Verified",
+  "firstNameLabel": "First name",
+  "lastNameLabel": "Last name",
+  "phoneLabel": "Phone number",
+  "phoneHelper": "e.g. +998 90 123 45 67",
+  "emailInvalid": "Enter a valid email address.",
+  "enterEmailTitle": "Enter your email",
+  "enterEmailSubtitle": "We’ll send a 6-digit code to confirm it.",
+  "signInWithThisEmail": "Sign in with this email",
+  "verifyEmailTitle": "Confirm your email",
+  "codeNotReceived": "Didn’t get the code? ",
+  "useAnotherEmail": "Use a different email",
+  "resetPasswordTitle": "Reset your password",
+  "resetPasswordSubtitle": "We’ll send a one-time code to your email.",
+  "enterCodeTitle": "Enter the code",
+  "newPassword": "New password",
+  "newPasswordSubtitle": "You’ll be signed out on all your devices.",
+  "saveAndSignIn": "Save and sign in",
+  "welcomeBack": "Welcome back",
+  "signInToContinue": "Sign in to continue.",
+  "forgotPassword": "Forgot your password?",
+  "errorInvalidEmail": "That email address isn’t valid.",
+  "errorEmailMismatch": "This email isn’t the one on your account. Enter the email you signed up with.",
+  "errorEmailExists": "An account with this email already exists. Sign in or reset your password.",
+  "errorInvalidCode": "That code isn’t right. Try again.",
+  "errorCodeExpired": "This code has expired. Ask for a new one.",
+  "errorTooManyAttempts": "Too many attempts. Ask for a new code.",
+  "errorTooManyRequests": "Too many requests. Please wait a moment.",
+  "errorInvalidPassword": "The password must be at least 8 characters.",
+  "errorNotVerified": "Confirm your email first.",
+  "errorValidation": "Some of the details aren’t right.",
+  "errorGeneric": "Something went wrong. Try again.",
+  "errorSessionExpired": "Your session has ended. Sign in again.",
+  "errorNoInternet": "No internet connection.",
+  "errorEmailDelivery": "We couldn’t send an email to this address. Try another email or try again later.",
+  "signOut": "Sign out",
+  "signOutQuestion": "Are you sure you want to sign out?",
+  "signOutGuestWarning": "A guest account has no email. Once you sign out, you won’t be able to get back to your progress.",
+  "signOutCodeNote": "To confirm, we’ll send a code to your account’s email.",
+  "signOutConfirm": "Yes, sign out",
+  "signOutVerifyTitle": "Confirm sign-out",
+  "signOutEnterEmail": "Enter the email your account uses. We’ll send a confirmation code to it.",
+  "skip": "Skip",
+  "getStarted": "Get started",
+  "next": "Next",
+  "pageOf": "Page {current} of {total}",
+  "@pageOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "splashSemantic": "Voca. Loading.",
+  "splashTagline": "Practise your pronunciation",
+  "onboardingTitle1": "Pronounce clearly",
+  "onboardingBody1": "Practise saying English words correctly. Listen to a model for every word.",
+  "onboardingTitle2": "Your voice is analysed",
+  "onboardingBody2": "Record your pronunciation. Every sound is scored on its own, and you see exactly where you went wrong.",
+  "onboardingTitle3": "A little every day",
+  "onboardingBody3": "The sounds you struggle with are tracked. Daily practice and a streak make the progress stick.",
+  "levelTitle": "How well do you know English?",
+  "levelSubtitle": "Practice will match your level.",
+  "goalTitle": "Why are you learning English?",
+  "goalSubtitle": "This shapes your recommendations.",
+  "dailyGoalTitle": "How much will you practise each day?",
+  "dailyGoalSubtitle": "You can change this later in settings.",
+  "wordsCount": "{count, plural, =1{1 word} other{{count} words}}",
+  "@wordsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recommended": "Recommended",
+  "aboutMinutes": "About {minutes} min",
+  "@aboutMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "cefrLevelName": "{code, select, A1{Beginner} A2{Elementary} B1{Intermediate} B2{Upper intermediate} C1{Advanced} other{{code}}}",
+  "@cefrLevelName": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "cefrLevelHint": "{code, select, A1{Simple words and phrases} A2{Everyday small talk} B1{I talk freely on familiar topics} B2{I understand complex texts} C1{I speak almost fluently} other{{code}}}",
+  "@cefrLevelHint": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "learningGoalName": "{id, select, pronunciation{Improve my pronunciation} confidence{Speak with confidence} ielts{Prepare for IELTS} vocabulary{Grow my vocabulary} work{English for work} everyday{Everyday conversation} other{{id}}}",
+  "@learningGoalName": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "learningSettings": "Learning settings",
+  "levelLabel": "Level",
+  "goalLabel": "Goal",
+  "dailyGoalLabel": "Daily goal",
+  "notChosen": "Not chosen",
+  "homeLoadFailed": "Couldn’t load the home screen.",
+  "recommendedPractice": "Recommended practice",
+  "recommendedPracticeHint": "Words that target your weak sounds",
+  "weakSounds": "Weak sounds",
+  "weakSoundsHint": "Need more attention",
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  "readyToPractise": "Ready to practise?",
+  "openProfile": "Open profile",
+  "todayGoalSemantic": "Today’s goal: {done} of {goal} words",
+  "@todayGoalSemantic": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "wordsUnit": "words",
+  "@wordsUnit": {
+    "description": "Under a fraction such as 7/10."
+  },
+  "goalReached": "Goal reached",
+  "todayGoal": "Today’s goal",
+  "goalReachedNote": "Great work. Keep going if you like.",
+  "wordsLeft": "{count, plural, =1{1 word left} other{{count} words left}}",
+  "@wordsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "startPractice": "Start practice",
+  "streak": "Streak",
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysInARow": "Days in a row",
+  "latestScore": "Latest score",
+  "noPracticeYet": "No practice yet",
+  "noPracticeYetSentence": "No practice yet.",
+  "pointsThisWeek": "{points, plural, =1{{sign}1 point this week} other{{sign}{points} points this week}}",
+  "@pointsThisWeek": {
+    "placeholders": {
+      "sign": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "practiseWordSemantic": "Practise “{word}”, level {level}",
+  "@practiseWordSemantic": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "noWeakSoundsYet": "No weak sounds found yet.",
+  "loading": "Loading",
+  "practiceSubtitle": "Words picked for today",
+  "wordsLoadFailed": "Couldn’t load the words.",
+  "noWordsAtLevel": "No words at this level",
+  "chooseAnotherLevel": "Choose another level.",
+  "showAll": "Show all",
+  "practiceSetSemantic": "{total} words, {done} good or mastered",
+  "@practiceSetSemantic": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceSetSummary": "{total} words · {done} good",
+  "@practiceSetSummary": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "allLevels": "All",
+  "levelSemantic": "Level {level}",
+  "@levelSemantic": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "statusNotStarted": "Not started",
+  "statusNeedsWork": "Needs work",
+  "statusGood": "Good",
+  "statusMastered": "Mastered",
+  "wordCardSemantic": "{word}, level {level}, {status}",
+  "@wordCardSemantic": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "bestScoreSemantic": ", best score {score}",
+  "@bestScoreSemantic": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "practiseAction": "Practise",
+  "recordingUnavailable": "Record your voice, not available yet",
+  "scoringComingNext": "Pronunciation scoring arrives in the next stage.",
+  "close": "Close",
+  "profileLoadFailed": "Couldn’t load your profile.",
+  "subscription": "Subscription",
+  "appSection": "App",
+  "guest": "Guest",
+  "noName": "No name",
+  "viaGoogle": "Via Google",
+  "guestMode": "Guest mode",
+  "viaEmail": "Via email",
+  "progressNotSaved": "Progress isn’t saved",
+  "freePlan": "Free plan",
+  "premiumSoon": "Premium features coming soon",
+  "active": "Active",
+  "last7Days": "Last 7 days",
+  "progressLoadFailed": "Couldn’t load your progress.",
+  "weeklyActivity": "Weekly activity",
+  "againstDailyGoal": "Against your daily goal",
+  "byAccuracy": "By accuracy",
+  "recentPractice": "Recent practice",
+  "averageScoreSemantic": "Average pronunciation score {score} out of 100",
+  "@averageScoreSemantic": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "averageScore": "Average pronunciation score",
+  "pointsDelta": "{points, plural, =1{{sign}1 point} other{{sign}{points} points}}",
+  "@pointsDelta": {
+    "placeholders": {
+      "sign": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "comparedWithLastWeek": "Compared with last week",
+  "wordsPractised": "Words practised",
+  "total": "Total",
+  "bestStreak": "{count, plural, =1{Best: 1 day} other{Best: {count} days}}",
+  "@bestStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "daysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@daysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recordSemantic": "{word}, {when}, {score, plural, =1{1 point} other{{score} points}}",
+  "@recordSemantic": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      },
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "weekdayShort": "{day, select, 1{Mon} 2{Tue} 3{Wed} 4{Thu} 5{Fri} 6{Sat} 7{Sun} other{{day}}}",
+  "@weekdayShort": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "goalMetSuffix": ", goal met",
+  "dailyGoalMet": "Daily goal met",
+  "weakSoundSemantic": "The /{symbol}/ sound, as in {example}. Accuracy {accuracy} percent",
+  "@weakSoundSemantic": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      },
+      "example": {
+        "type": "String"
+      },
+      "accuracy": {
+        "type": "num"
+      }
+    }
+  },
+  "forExample": "e.g. {example}",
+  "@forExample": {
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "takePhoto": "Take a photo",
+  "chooseFromGallery": "Choose from gallery",
+  "removePhoto": "Remove photo",
+  "chooseProfilePhoto": "Choose a profile photo",
+  "changeProfilePhoto": "Change profile photo",
+  "addProfilePhoto": "Add a profile photo",
+  "photoSelected": "Photo selected",
+  "verificationCode": "Verification code",
+  "soundSemantic": "{symbol} sound",
+  "@soundSemantic": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "retry": "Retry",
+  "notImplementedYet": "Not implemented yet",
+  "weakSoundOpen": "See results for the /{symbol}/ sound",
+  "@weakSoundOpen": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  }
+}

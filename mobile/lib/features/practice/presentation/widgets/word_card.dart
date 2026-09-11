@@ -12,15 +12,16 @@ import '../../../../core/widgets/press_scale.dart';
 import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/word.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../l10n/l10n.dart';
 
 /// How each status is shown. A label and an icon for every state, so none of them rely on
 /// colour to be told apart.
 extension PronunciationStatusUi on PronunciationStatus {
-  String get label => switch (this) {
-    PronunciationStatus.notStarted => 'Boshlanmagan',
-    PronunciationStatus.needsWork => 'Mashq kerak',
-    PronunciationStatus.good => 'Yaxshi',
-    PronunciationStatus.mastered => 'O‘zlashtirilgan',
+  String label(AppLocalizations l) => switch (this) {
+    PronunciationStatus.notStarted => l.statusNotStarted,
+    PronunciationStatus.needsWork => l.statusNeedsWork,
+    PronunciationStatus.good => l.statusGood,
+    PronunciationStatus.mastered => l.statusMastered,
   };
 
   BadgeTone get tone => switch (this) {
@@ -52,8 +53,8 @@ class WordCard extends StatelessWidget {
 
     return PressScale(
       semanticLabel:
-          '${word.text}, ${word.level} daraja, ${word.status.label}'
-          '${score == null ? '' : ', eng yaxshi natija $score'}. Mashq qilish',
+          '${context.l10n.wordCardSemantic(word.text, word.level, word.status.label(context.l10n))}'
+          '${score == null ? '' : context.l10n.bestScoreSemantic(score)}. ${context.l10n.practiseAction}',
       onTap: onTap,
       child: ExcludeSemantics(
         child: GlassSurface(
@@ -85,7 +86,11 @@ class WordCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${word.ipa} · ${word.meaningUz}',
+                      // The meanings on hand are Uzbek, so they are shown with the Uzbek
+                      // interface only; the other languages show the sounds.
+                      Localizations.localeOf(context).languageCode == 'uz'
+                          ? '${word.ipa} · ${word.meaningUz}'
+                          : word.ipa,
                       style: text.bodyMedium.copyWith(
                         color: colors.textSecondary,
                       ),
@@ -95,8 +100,8 @@ class WordCard extends StatelessWidget {
                     const SizedBox(height: VocaSpacing.xs),
                     AppBadge(
                       label: score == null
-                          ? word.status.label
-                          : '${word.status.label} · $score',
+                          ? word.status.label(context.l10n)
+                          : '${word.status.label(context.l10n)} · $score',
                       tone: word.status.tone,
                       icon: word.status.icon,
                     ),

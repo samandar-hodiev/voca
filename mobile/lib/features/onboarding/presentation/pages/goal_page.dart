@@ -10,6 +10,7 @@ import '../../../../core/widgets/selection_card.dart';
 import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/setup_controller.dart';
+import '../../../../l10n/l10n.dart';
 
 class GoalPage extends ConsumerWidget {
   const GoalPage({super.key});
@@ -19,17 +20,17 @@ class GoalPage extends ConsumerWidget {
     final selected = ref.watch(setupProvider).goal;
 
     return SetupScaffold(
-      title: 'Nima uchun ingliz tilini o‘rganyapsiz?',
-      subtitle: 'Bu tavsiyalarni shakllantiradi.',
-      primaryLabel: 'Davom etish',
+      title: context.l10n.goalTitle,
+      subtitle: context.l10n.goalSubtitle,
+      primaryLabel: context.l10n.continueAction,
       onPrimary: selected == null ? null : () => context.push(Routes.dailyGoal),
       child: Column(
         children: [
           for (final goal in learningGoals) ...[
             SelectionCard(
-              title: goal.label,
-              selected: selected == goal.id,
-              onTap: () => ref.read(setupProvider.notifier).setGoal(goal.id),
+              title: context.l10n.learningGoalName(goal),
+              selected: selected == goal,
+              onTap: () => ref.read(setupProvider.notifier).setGoal(goal),
             ),
             const SizedBox(height: VocaSpacing.sm),
           ],

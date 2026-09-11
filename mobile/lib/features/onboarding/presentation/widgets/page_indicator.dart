@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/liquid_drop.dart';
+import '../../../../l10n/l10n.dart';
 
 class PageIndicator extends StatelessWidget {
   const PageIndicator({super.key, required this.count, required this.index});
@@ -22,7 +23,7 @@ class PageIndicator extends StatelessWidget {
     final colors = context.vocaColors;
 
     return Semantics(
-      label: 'Sahifa ${index + 1} / $count',
+      label: context.l10n.pageOf(index + 1, count),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(count, (i) {

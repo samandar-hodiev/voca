@@ -15,6 +15,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 class EmailVerifyPage extends ConsumerStatefulWidget {
   const EmailVerifyPage({super.key});
@@ -49,7 +50,9 @@ class _EmailVerifyPageState extends ConsumerState<EmailVerifyPage> {
 
   Future<void> _verify() async {
     if (_code.length != 6) return;
-    final ok = await ref.read(authControllerProvider.notifier).verifyEmail(_code);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .verifyEmail(_code);
     if (ok && mounted) unawaited(context.push(Routes.createProfile));
   }
 
@@ -60,8 +63,8 @@ class _EmailVerifyPageState extends ConsumerState<EmailVerifyPage> {
     final text = context.vocaText;
 
     return SetupScaffold(
-      title: 'Pochtangizni tasdiqlang',
-      primaryLabel: 'Tasdiqlash',
+      title: context.l10n.verifyEmailTitle,
+      primaryLabel: context.l10n.confirmAction,
       isBusy: state.isBusy,
       onPrimary: _code.length == 6 && !state.isBusy ? _verify : null,
       child: Column(
@@ -69,7 +72,7 @@ class _EmailVerifyPageState extends ConsumerState<EmailVerifyPage> {
         children: [
           Text.rich(
             TextSpan(
-              text: '6 xonali kod yuborildi: ',
+              text: context.l10n.codeSentPrefix,
               style: text.body.copyWith(color: colors.textSecondary),
               children: [
                 TextSpan(
@@ -98,23 +101,31 @@ class _EmailVerifyPageState extends ConsumerState<EmailVerifyPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Kod kelmadimi? ',
-                  style: text.bodyMedium.copyWith(color: colors.textSecondary)),
+              Text(
+                context.l10n.codeNotReceived,
+                style: text.bodyMedium.copyWith(color: colors.textSecondary),
+              ),
               TextButton(
                 onPressed: _cooldown > 0 || state.isBusy
                     ? null
                     : () async {
-                        await ref.read(authControllerProvider.notifier).resendCode();
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .resendCode();
                         _startCooldown();
                       },
-                child: Text(_cooldown > 0 ? 'Qayta yuborish ($_cooldown)' : 'Qayta yuborish'),
+                child: Text(
+                  _cooldown > 0
+                      ? context.l10n.resendIn(_cooldown)
+                      : context.l10n.resend,
+                ),
               ),
             ],
           ),
           Center(
             child: TextButton(
               onPressed: state.isBusy ? null : () => context.pop(),
-              child: const Text('Boshqa pochta kiritish'),
+              child: Text(context.l10n.useAnotherEmail),
             ),
           ),
         ],

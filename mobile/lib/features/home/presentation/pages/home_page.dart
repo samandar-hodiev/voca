@@ -35,6 +35,7 @@ import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../domain/entities/home_summary.dart';
 import '../controllers/home_controller.dart';
+import '../../../../l10n/l10n.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -66,7 +67,7 @@ class HomePage extends ConsumerWidget {
             SizedBox(
               height: 320,
               child: ErrorView(
-                message: 'Bosh sahifani yuklab bo‘lmadi.',
+                message: context.l10n.homeLoadFailed,
                 onRetry: () => ref.invalidate(homeSummaryProvider),
               ),
             ),
@@ -76,11 +77,11 @@ class HomePage extends ConsumerWidget {
             const SizedBox(height: VocaSpacing.md),
             Reveal(index: 1, child: _Stats(summary: s)),
             const SizedBox(height: VocaSpacing.xl),
-            const Reveal(
+            Reveal(
               index: 2,
               child: SectionHeader(
-                title: 'Tavsiya etilgan mashqlar',
-                subtitle: 'Zaif tovushlaringizga mos so‘zlar',
+                title: context.l10n.recommendedPractice,
+                subtitle: context.l10n.recommendedPracticeHint,
               ),
             ),
             for (var i = 0; i < s.recommended.length; i++) ...[
@@ -91,11 +92,11 @@ class HomePage extends ConsumerWidget {
               const SizedBox(height: VocaSpacing.sm),
             ],
             const SizedBox(height: VocaSpacing.lg),
-            const Reveal(
+            Reveal(
               index: 6,
               child: SectionHeader(
-                title: 'Zaif tovushlar',
-                subtitle: 'Ko‘proq e’tibor talab qiladi',
+                title: context.l10n.weakSounds,
+                subtitle: context.l10n.weakSoundsHint,
               ),
             ),
             Reveal(index: 6, child: _WeakSounds(sounds: s.weakSounds)),
@@ -112,10 +113,10 @@ class _Greeting extends StatelessWidget {
 
   final Profile? profile;
 
-  static String _salutation(int hour) {
-    if (hour < 12) return 'Xayrli tong';
-    if (hour < 18) return 'Xayrli kun';
-    return 'Xayrli kech';
+  static String _salutation(AppLocalizations l, int hour) {
+    if (hour < 12) return l.goodMorning;
+    if (hour < 18) return l.goodAfternoon;
+    return l.goodEvening;
   }
 
   @override
@@ -126,7 +127,7 @@ class _Greeting extends StatelessWidget {
     // The name is optional. A greeting that waits for a network answer before it can say
     // hello is worse than one that says hello without a name.
     final name = profile?.firstName?.trim();
-    final salutation = _salutation(DateTime.now().hour);
+    final salutation = _salutation(context.l10n, DateTime.now().hour);
     final hello = (name == null || name.isEmpty)
         ? salutation
         : '$salutation, $name';
@@ -148,7 +149,7 @@ class _Greeting extends StatelessWidget {
               ),
               const SizedBox(height: VocaSpacing.xxs),
               Text(
-                'Mashq qilishga tayyormisiz?',
+                context.l10n.readyToPractise,
                 style: text.body.copyWith(color: colors.textSecondary),
               ),
             ],
@@ -156,7 +157,7 @@ class _Greeting extends StatelessWidget {
         ),
         const SizedBox(width: VocaSpacing.sm),
         PressScale(
-          semanticLabel: 'Profilni ochish',
+          semanticLabel: context.l10n.openProfile,
           onTap: () => context.go(Routes.profile),
           child: ExcludeSemantics(
             child: UserAvatar(
@@ -185,7 +186,7 @@ class _HeroCard extends StatelessWidget {
     final remaining = (s.dailyGoal - s.wordsDoneToday).clamp(0, s.dailyGoal);
 
     final ring = Semantics(
-      label: 'Bugungi maqsad: ${s.wordsDoneToday} / ${s.dailyGoal} so‘z',
+      label: context.l10n.todayGoalSemantic(s.wordsDoneToday, s.dailyGoal),
       excludeSemantics: true,
       child: ProgressRing(
         value: s.goalProgress,
@@ -198,7 +199,7 @@ class _HeroCard extends StatelessWidget {
               style: text.title.copyWith(color: colors.textPrimary),
             ),
             Text(
-              'so‘z',
+              context.l10n.wordsUnit,
               style: text.caption.copyWith(color: colors.textSecondary),
             ),
           ],
@@ -210,19 +211,19 @@ class _HeroCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          s.goalMet ? 'Maqsad bajarildi' : 'Bugungi maqsad',
+          s.goalMet ? context.l10n.goalReached : context.l10n.todayGoal,
           style: text.subtitle.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: VocaSpacing.xxs),
         Text(
           s.goalMet
-              ? 'Ajoyib natija. Xohlasangiz davom eting.'
-              : '$remaining ta so‘z qoldi',
+              ? context.l10n.goalReachedNote
+              : context.l10n.wordsLeft(remaining),
           style: text.body.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: VocaSpacing.md),
         PrimaryButton(
-          label: 'Mashqni boshlash',
+          label: context.l10n.startPractice,
           icon: Icons.mic_rounded,
           onPressed: () => context.go(Routes.practice),
         ),
@@ -270,21 +271,21 @@ class _Stats extends StatelessWidget {
 
     return StatPair(
       left: StatCard(
-        label: 'Seriya',
-        value: '${s.streakDays} kun',
+        label: context.l10n.streak,
+        value: context.l10n.daysCount(s.streakDays),
         icon: Icons.local_fire_department_rounded,
         accent: colors.warning,
-        caption: 'Ketma-ket mashq kunlari',
+        caption: context.l10n.daysInARow,
       ),
       right: StatCard(
-        label: 'So‘nggi natija',
+        label: context.l10n.latestScore,
         value: score == null ? '—' : '$score/100',
         // Direction is carried by the icon and the sign, not only by the colour.
         icon: up ? Icons.trending_up_rounded : Icons.trending_down_rounded,
         accent: up ? colors.success : colors.error,
         caption: score == null
-            ? 'Hali mashq qilinmagan'
-            : '${up ? '+' : ''}${s.scoreDelta} ball bu hafta',
+            ? context.l10n.noPracticeYet
+            : context.l10n.pointsThisWeek(up ? '+' : '-', s.scoreDelta.abs()),
       ),
     );
   }
@@ -301,7 +302,7 @@ class _SuggestionTile extends StatelessWidget {
     final text = context.vocaText;
 
     return PressScale(
-      semanticLabel: '${item.word} so‘zini mashq qilish, ${item.level} daraja',
+      semanticLabel: context.l10n.practiseWordSemantic(item.word, item.level),
       onTap: () => context.go(Routes.practice),
       child: ExcludeSemantics(
         child: GlassSurface(
@@ -353,7 +354,7 @@ class _WeakSounds extends StatelessWidget {
 
     if (sounds.isEmpty) {
       return Text(
-        'Hozircha zaif tovush aniqlanmadi.',
+        context.l10n.noWeakSoundsYet,
         style: text.body.copyWith(color: colors.textSecondary),
       );
     }
@@ -364,7 +365,7 @@ class _WeakSounds extends StatelessWidget {
       children: [
         for (final symbol in sounds)
           PressScale(
-            semanticLabel: '/$symbol/ tovushi natijalarini ko‘rish',
+            semanticLabel: context.l10n.weakSoundOpen(symbol),
             onTap: () => context.go(Routes.progress),
             child: ExcludeSemantics(
               child: SoundSymbol(symbol: symbol, size: 56),
@@ -381,7 +382,7 @@ class _HomeLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Yuklanmoqda',
+      label: context.l10n.loading,
       child: Column(
         children: [
           SkeletonBox(

@@ -7,6 +7,7 @@ import '../../../../core/di/providers.dart';
 import '../../data/repositories/onboarding_repository_impl.dart';
 import '../../domain/entities/onboarding_slide.dart';
 import '../../domain/repositories/onboarding_repository.dart';
+import '../../../../l10n/l10n.dart';
 
 final onboardingRepositoryProvider = Provider<OnboardingRepository>((ref) {
   return OnboardingRepositoryImpl(ref.watch(keyValueStoreProvider));
@@ -17,29 +18,13 @@ final onboardingCompletedProvider = FutureProvider<bool>((ref) {
   return ref.watch(onboardingRepositoryProvider).hasCompleted();
 });
 
-/// The slides.
+/// The slides, in the current language.
 ///
 /// Three, deliberately. Onboarding earns attention it has not been given yet, so it says
 /// only what the product is, how it works, and what it asks of the person. Anything more
 /// gets skipped.
-///
-/// Text is Uzbek, the first UI language. It moves into ARB files with the localization
-/// work; keeping it here now would be the only copy, and pretending otherwise by adding a
-/// key indirection with a single language behind it would be ceremony.
-const onboardingSlides = <OnboardingSlide>[
-  OnboardingSlide(
-    title: 'Aniq talaffuz qiling',
-    body: 'Ingliz tilidagi so‘zlarni to‘g‘ri talaffuz qilishni mashq qiling. '
-        'Har bir so‘z uchun namunani eshiting.',
-  ),
-  OnboardingSlide(
-    title: 'Ovozingiz tahlil qilinadi',
-    body: 'Talaffuzingizni yozib oling. Har bir tovush alohida baholanadi va '
-        'qaysi joyda xato qilganingiz ko‘rsatiladi.',
-  ),
-  OnboardingSlide(
-    title: 'Har kuni bir oz',
-    body: 'Qiynalayotgan tovushlaringiz kuzatib boriladi. Kunlik mashq va '
-        'ketma-ketlik natijani mustahkamlaydi.',
-  ),
+List<OnboardingSlide> onboardingSlides(AppLocalizations l) => [
+  OnboardingSlide(title: l.onboardingTitle1, body: l.onboardingBody1),
+  OnboardingSlide(title: l.onboardingTitle2, body: l.onboardingBody2),
+  OnboardingSlide(title: l.onboardingTitle3, body: l.onboardingBody3),
 ];

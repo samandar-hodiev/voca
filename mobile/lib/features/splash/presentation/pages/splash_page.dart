@@ -18,6 +18,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/liquid_background.dart';
 import '../controllers/splash_controller.dart';
+import '../../../../l10n/l10n.dart';
 
 class SplashPage extends ConsumerWidget {
   const SplashPage({super.key});
@@ -43,7 +44,7 @@ class SplashPage extends ConsumerWidget {
             child: _SplashMark(
               // Reported to assistive technology as one live region: a screen reader
               // announces "Voca, loading" rather than reading decorative parts.
-              semanticLabel: 'Voca. Loading.',
+              semanticLabel: context.l10n.splashSemantic,
             ),
           ),
         ),
@@ -75,9 +76,10 @@ class _SplashMarkState extends State<_SplashMark>
 
   // A small rise and settle. Starting at 0.94 rather than 0.8 keeps it a settle rather
   // than a pop; the direction is calm.
-  late final Animation<double> _scale = Tween<double>(begin: 0.94, end: 1).animate(
-    CurvedAnimation(parent: _controller, curve: VocaMotion.enterCurve),
-  );
+  late final Animation<double> _scale = Tween<double>(
+    begin: 0.94,
+    end: 1,
+  ).animate(CurvedAnimation(parent: _controller, curve: VocaMotion.enterCurve));
 
   @override
   void initState() {
@@ -113,7 +115,7 @@ class _SplashMarkState extends State<_SplashMark>
           ),
           const SizedBox(height: VocaSpacing.xxs),
           Text(
-            'Talaffuzni mashq qiling',
+            context.l10n.splashTagline,
             style: text.bodyMedium.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: VocaSpacing.xl),

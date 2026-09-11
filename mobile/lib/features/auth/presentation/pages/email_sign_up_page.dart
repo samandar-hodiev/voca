@@ -15,6 +15,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 class EmailSignUpPage extends ConsumerStatefulWidget {
   const EmailSignUpPage({super.key});
@@ -50,12 +51,13 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
   Future<void> _submit() async {
     final email = _controller.text.trim();
     if (!_looksLikeEmail(email)) {
-      setState(() => _localError = 'Pochta manzilini to‘g‘ri kiriting.');
+      setState(() => _localError = context.l10n.emailInvalid);
       return;
     }
     setState(() => _localError = null);
 
-    final ok = await ref.read(authControllerProvider.notifier)
+    final ok = await ref
+        .read(authControllerProvider.notifier)
         .startEmailVerification(email);
     if (ok && mounted) unawaited(context.push(Routes.emailVerify));
   }
@@ -65,9 +67,9 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
     final state = ref.watch(authControllerProvider);
 
     return SetupScaffold(
-      title: 'Pochtangizni kiriting',
-      subtitle: 'Tasdiqlash uchun 6 xonali kod yuboramiz.',
-      primaryLabel: 'Davom etish',
+      title: context.l10n.enterEmailTitle,
+      subtitle: context.l10n.enterEmailSubtitle,
+      primaryLabel: context.l10n.continueAction,
       isBusy: state.isBusy,
       onPrimary: state.isBusy ? null : _submit,
       child: Column(
@@ -78,7 +80,7 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
           // way out is offered here rather than leaving the person to find it.
           if (_isTaken(state.failure)) ...[
             SecondaryButton(
-              label: 'Shu pochta bilan kirish',
+              label: context.l10n.signInWithThisEmail,
               icon: Icons.login_rounded,
               onPressed: state.isBusy
                   ? null
@@ -88,7 +90,7 @@ class _EmailSignUpPageState extends ConsumerState<EmailSignUpPage> {
           ],
 
           AppTextField(
-            label: 'Elektron pochta',
+            label: context.l10n.emailLabel,
             hint: 'siz@example.com',
             controller: _controller,
             keyboardType: TextInputType.emailAddress,

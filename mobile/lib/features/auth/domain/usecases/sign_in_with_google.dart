@@ -56,9 +56,7 @@ class SignInWithGoogle {
       // Anything the picker or Firebase throws lands here. The reason is not shown: it
       // names vendors and internal states that mean nothing to the person reading it.
       return const Err(
-        ProviderFailure(
-          message: 'Google orqali kirib bo‘lmadi. Qaytadan urinib ko‘ring.',
-        ),
+        ProviderFailure(message: 'Google sign-in did not complete.'),
       );
     }
 

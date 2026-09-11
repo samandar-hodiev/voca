@@ -10,6 +10,7 @@ import '../../../../core/widgets/selection_card.dart';
 import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/setup_controller.dart';
+import '../../../../l10n/l10n.dart';
 
 class LevelPage extends ConsumerWidget {
   const LevelPage({super.key});
@@ -19,9 +20,9 @@ class LevelPage extends ConsumerWidget {
     final selected = ref.watch(setupProvider).level;
 
     return SetupScaffold(
-      title: 'Ingliz tilini qay darajada bilasiz?',
-      subtitle: 'Mashqlar shu darajaga moslashtiriladi.',
-      primaryLabel: 'Davom etish',
+      title: context.l10n.levelTitle,
+      subtitle: context.l10n.levelSubtitle,
+      primaryLabel: context.l10n.continueAction,
       // Disabled until something is chosen: an action that cannot succeed should not
       // look available.
       onPrimary: selected == null ? null : () => context.push(Routes.goal),
@@ -29,11 +30,11 @@ class LevelPage extends ConsumerWidget {
         children: [
           for (final level in cefrLevels) ...[
             SelectionCard(
-              leading: level.code,
-              title: level.label,
-              subtitle: level.description,
-              selected: selected == level.code,
-              onTap: () => ref.read(setupProvider.notifier).setLevel(level.code),
+              leading: level,
+              title: context.l10n.cefrLevelName(level),
+              subtitle: context.l10n.cefrLevelHint(level),
+              selected: selected == level,
+              onTap: () => ref.read(setupProvider.notifier).setLevel(level),
             ),
             const SizedBox(height: VocaSpacing.sm),
           ],

@@ -14,6 +14,7 @@ import '../theme/app_motion.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../../l10n/l10n.dart';
 
 /// A centred progress indicator for a screen that has nothing to show yet.
 class LoadingView extends StatelessWidget {
@@ -27,7 +28,7 @@ class LoadingView extends StatelessWidget {
 
     return Semantics(
       liveRegion: true,
-      label: message ?? 'Loading',
+      label: message ?? context.l10n.loading,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -35,13 +36,18 @@ class LoadingView extends StatelessWidget {
             SizedBox(
               height: 28,
               width: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: colors.primary),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: colors.primary,
+              ),
             ),
             if (message != null) ...[
               const SizedBox(height: VocaSpacing.md),
               Text(
                 message!,
-                style: context.vocaText.bodyMedium.copyWith(color: colors.textSecondary),
+                style: context.vocaText.bodyMedium.copyWith(
+                  color: colors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

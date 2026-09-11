@@ -19,6 +19,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Step one: which address.
 class ForgotPasswordPage extends ConsumerStatefulWidget {
@@ -38,7 +39,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   }
 
   Future<void> _submit() async {
-    final ok = await ref.read(authControllerProvider.notifier)
+    final ok = await ref
+        .read(authControllerProvider.notifier)
         .forgotPassword(_email.text.trim());
     if (ok && mounted) unawaited(context.push(Routes.forgotVerify));
   }
@@ -48,16 +50,16 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     final state = ref.watch(authControllerProvider);
 
     return SetupScaffold(
-      title: 'Parolni tiklash',
-      subtitle: 'Pochtangizga bir martalik kod yuboramiz.',
-      primaryLabel: 'Kod yuborish',
+      title: context.l10n.resetPasswordTitle,
+      subtitle: context.l10n.resetPasswordSubtitle,
+      primaryLabel: context.l10n.sendCode,
       isBusy: state.isBusy,
       onPrimary: state.isBusy ? null : () => unawaited(_submit()),
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
           AppTextField(
-            label: 'Elektron pochta',
+            label: context.l10n.emailLabel,
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
@@ -83,7 +85,9 @@ class _ForgotVerifyPageState extends ConsumerState<ForgotVerifyPage> {
 
   Future<void> _verify() async {
     if (_code.length != 6) return;
-    final ok = await ref.read(authControllerProvider.notifier).verifyPasswordCode(_code);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .verifyPasswordCode(_code);
     if (ok && mounted) unawaited(context.push(Routes.newPassword));
   }
 
@@ -94,15 +98,17 @@ class _ForgotVerifyPageState extends ConsumerState<ForgotVerifyPage> {
     final text = context.vocaText;
 
     return SetupScaffold(
-      title: 'Kodni kiriting',
-      primaryLabel: 'Tasdiqlash',
+      title: context.l10n.enterCodeTitle,
+      primaryLabel: context.l10n.confirmAction,
       isBusy: state.isBusy,
-      onPrimary: _code.length == 6 && !state.isBusy ? () => unawaited(_verify()) : null,
+      onPrimary: _code.length == 6 && !state.isBusy
+          ? () => unawaited(_verify())
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kod yuborildi: ${state.email ?? ''}',
+            context.l10n.codeSentToEmail(state.email ?? ''),
             style: text.body.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: VocaSpacing.xl),
@@ -144,13 +150,17 @@ class _NewPasswordPageState extends ConsumerState<NewPasswordPage> {
 
   Future<void> _submit() async {
     setState(() {
-      _passwordError =
-          _password.text.length < 8 ? 'Parol kamida 8 ta belgidan iborat bo‘lsin.' : null;
-      _confirmError = _confirm.text != _password.text ? 'Parollar mos kelmadi.' : null;
+      _passwordError = _password.text.length < 8
+          ? context.l10n.passwordTooShort
+          : null;
+      _confirmError = _confirm.text != _password.text
+          ? context.l10n.passwordsDontMatch
+          : null;
     });
     if (_passwordError != null || _confirmError != null) return;
 
-    final ok = await ref.read(authControllerProvider.notifier)
+    final ok = await ref
+        .read(authControllerProvider.notifier)
         .resetPassword(_password.text);
     // The reset signs the person in, so they land in the product rather than at a login
     // screen they would immediately pass through.
@@ -162,33 +172,37 @@ class _NewPasswordPageState extends ConsumerState<NewPasswordPage> {
     final state = ref.watch(authControllerProvider);
 
     return SetupScaffold(
-      title: 'Yangi parol',
-      subtitle: 'Barcha qurilmalardagi seanslar tugatiladi.',
-      primaryLabel: 'Saqlash va kirish',
+      title: context.l10n.newPassword,
+      subtitle: context.l10n.newPasswordSubtitle,
+      primaryLabel: context.l10n.saveAndSignIn,
       isBusy: state.isBusy,
       onPrimary: state.isBusy ? null : () => unawaited(_submit()),
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
           AppTextField(
-            label: 'Yangi parol',
+            label: context.l10n.newPassword,
             controller: _password,
             obscureText: !_showPassword,
             errorText: _passwordError,
-            helperText: 'Kamida 8 ta belgi',
+            helperText: context.l10n.passwordHelper,
             autofocus: true,
             textInputAction: TextInputAction.next,
             suffixIcon: IconButton(
               onPressed: () => setState(() => _showPassword = !_showPassword),
-              icon: Icon(_showPassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined),
-              tooltip: _showPassword ? 'Parolni yashirish' : 'Parolni ko‘rsatish',
+              icon: Icon(
+                _showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              tooltip: _showPassword
+                  ? context.l10n.passwordHide
+                  : context.l10n.passwordShow,
             ),
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Parolni tasdiqlang',
+            label: context.l10n.passwordConfirmLabel,
             controller: _confirm,
             obscureText: !_showPassword,
             errorText: _confirmError,

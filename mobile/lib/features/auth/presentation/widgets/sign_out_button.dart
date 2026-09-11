@@ -22,6 +22,7 @@ import '../../../../routing/routes.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
 import 'sign_out_flow.dart';
+import '../../../../l10n/l10n.dart';
 
 class SignOutButton extends ConsumerStatefulWidget {
   const SignOutButton({super.key});
@@ -77,7 +78,7 @@ class _SignOutButtonState extends ConsumerState<SignOutButton> {
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
     return GlassActionButton(
-      label: 'Hisobdan chiqish',
+      label: context.l10n.signOut,
       icon: Icon(Icons.logout_rounded, size: 20, color: colors.error),
       isLoading: _busy,
       onPressed: _busy ? null : () => unawaited(_signOut()),

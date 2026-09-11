@@ -5,13 +5,14 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/di/providers.dart';
+import 'core/l10n/locale_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_controller.dart';
+import 'l10n/app_localizations.dart';
 import 'routing/app_router.dart';
 
 /// Holds the router for the lifetime of the app. Rebuilding a GoRouter drops navigation
@@ -37,24 +38,19 @@ class VocaApp extends ConsumerWidget {
       // The person's choice, which defaults to following the device until they make one.
       themeMode: ref.watch(themeModeProvider),
 
-      // Uzbek is the first UI language; English ships alongside it from day one to prove
-      // the plumbing works before a second language is real (ARCHITECTURE.md 4.6).
-      locale: const Locale('uz'),
-      supportedLocales: const [Locale('uz'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      // English by default; Uzbek and Russian are chosen in Settings or on the first
+      // screen, and the choice is kept on the device.
+      locale: ref.watch(localeProvider),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
 
       builder: (context, child) {
         // Clamp text scaling. People legitimately enlarge text, and the layout must
         // accommodate that; beyond this bound the design breaks rather than adapts, and a
         // broken layout is less accessible than a slightly smaller one.
-        final scale = MediaQuery.textScalerOf(context).clamp(
-          minScaleFactor: 0.85,
-          maxScaleFactor: 1.4,
-        );
+        final scale = MediaQuery.textScalerOf(
+          context,
+        ).clamp(minScaleFactor: 0.85, maxScaleFactor: 1.4);
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: scale),
           child: child ?? const SizedBox.shrink(),

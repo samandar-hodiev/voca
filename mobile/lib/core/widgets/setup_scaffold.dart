@@ -15,6 +15,7 @@ import '../theme/app_typography.dart';
 import '../utils/responsive.dart';
 import 'app_button.dart';
 import 'liquid_background.dart';
+import '../../l10n/l10n.dart';
 
 class SetupScaffold extends StatelessWidget {
   const SetupScaffold({
@@ -76,7 +77,7 @@ class SetupScaffold extends StatelessWidget {
                       if (showBack && Navigator.of(context).canPop())
                         VocaIconButton(
                           icon: Icons.arrow_back_rounded,
-                          semanticLabel: 'Orqaga',
+                          semanticLabel: context.l10n.back,
                           onPressed: () => Navigator.of(context).maybePop(),
                         ),
                       const Spacer(),
@@ -97,7 +98,9 @@ class SetupScaffold extends StatelessWidget {
                         const SizedBox(height: VocaSpacing.xs),
                         Text(
                           subtitle!,
-                          style: text.body.copyWith(color: colors.textSecondary),
+                          style: text.body.copyWith(
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ],
                       const SizedBox(height: VocaSpacing.xl),

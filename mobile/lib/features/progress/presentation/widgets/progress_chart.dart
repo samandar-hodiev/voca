@@ -17,6 +17,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/daily_progress.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/liquid_drop.dart';
+import '../../../../l10n/l10n.dart';
 
 class WeeklyActivityChart extends StatelessWidget {
   const WeeklyActivityChart({super.key, required this.days});
@@ -24,9 +25,8 @@ class WeeklyActivityChart extends StatelessWidget {
   /// Oldest first.
   final List<DailyProgress> days;
 
-  static const _dayNames = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
-
-  static String _name(DateTime d) => _dayNames[d.weekday - 1];
+  static String _name(AppLocalizations l, DateTime d) =>
+      l.weekdayShort('${d.weekday}');
 
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -45,12 +45,12 @@ class WeeklyActivityChart extends StatelessWidget {
     final spoken = days
         .map(
           (d) =>
-              '${_name(d.day)}: ${d.words} so‘z${d.goalMet ? ', maqsad bajarilgan' : ''}',
+              '${_name(context.l10n, d.day)}: ${context.l10n.wordsCount(d.words)}${d.goalMet ? context.l10n.goalMetSuffix : ''}',
         )
         .join('; ');
 
     return Semantics(
-      label: 'Haftalik faollik. $spoken',
+      label: '${context.l10n.weeklyActivity}. $spoken',
       excludeSemantics: true,
       child: GlassSurface(
         blur: false,
@@ -85,7 +85,7 @@ class WeeklyActivityChart extends StatelessWidget {
                 for (final d in days)
                   Expanded(
                     child: Text(
-                      _name(d.day),
+                      _name(context.l10n, d.day),
                       textAlign: TextAlign.center,
                       style: text.caption.copyWith(
                         color: _sameDay(d.day, today)
@@ -109,7 +109,7 @@ class WeeklyActivityChart extends StatelessWidget {
                 ),
                 const SizedBox(width: VocaSpacing.xxs),
                 Text(
-                  'Kunlik maqsad bajarilgan',
+                  context.l10n.dailyGoalMet,
                   style: text.caption.copyWith(color: colors.textSecondary),
                 ),
               ],

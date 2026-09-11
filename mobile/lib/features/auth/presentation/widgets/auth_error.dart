@@ -12,38 +12,36 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Uzbek text for each failure the auth flow can produce.
-String authFailureMessage(Failure failure) {
+String authFailureMessage(AppLocalizations l, Failure failure) {
   if (failure is ApiFailure) {
     return switch (failure.code) {
-      'INVALID_EMAIL' => 'Elektron pochta manzili noto‘g‘ri.',
-      'EMAIL_MISMATCH' =>
-        'Bu pochta hisobingizga tegishli emas. Hisob ochilgan pochtani kiriting.',
-      'EMAIL_ALREADY_EXISTS' =>
-        'Bu pochta bilan akkaunt allaqachon ochilgan. Kiring yoki parolni tiklang.',
-      'INVALID_VERIFICATION_CODE' => 'Kod noto‘g‘ri. Qaytadan urinib ko‘ring.',
-      'VERIFICATION_CODE_EXPIRED' => 'Kod muddati tugagan. Yangisini so‘rang.',
-      'TOO_MANY_ATTEMPTS' => 'Juda ko‘p urinish. Yangi kod so‘rang.',
-      'TOO_MANY_REQUESTS' => 'Juda ko‘p so‘rov. Biroz kuting.',
-      'INVALID_PASSWORD' => 'Parol kamida 8 ta belgidan iborat bo‘lishi kerak.',
-      'ACCOUNT_NOT_VERIFIED' => 'Avval pochtangizni tasdiqlang.',
-      'VALIDATION_ERROR' => 'Kiritilgan ma’lumotlarda xatolik bor.',
-      _ => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.',
+      'INVALID_EMAIL' => l.errorInvalidEmail,
+      'EMAIL_MISMATCH' => l.errorEmailMismatch,
+      'EMAIL_ALREADY_EXISTS' => l.errorEmailExists,
+      'INVALID_VERIFICATION_CODE' => l.errorInvalidCode,
+      'VERIFICATION_CODE_EXPIRED' => l.errorCodeExpired,
+      'TOO_MANY_ATTEMPTS' => l.errorTooManyAttempts,
+      'TOO_MANY_REQUESTS' => l.errorTooManyRequests,
+      'INVALID_PASSWORD' => l.errorInvalidPassword,
+      'ACCOUNT_NOT_VERIFIED' => l.errorNotVerified,
+      'VALIDATION_ERROR' => l.errorValidation,
+      _ => l.errorGeneric,
     };
   }
   return switch (failure) {
     // Backing out is not a failure. Somebody who closed the Google picker knows what they
     // did, and "sign-in failed" would be both wrong and irritating.
     CancelledFailure() => '',
-    UnauthenticatedFailure() => 'Sessiya tugagan. Qaytadan kiring.',
-    NetworkFailure() => 'Internet aloqasi yo‘q.',
+    UnauthenticatedFailure() => l.errorSessionExpired,
+    NetworkFailure() => l.errorNoInternet,
     // Sending is the only provider the auth flow talks to, so this is always about an
     // email that could not be delivered. Saying so is more useful than naming a service
     // the person has never heard of.
-    ProviderFailure() =>
-      'Bu manzilga xat yubora olmadik. Boshqa pochta kiriting yoki keyinroq urinib ko‘ring.',
-    _ => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.',
+    ProviderFailure() => l.errorEmailDelivery,
+    _ => l.errorGeneric,
   };
 }
 
@@ -81,7 +79,7 @@ class AuthErrorBanner extends StatelessWidget {
               const SizedBox(width: VocaSpacing.xs),
               Expanded(
                 child: Text(
-                  authFailureMessage(failure!),
+                  authFailureMessage(context.l10n, failure!),
                   style: context.vocaText.bodyMedium.copyWith(
                     color: colors.onErrorMuted,
                   ),

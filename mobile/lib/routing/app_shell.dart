@@ -14,32 +14,33 @@ import 'package:go_router/go_router.dart';
 import '../core/widgets/liquid_background.dart';
 import '../core/widgets/liquid_bottom_bar.dart';
 import '../core/theme/app_colors.dart';
+import '../l10n/l10n.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  static const _items = [
+  static List<LiquidNavItem> _items(AppLocalizations l) => [
     LiquidNavItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Bosh sahifa',
+      label: l.navHome,
     ),
     LiquidNavItem(
       icon: Icons.mic_none_rounded,
       activeIcon: Icons.mic_rounded,
-      label: 'Mashq',
+      label: l.navPractice,
     ),
     LiquidNavItem(
       icon: Icons.insights_outlined,
       activeIcon: Icons.insights_rounded,
-      label: 'Natijalar',
+      label: l.navProgress,
     ),
     LiquidNavItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      label: 'Profil',
+      label: l.navProfile,
     ),
   ];
 
@@ -67,7 +68,7 @@ class AppShell extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: LiquidBottomBar(
-        items: _items,
+        items: _items(context.l10n),
         currentIndex: navigationShell.currentIndex,
         onTap: _onTap,
       ),

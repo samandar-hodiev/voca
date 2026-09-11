@@ -13,6 +13,7 @@ import '../theme/app_typography.dart';
 import '../utils/responsive.dart';
 import 'app_badge.dart';
 import 'glass_surface.dart';
+import '../../l10n/l10n.dart';
 
 class PlaceholderScreen extends StatelessWidget {
   const PlaceholderScreen({
@@ -64,8 +65,8 @@ class PlaceholderScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: VocaSpacing.md),
-                  const AppBadge(
-                    label: 'Not implemented yet',
+                  AppBadge(
+                    label: context.l10n.notImplementedYet,
                     tone: BadgeTone.warning,
                   ),
                 ],

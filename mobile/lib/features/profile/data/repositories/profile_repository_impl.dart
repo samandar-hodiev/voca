@@ -25,7 +25,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on DioException catch (e) {
       return Err(ErrorMapper.fromDioException(e));
     } catch (_) {
-      return const Err(UnknownFailure(message: 'Profilni yuklab bo‘lmadi.'));
+      return const Err(UnknownFailure(message: 'Could not load the profile.'));
     }
   }
 }

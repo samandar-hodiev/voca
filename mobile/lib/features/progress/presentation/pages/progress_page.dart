@@ -24,6 +24,7 @@ import '../controllers/progress_controller.dart';
 import '../widgets/progress_chart.dart';
 import '../widgets/weak_sound_tile.dart';
 import '../../../../core/widgets/glass_surface.dart';
+import '../../../../l10n/l10n.dart';
 
 class ProgressPage extends ConsumerWidget {
   const ProgressPage({super.key});
@@ -37,8 +38,8 @@ class ProgressPage extends ConsumerWidget {
     return KeyedSubtree(
       key: pageKey,
       child: TabScaffold(
-        title: 'Natijalar',
-        subtitle: 'So‘nggi 7 kun',
+        title: context.l10n.navProgress,
+        subtitle: context.l10n.last7Days,
         onRefresh: () async {
           ref.invalidate(progressSummaryProvider);
           try {
@@ -68,7 +69,7 @@ class ProgressPage extends ConsumerWidget {
             SizedBox(
               height: 320,
               child: ErrorView(
-                message: 'Natijalarni yuklab bo‘lmadi.',
+                message: context.l10n.progressLoadFailed,
                 onRetry: () => ref.invalidate(progressSummaryProvider),
               ),
             ),
@@ -78,20 +79,20 @@ class ProgressPage extends ConsumerWidget {
             const SizedBox(height: VocaSpacing.md),
             Reveal(index: 1, child: _Stats(summary: s)),
             const SizedBox(height: VocaSpacing.xl),
-            const Reveal(
+            Reveal(
               index: 2,
               child: SectionHeader(
-                title: 'Haftalik faollik',
-                subtitle: 'Kunlik maqsadga nisbatan',
+                title: context.l10n.weeklyActivity,
+                subtitle: context.l10n.againstDailyGoal,
               ),
             ),
             Reveal(index: 2, child: WeeklyActivityChart(days: s.week)),
             const SizedBox(height: VocaSpacing.xl),
-            const Reveal(
+            Reveal(
               index: 3,
               child: SectionHeader(
-                title: 'Zaif tovushlar',
-                subtitle: 'Aniqlik bo‘yicha',
+                title: context.l10n.weakSounds,
+                subtitle: context.l10n.byAccuracy,
               ),
             ),
             for (var i = 0; i < s.weakSounds.length; i++) ...[
@@ -102,9 +103,9 @@ class ProgressPage extends ConsumerWidget {
               const SizedBox(height: VocaSpacing.sm),
             ],
             const SizedBox(height: VocaSpacing.lg),
-            const Reveal(
+            Reveal(
               index: 6,
-              child: SectionHeader(title: 'So‘nggi mashqlar'),
+              child: SectionHeader(title: context.l10n.recentPractice),
             ),
             Reveal(index: 6, child: _RecentList(records: s.recent)),
           ],
@@ -127,7 +128,7 @@ class _ScoreHero extends StatelessWidget {
     final up = s.scoreDelta >= 0;
 
     final ring = Semantics(
-      label: 'O‘rtacha talaffuz balli ${s.overallScore} / 100',
+      label: context.l10n.averageScoreSemantic(s.overallScore),
       excludeSemantics: true,
       child: ProgressRing(
         value: s.overallScore / 100,
@@ -153,19 +154,19 @@ class _ScoreHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'O‘rtacha talaffuz balli',
+          context.l10n.averageScore,
           style: text.subtitle.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: VocaSpacing.xs),
         // The direction is carried by the sign and the icon, not only by the colour.
         AppBadge(
-          label: '${up ? '+' : ''}${s.scoreDelta} ball',
+          label: context.l10n.pointsDelta(up ? '+' : '-', s.scoreDelta.abs()),
           tone: up ? BadgeTone.success : BadgeTone.error,
           icon: up ? Icons.trending_up_rounded : Icons.trending_down_rounded,
         ),
         const SizedBox(height: VocaSpacing.xs),
         Text(
-          'O‘tgan haftaga nisbatan',
+          context.l10n.comparedWithLastWeek,
           style: text.caption.copyWith(color: colors.textSecondary),
         ),
       ],
@@ -211,17 +212,17 @@ class _Stats extends StatelessWidget {
 
     return StatPair(
       left: StatCard(
-        label: 'Mashq qilingan so‘zlar',
+        label: context.l10n.wordsPractised,
         value: '${s.wordsPracticed}',
         icon: Icons.menu_book_rounded,
-        caption: 'Jami',
+        caption: context.l10n.total,
       ),
       right: StatCard(
-        label: 'Seriya',
-        value: '${s.streakDays} kun',
+        label: context.l10n.streak,
+        value: context.l10n.daysCount(s.streakDays),
         icon: Icons.local_fire_department_rounded,
         accent: colors.warning,
-        caption: 'Eng yaxshisi: ${s.bestStreak} kun',
+        caption: context.l10n.bestStreak(s.bestStreak),
       ),
     );
   }
@@ -232,15 +233,15 @@ class _RecentList extends StatelessWidget {
 
   final List<PracticeRecord> records;
 
-  static String _when(DateTime at, DateTime now) {
+  static String _when(AppLocalizations l, DateTime at, DateTime now) {
     final days = DateTime(
       now.year,
       now.month,
       now.day,
     ).difference(DateTime(at.year, at.month, at.day)).inDays;
-    if (days <= 0) return 'Bugun';
-    if (days == 1) return 'Kecha';
-    return '$days kun oldin';
+    if (days <= 0) return l.today;
+    if (days == 1) return l.yesterday;
+    return l.daysAgo(days);
   }
 
   static BadgeTone _tone(int score) {
@@ -257,7 +258,7 @@ class _RecentList extends StatelessWidget {
 
     if (records.isEmpty) {
       return Text(
-        'Hali mashq qilinmagan.',
+        context.l10n.noPracticeYetSentence,
         style: text.body.copyWith(color: colors.textSecondary),
       );
     }
@@ -271,9 +272,11 @@ class _RecentList extends StatelessWidget {
           for (var i = 0; i < records.length; i++) ...[
             if (i > 0) Divider(height: 1, thickness: 1, color: colors.border),
             Semantics(
-              label:
-                  '${records[i].word}, ${_when(records[i].at, now)}, '
-                  '${records[i].score} ball',
+              label: context.l10n.recordSemantic(
+                records[i].word,
+                _when(context.l10n, records[i].at, now),
+                records[i].score,
+              ),
               excludeSemantics: true,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -293,7 +296,7 @@ class _RecentList extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            _when(records[i].at, now),
+                            _when(context.l10n, records[i].at, now),
                             style: text.caption.copyWith(
                               color: colors.textSecondary,
                             ),

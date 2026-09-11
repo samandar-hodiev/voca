@@ -13,6 +13,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../l10n/l10n.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -34,7 +35,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
-    final ok = await ref.read(authControllerProvider.notifier)
+    final ok = await ref
+        .read(authControllerProvider.notifier)
         .login(_email.text.trim(), _password.text);
     if (ok && mounted) context.go(Routes.home);
   }
@@ -42,23 +44,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
-    final canSubmit = _email.text.trim().isNotEmpty && _password.text.isNotEmpty;
+    final canSubmit =
+        _email.text.trim().isNotEmpty && _password.text.isNotEmpty;
 
     return SetupScaffold(
-      title: 'Xush kelibsiz',
-      subtitle: 'Davom etish uchun kiring.',
-      primaryLabel: 'Kirish',
+      title: context.l10n.welcomeBack,
+      subtitle: context.l10n.signInToContinue,
+      primaryLabel: context.l10n.signIn,
       isBusy: state.isBusy,
       onPrimary: canSubmit && !state.isBusy ? () => unawaited(_submit()) : null,
       footer: TextButton(
-        onPressed: state.isBusy ? null : () => context.push(Routes.forgotPassword),
-        child: const Text('Parolni unutdingizmi?'),
+        onPressed: state.isBusy
+            ? null
+            : () => context.push(Routes.forgotPassword),
+        child: Text(context.l10n.forgotPassword),
       ),
       child: Column(
         children: [
           AuthErrorBanner(failure: state.failure),
           AppTextField(
-            label: 'Elektron pochta',
+            label: context.l10n.emailLabel,
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -67,7 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
-            label: 'Parol',
+            label: context.l10n.passwordLabel,
             controller: _password,
             obscureText: !_showPassword,
             textInputAction: TextInputAction.done,
@@ -75,10 +80,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             onSubmitted: (_) => unawaited(_submit()),
             suffixIcon: IconButton(
               onPressed: () => setState(() => _showPassword = !_showPassword),
-              icon: Icon(_showPassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined),
-              tooltip: _showPassword ? 'Parolni yashirish' : 'Parolni ko‘rsatish',
+              icon: Icon(
+                _showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              tooltip: _showPassword
+                  ? context.l10n.passwordHide
+                  : context.l10n.passwordShow,
             ),
           ),
         ],

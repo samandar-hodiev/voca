@@ -26,6 +26,7 @@ import '../widgets/word_card.dart';
 import '../widgets/word_practice_sheet.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/liquid_drop.dart';
+import '../../../../l10n/l10n.dart';
 
 class PracticePage extends ConsumerWidget {
   const PracticePage({super.key});
@@ -51,8 +52,8 @@ class PracticePage extends ConsumerWidget {
     return KeyedSubtree(
       key: pageKey,
       child: TabScaffold(
-        title: 'Mashq',
-        subtitle: 'Bugun uchun tanlangan so‘zlar',
+        title: context.l10n.navPractice,
+        subtitle: context.l10n.practiceSubtitle,
         onRefresh: () async {
           ref.invalidate(dailyPracticeSetProvider);
           try {
@@ -78,7 +79,7 @@ class PracticePage extends ConsumerWidget {
               SizedBox(
                 height: 320,
                 child: ErrorView(
-                  message: 'So‘zlarni yuklab bo‘lmadi.',
+                  message: context.l10n.wordsLoadFailed,
                   onRetry: () => ref.invalidate(dailyPracticeSetProvider),
                 ),
               ),
@@ -88,10 +89,10 @@ class PracticePage extends ConsumerWidget {
                     SizedBox(
                       height: 280,
                       child: EmptyView(
-                        title: 'Bu darajada so‘z yo‘q',
-                        message: 'Boshqa darajani tanlang.',
+                        title: context.l10n.noWordsAtLevel,
+                        message: context.l10n.chooseAnotherLevel,
                         icon: Icons.filter_alt_off_outlined,
-                        actionLabel: 'Barchasini ko‘rsatish',
+                        actionLabel: context.l10n.showAll,
                         onAction: () => setLevel(null),
                       ),
                     ),
@@ -111,7 +112,7 @@ class PracticePage extends ConsumerWidget {
                     ],
                     const SizedBox(height: VocaSpacing.md),
                     PrimaryButton(
-                      label: 'Mashqni boshlash',
+                      label: context.l10n.startPractice,
                       icon: Icons.play_arrow_rounded,
                       onPressed: () => showWordPracticeSheet(
                         context,
@@ -145,7 +146,7 @@ class _SetSummary extends StatelessWidget {
         .length;
 
     return Semantics(
-      label: '${words.length} ta so‘z, $done tasi yaxshi yoki o‘zlashtirilgan',
+      label: context.l10n.practiceSetSemantic(words.length, done),
       excludeSemantics: true,
       child: GlassSurface(
         blur: false,
@@ -164,7 +165,7 @@ class _SetSummary extends StatelessWidget {
                 const SizedBox(width: VocaSpacing.xs),
                 Expanded(
                   child: Text(
-                    '${words.length} ta so‘z · $done tasi yaxshi',
+                    context.l10n.practiceSetSummary(words.length, done),
                     style: text.subtitle.copyWith(color: colors.textPrimary),
                   ),
                 ),
@@ -199,7 +200,7 @@ class _LevelFilter extends StatelessWidget {
       runSpacing: VocaSpacing.xs,
       children: [
         _Pill(
-          label: 'Barchasi',
+          label: context.l10n.allLevels,
           selected: selected == null,
           onTap: () => onChanged(null),
         ),
@@ -229,7 +230,7 @@ class _Pill extends StatelessWidget {
     return Semantics(
       selected: selected,
       child: PressScale(
-        semanticLabel: '$label darajasi',
+        semanticLabel: context.l10n.levelSemantic(label),
         borderRadius: VocaRadius.pillAll,
         onTap: onTap,
         child: AnimatedSwitcher(
