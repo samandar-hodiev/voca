@@ -18,7 +18,17 @@ whole email system rests on, and it is not a tier or a price. On a free plan wit
 verified domain:
 
 - Resend delivers only to the address that owns the Resend account, from its shared
-  `onboarding@resend.dev` sender.
+  `onboarding@resend.dev` sender. This was confirmed against a live key rather than read
+  from documentation. Sending to the account owner succeeded; sending to any other
+  recipient was refused with:
+
+  > You can only send testing emails to your own email address. To send emails to other
+  > recipients, please verify a domain at resend.com/domains, and change the `from`
+  > address to an email using this domain.
+
+  The refusal arrives as HTTP 403 before any delivery is attempted, so a project
+  configured this way appears to work for whoever owns the account and fails for
+  everybody else.
 - Brevo delivers to anyone, but only from a verified sender ADDRESS, which in practice
   means sending as `something@gmail.com` through Brevo's servers. Gmail's own DMARC policy
   then fails to align, and a large share of those messages land in spam or are rejected
