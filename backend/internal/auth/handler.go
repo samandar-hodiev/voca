@@ -163,6 +163,41 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// StartSignOut handles POST /users/me/sign-out/start.
+func (h *Handler) StartSignOut(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	req, ok := bind[emailRequest](c)
+	if !ok {
+		return
+	}
+	if err := h.svc.StartSignOut(c.Request.Context(), userID, req.Email); err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, gin.H{"status": "sent"})
+}
+
+// ConfirmSignOut handles POST /users/me/sign-out/confirm.
+func (h *Handler) ConfirmSignOut(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	req, ok := bind[confirmSignOutRequest](c)
+	if !ok {
+		return
+	}
+	if err := h.svc.ConfirmSignOut(c.Request.Context(), userID, req.Code,
+		req.RefreshToken); err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 // ForgotPassword handles POST /auth/password/forgot.
 func (h *Handler) ForgotPassword(c *gin.Context) {
 	req, ok := bind[emailRequest](c)

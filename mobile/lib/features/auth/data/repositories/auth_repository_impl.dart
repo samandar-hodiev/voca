@@ -75,6 +75,19 @@ class AuthRepositoryImpl implements AuthRepository {
     await _store.clear();
   }
 
+  @override
+  Future<Result<void>> requestSignOutCode(String email) =>
+      _guard(() => _remote.startSignOut(email.trim()));
+
+  @override
+  Future<Result<void>> confirmSignOutCode(String code) async {
+    final refresh = await _store.read(_refreshKey);
+    if (refresh == null) {
+      return const Err(UnauthenticatedFailure(message: 'No session.'));
+    }
+    return _guard(() => _remote.confirmSignOut(code, refresh));
+  }
+
   /// Runs a call and turns any transport or API error into a typed failure.
   Future<Result<T>> _guard<T>(Future<T> Function() call) async {
     try {

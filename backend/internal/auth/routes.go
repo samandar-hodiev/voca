@@ -43,4 +43,16 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler,
 		me.PUT("/preferences", h.UpdatePreferences)
 		me.POST("/avatar", h.UploadAvatar)
 	}
+
+	// Signing out is confirmed with a code sent to the account's own address. It needs a
+	// signed-in person, and it is rate limited like the other code endpoints, because the
+	// code is the thing somebody would try to guess.
+	signOut := v1.Group("/users/me/sign-out", requireAuth)
+	if rateLimit != nil {
+		signOut.Use(rateLimit)
+	}
+	{
+		signOut.POST("/start", h.StartSignOut)
+		signOut.POST("/confirm", h.ConfirmSignOut)
+	}
 }

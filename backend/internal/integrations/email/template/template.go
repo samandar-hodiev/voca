@@ -25,6 +25,8 @@ func Subject(t auth.EmailTemplate) string {
 		return "Voca parolni tiklash kodi"
 	case auth.TemplateAccountExists:
 		return "Voca: bu pochta allaqachon ro'yxatdan o'tgan"
+	case auth.TemplateSignOutCode:
+		return "Voca: hisobdan chiqishni tasdiqlash kodi"
 	default:
 		return "Voca"
 	}
@@ -74,6 +76,19 @@ func Body(msg auth.EmailMessage) string {
 			"",
 			"Agar bu siz bo'lmasangiz, hech narsa qilish shart emas.",
 			"Akkauntingiz o'zgarmadi va hech kim unga kira olmadi.",
+		)
+	case auth.TemplateSignOutCode:
+		return join(
+			"Salom!",
+			"",
+			"Voca hisobingizdan chiqishni tasdiqlash uchun kodingiz:",
+			"",
+			"    "+code,
+			"",
+			"Kod 10 daqiqa amal qiladi.",
+			"",
+			"Agar hisobdan chiqishni siz so'ramagan bo'lsangiz, kodni hech kimga bermang.",
+			"Kodsiz hisobingizdan hech kim chiqara olmaydi.",
 		)
 	default:
 		return fmt.Sprintf("Voca: %s", code)

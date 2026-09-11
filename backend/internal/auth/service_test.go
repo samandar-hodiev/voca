@@ -1183,3 +1183,133 @@ func TestMe_UnknownUserIsUnauthenticated(t *testing.T) {
 		t.Fatalf("got %s, want UNAUTHENTICATED", got)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Confirmed sign-out
+// ---------------------------------------------------------------------------
+
+func TestStartSignOut_SendsTheCodeToTheAccountsOwnAddress(t *testing.T) {
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+
+	if err := svc.StartSignOut(context.Background(), u.ID, "  Ali@Example.com "); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	msg, ok := mail.Last()
+	if !ok || msg.Template != TemplateSignOutCode || msg.To != "ali@example.com" {
+		t.Fatalf("expected a sign-out code to the account, got %+v", msg)
+	}
+	if len(msg.Params["code"]) != DefaultPolicy().CodeLength {
+		t.Fatalf("code has the wrong length: %q", msg.Params["code"])
+	}
+}
+
+func TestStartSignOut_RefusesAnotherAddressAndSendsNothing(t *testing.T) {
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+
+	err := svc.StartSignOut(context.Background(), u.ID, "someone@example.com")
+	if codeOf(t, err) != apperr.CodeEmailMismatch {
+		t.Fatalf("expected EMAIL_MISMATCH, got %v", err)
+	}
+	if len(mail.sent) != 0 {
+		t.Fatalf("nothing should be sent, got %d messages", len(mail.sent))
+	}
+}
+
+func TestStartSignOut_GuestHasNoAddressToConfirmFrom(t *testing.T) {
+	svc, repo, mail := newService(t)
+	guest, err := svc.CreateGuest(context.Background(), RegisterInput{})
+	if err != nil {
+		t.Fatalf("guest: %v", err)
+	}
+	// The fake only records accounts that have an address; the real table keeps guests
+	// too, with no email. Seed it the way the database would hold it.
+	repo.users["guest:"+guest.User.ID.String()] = guest.User
+
+	err = svc.StartSignOut(context.Background(), guest.User.ID, "any@example.com")
+	if codeOf(t, err) != apperr.CodeValidation {
+		t.Fatalf("expected a validation error, got %v", err)
+	}
+	if len(mail.sent) != 0 {
+		t.Fatal("nothing should be sent to a guest")
+	}
+}
+
+func TestConfirmSignOut_RevokesTheSessionOnlyWithTheRightCode(t *testing.T) {
+	ctx := context.Background()
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	session, err := svc.Login(ctx, "ali@example.com", "correct horse battery")
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+	if err := svc.StartSignOut(ctx, u.ID, "ali@example.com"); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	msg, _ := mail.Last()
+	code := msg.Params["code"]
+	wrong := "000000"
+	if code == wrong {
+		wrong = "111111"
+	}
+	revoked := func() bool { return repo.refresh[token.Hash(session.RefreshToken)].revoked }
+
+	err = svc.ConfirmSignOut(ctx, u.ID, wrong, session.RefreshToken)
+	if codeOf(t, err) != apperr.CodeInvalidCode {
+		t.Fatalf("a wrong code must be refused, got %v", err)
+	}
+	if revoked() {
+		t.Fatal("a wrong code must not end the session")
+	}
+
+	if err := svc.ConfirmSignOut(ctx, u.ID, code, session.RefreshToken); err != nil {
+		t.Fatalf("confirm: %v", err)
+	}
+	if !revoked() {
+		t.Fatal("the right code must end the session")
+	}
+
+	// Consumed: the same code cannot confirm a second time.
+	err = svc.ConfirmSignOut(ctx, u.ID, code, session.RefreshToken)
+	if codeOf(t, err) != apperr.CodeInvalidCode {
+		t.Fatalf("a used code must be refused, got %v", err)
+	}
+}
+
+func TestConfirmSignOut_APasswordResetCodeCannotEndASession(t *testing.T) {
+	ctx := context.Background()
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	if err := svc.StartPasswordReset(ctx, "ali@example.com"); err != nil {
+		t.Fatalf("reset: %v", err)
+	}
+	msg, _ := mail.Last()
+
+	err := svc.ConfirmSignOut(ctx, u.ID, msg.Params["code"], "whatever")
+	if codeOf(t, err) != apperr.CodeInvalidCode {
+		t.Fatalf("a code for another purpose must be refused, got %v", err)
+	}
+}
+
+func TestConfirmSignOut_LeavesAnotherAccountsSessionAlone(t *testing.T) {
+	ctx := context.Background()
+	svc, repo, mail := newService(t)
+	a := repo.addUser("ali@example.com", "correct horse battery")
+	repo.addUser("vali@example.com", "correct horse battery")
+	other, err := svc.Login(ctx, "vali@example.com", "correct horse battery")
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+	if err := svc.StartSignOut(ctx, a.ID, "ali@example.com"); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	msg, _ := mail.Last()
+
+	if err := svc.ConfirmSignOut(ctx, a.ID, msg.Params["code"], other.RefreshToken); err != nil {
+		t.Fatalf("confirm: %v", err)
+	}
+	if repo.refresh[token.Hash(other.RefreshToken)].revoked {
+		t.Fatal("one account must not be able to end another's session")
+	}
+}

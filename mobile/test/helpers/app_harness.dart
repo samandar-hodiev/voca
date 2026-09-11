@@ -12,6 +12,7 @@ import 'package:voca/core/di/providers.dart';
 import 'package:voca/core/storage/key_value_store.dart';
 import 'package:voca/core/storage/secure_storage.dart';
 import 'package:voca/features/auth/domain/repositories/auth_repository.dart';
+import 'package:voca/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:voca/features/home/data/repositories/home_repository_impl.dart';
 import 'package:voca/features/home/presentation/controllers/home_controller.dart';
 import 'package:voca/features/practice/data/repositories/practice_repository_impl.dart';
@@ -31,6 +32,9 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
   bool onboardingCompleted = false,
   bool signedIn = false,
   KeyValueStore? store,
+  ProfileRepository profileRepository = const FakeProfileRepository(),
+  AuthRepository? authRepository,
+  GoogleIdentityTokenProvider? googleTokens,
 }) {
   // A stored session is what the startup state machine checks, so seeding the tokens is
   // how a test says "this person is already signed in".
@@ -55,9 +59,11 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
 
       // The signed-in screens read these. A test must not reach a server, and the mocks'
       // simulated latency would leave timers pending when a test ends.
-      profileRepositoryProvider.overrideWithValue(
-        const FakeProfileRepository(),
-      ),
+      profileRepositoryProvider.overrideWithValue(profileRepository),
+      if (authRepository != null)
+        authRepositoryProvider.overrideWithValue(authRepository),
+      if (googleTokens != null)
+        googleIdentityTokenProvider.overrideWithValue(googleTokens),
       homeRepositoryProvider.overrideWithValue(
         const MockHomeRepository(latency: Duration.zero),
       ),

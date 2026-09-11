@@ -24,6 +24,7 @@ import '../storage/key_value_store.dart';
 import '../../features/auth/data/datasources/firebase_google_tokens.dart';
 import '../../features/auth/domain/usecases/sign_in_with_google.dart';
 import '../../features/auth/domain/usecases/sign_out.dart';
+import '../../features/auth/domain/usecases/confirmed_sign_out.dart';
 import '../storage/secure_storage.dart';
 
 /// Overridden in [bootstrap] with the flavor's configuration. Reading it without an
@@ -112,5 +113,18 @@ final signOutProvider = Provider<SignOut>((ref) {
   return SignOut(
     ref.watch(authRepositoryProvider),
     ref.watch(googleIdentityTokenProvider),
+  );
+});
+
+/// The first half of a confirmed sign-out: a code to the account's own address.
+final requestSignOutCodeProvider = Provider<RequestSignOutCode>((ref) {
+  return RequestSignOutCode(ref.watch(authRepositoryProvider));
+});
+
+/// The second half: the code is checked on the server, then both sessions end.
+final confirmSignOutProvider = Provider<ConfirmSignOut>((ref) {
+  return ConfirmSignOut(
+    ref.watch(authRepositoryProvider),
+    ref.watch(signOutProvider),
   );
 });

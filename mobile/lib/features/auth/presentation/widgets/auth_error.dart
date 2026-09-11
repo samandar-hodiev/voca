@@ -18,6 +18,8 @@ String authFailureMessage(Failure failure) {
   if (failure is ApiFailure) {
     return switch (failure.code) {
       'INVALID_EMAIL' => 'Elektron pochta manzili noto‘g‘ri.',
+      'EMAIL_MISMATCH' =>
+        'Bu pochta hisobingizga tegishli emas. Hisob ochilgan pochtani kiriting.',
       'EMAIL_ALREADY_EXISTS' =>
         'Bu pochta bilan akkaunt allaqachon ochilgan. Kiring yoki parolni tiklang.',
       'INVALID_VERIFICATION_CODE' => 'Kod noto‘g‘ri. Qaytadan urinib ko‘ring.',

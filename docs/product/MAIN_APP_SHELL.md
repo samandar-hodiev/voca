@@ -85,6 +85,15 @@ The background is still. Nothing on these screens loops.
 - The active destination is marked three ways: the brand drop, a filled icon and a bold
   label.
 
+## Signing out
+
+Profile and Settings share one sign-out button, and it always asks first. A guest, who
+has no mailbox, is then signed out, after a warning that their results stay behind.
+Anyone else types their account's address, receives a six-digit code there, and is
+signed out only once the server accepts it. The server checks both the address and the
+code and revokes the session before the app clears anything. Closing the dialog or the
+sheet at any point leaves the person signed in.
+
 ## Test anchors
 
 Stable keys rather than labels, so a test does not break when a word is translated:

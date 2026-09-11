@@ -50,6 +50,17 @@ class AuthRemoteDataSource {
   Future<void> logout(String refreshToken) =>
       _dio.post<dynamic>('/api/v1/auth/logout', data: {'refresh_token': refreshToken});
 
+  /// Sends a sign-out code to the signed-in account's own address. The server refuses
+  /// an address that is not the account's.
+  Future<void> startSignOut(String email) =>
+      _dio.post<dynamic>('/api/v1/users/me/sign-out/start', data: {'email': email});
+
+  /// Ends the session on the server, once the emailed code is right.
+  Future<void> confirmSignOut(String code, String refreshToken) => _dio.post<dynamic>(
+        '/api/v1/users/me/sign-out/confirm',
+        data: {'code': code, 'refresh_token': refreshToken},
+      );
+
   Future<void> forgotPassword(String email) =>
       _dio.post<dynamic>('/api/v1/auth/password/forgot', data: {'email': email});
 

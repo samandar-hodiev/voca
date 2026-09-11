@@ -65,4 +65,11 @@ abstract interface class AuthRepository {
   Future<Result<String>> uploadAvatar(String filePath);
 
   Future<void> signOut();
+
+  /// Asks for a sign-out code at [email], which must be the account's own address.
+  Future<Result<void>> requestSignOutCode(String email);
+
+  /// Checks the emailed code. The server ends the session only if it is right. Local
+  /// storage is not touched here; [signOut] clears it once this succeeds.
+  Future<Result<void>> confirmSignOutCode(String code);
 }

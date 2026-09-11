@@ -52,6 +52,12 @@ type googleSignInRequest struct {
 	LastName       string  `json:"last_name"`
 }
 
+// confirmSignOutRequest carries the emailed code and the session it should end.
+type confirmSignOutRequest struct {
+	Code         string `json:"code" binding:"required"`
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }

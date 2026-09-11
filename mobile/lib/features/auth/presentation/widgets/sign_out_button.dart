@@ -4,8 +4,9 @@
 /// app and it always ends both sessions: Voca's, and the Google one. Leaving the Google
 /// session behind would make the next sign-in silently reuse this account.
 ///
-/// Its own state so the spinner belongs to this button alone, and a second tap cannot
-/// start a second sign-out while the first is still clearing storage.
+/// It always asks first. A guest, who has no mailbox, is then signed out. Anyone else
+/// confirms with a code sent to their account's address, and the server ends the session
+/// before anything here is cleared (sign_out_flow.dart).
 library;
 
 import 'dart:async';
@@ -18,6 +19,9 @@ import '../../../../core/di/providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_action_button.dart';
 import '../../../../routing/routes.dart';
+import '../../../profile/domain/entities/profile.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
+import 'sign_out_flow.dart';
 
 class SignOutButton extends ConsumerStatefulWidget {
   const SignOutButton({super.key});
@@ -27,16 +31,45 @@ class SignOutButton extends ConsumerStatefulWidget {
 }
 
 class _SignOutButtonState extends ConsumerState<SignOutButton> {
+  // A second tap while the conversation is open must not start a second one.
+  bool _open = false;
+
+  // Only the guest path clears storage from here, so only it shows a spinner.
   bool _busy = false;
 
-  Future<void> _signOut() async {
-    if (_busy) return;
-    setState(() => _busy = true);
+  Future<Profile?> _profileOrNull() async {
     try {
-      await ref.read(signOutProvider)();
+      return await ref.read(profileProvider.future);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _signOut() async {
+    if (_open) return;
+    _open = true;
+    try {
+      // Whether there is a mailbox to confirm from. If the profile cannot be read, the
+      // account is treated as having one: signing out without the check is the one thing
+      // this flow must never fall into by accident.
+      final profile = await _profileOrNull();
+      final isGuest =
+          profile != null && (profile.isGuest || profile.email == null);
+      if (!mounted) return;
+
+      final confirmed = await askToSignOut(context, isGuest: isGuest);
+      if (!confirmed || !mounted) return;
+
+      if (isGuest) {
+        setState(() => _busy = true);
+        await ref.read(signOutProvider)();
+      } else if (!await verifySignOutByEmail(context)) {
+        return;
+      }
       if (mounted) context.go(Routes.authEntry);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      _open = false;
+      if (mounted && _busy) setState(() => _busy = false);
     }
   }
 

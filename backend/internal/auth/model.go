@@ -27,6 +27,7 @@ type VerificationPurpose string
 const (
 	PurposeSignup        VerificationPurpose = "signup"
 	PurposePasswordReset VerificationPurpose = "password_reset"
+	PurposeSignOut       VerificationPurpose = "sign_out"
 )
 
 // User is an account.

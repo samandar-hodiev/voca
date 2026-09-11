@@ -53,6 +53,8 @@ skips the slides, not the questions: the answers shape every later screen.
 | POST | `/api/v1/auth/guest` | Anonymous session, keeps the setup answers |
 | POST | `/api/v1/auth/refresh` | Rotates; reuse revokes every session |
 | POST | `/api/v1/auth/logout` | Forgiving of an unknown token |
+| POST | `/api/v1/users/me/sign-out/start` | Signed in. Sends a code to the account's own address; any other address gets `EMAIL_MISMATCH` and nothing is sent |
+| POST | `/api/v1/users/me/sign-out/confirm` | Signed in. Checks the code, then revokes the caller's own refresh token |
 | POST | `/api/v1/auth/password/forgot` | Silent about whether the address exists |
 | POST | `/api/v1/auth/password/verify` | |
 | POST | `/api/v1/auth/password/reset` | Revokes every session, then signs in |

@@ -28,6 +28,10 @@ const (
 	// address that already has one. It carries no code and no link that would let the
 	// sender in, so it is safe to send to an address whoever typed it may not own.
 	TemplateAccountExists EmailTemplate = "account_exists"
+
+	// TemplateSignOutCode confirms a sign-out. It only ever goes to the address the
+	// account already has.
+	TemplateSignOutCode EmailTemplate = "sign_out_code"
 )
 
 // EmailProvider delivers transactional email.

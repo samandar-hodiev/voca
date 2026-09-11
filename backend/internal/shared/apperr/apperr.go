@@ -61,6 +61,9 @@ const (
 	CodeEmailNotVerified   Code = "ACCOUNT_NOT_VERIFIED"
 	CodeSessionExpired     Code = "SESSION_EXPIRED"
 
+	// CodeEmailMismatch: the address typed to confirm a sign-out is not the account's.
+	CodeEmailMismatch Code = "EMAIL_MISMATCH"
+
 	// Catch-all.
 	CodeInternal Code = "INTERNAL_ERROR"
 )

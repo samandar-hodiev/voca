@@ -577,6 +577,90 @@ func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	return nil
 }
 
+// ---------------------------------------------------------------------------
+// Confirmed sign-out
+// ---------------------------------------------------------------------------
+
+// StartSignOut sends a one-time code to the signed-in person's own address, the first
+// half of a sign-out they confirm from their mailbox.
+//
+// The address typed in the app has to be the account's own. The comparison happens here,
+// not only in the app, and a mismatch sends nothing: the code can only ever reach the
+// mailbox that already owns the account, so typing another address gains nothing.
+func (s *Service) StartSignOut(ctx context.Context, userID uuid.UUID, rawEmail string) error {
+	account, err := s.signOutAddress(ctx, userID)
+	if err != nil {
+		return err
+	}
+	typed, err := normalizeEmail(rawEmail)
+	if err != nil {
+		return err
+	}
+	if typed != account {
+		return apperr.New(apperr.CodeEmailMismatch, http.StatusBadRequest,
+			"Bu pochta hisobingizga tegishli emas. Hisob ochilgan pochtani kiriting.")
+	}
+	return s.issueCode(ctx, account, PurposeSignOut, TemplateSignOutCode)
+}
+
+// ConfirmSignOut checks the emailed code and only then revokes the session.
+//
+// The code is consumed on success, so it cannot end a later session as well. Only a
+// refresh token that belongs to the caller is revoked: a token from somebody else's
+// session is left alone rather than letting one account sign another out.
+func (s *Service) ConfirmSignOut(ctx context.Context, userID uuid.UUID,
+	code, refreshToken string) error {
+
+	account, err := s.signOutAddress(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := s.VerifyCode(ctx, account, PurposeSignOut, code); err != nil {
+		return err
+	}
+	v, err := s.repo.LatestVerification(ctx, account, PurposeSignOut)
+	if err != nil {
+		return apperr.Internal(err)
+	}
+	if err := s.repo.ConsumeVerification(ctx, v.ID); err != nil {
+		return apperr.Internal(err)
+	}
+
+	id, owner, _, _, err := s.repo.RefreshTokenByHash(ctx, token.Hash(refreshToken))
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			// Already gone. The person asked to be signed out and is.
+			return nil
+		}
+		return apperr.Internal(err)
+	}
+	if owner != userID {
+		s.log.Warn("sign_out_token_owner_mismatch")
+		return nil
+	}
+	if err := s.repo.RevokeRefreshToken(ctx, id); err != nil {
+		return apperr.Internal(err)
+	}
+	return nil
+}
+
+// signOutAddress is where a sign-out code goes: the account's own address, normalised.
+func (s *Service) signOutAddress(ctx context.Context, userID uuid.UUID) (string, error) {
+	user, err := s.repo.UserByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return "", apperr.Unauthenticated("Authentication required.")
+		}
+		return "", apperr.Internal(err)
+	}
+	if user.Email == nil || *user.Email == "" {
+		// A guest has no mailbox to confirm from. The app signs a guest out after a plain
+		// confirmation and never calls this.
+		return "", apperr.Validation("Bu hisobda pochta yo‘q.")
+	}
+	return normalizeEmail(*user.Email)
+}
+
 func sessionExpired() *apperr.AppError {
 	return apperr.New(apperr.CodeSessionExpired, http.StatusUnauthorized,
 		"Your session has expired. Please sign in again.")
