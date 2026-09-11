@@ -38,3 +38,6 @@ mobile/coverage/
 .idea/
 .vscode/
 *.iml
+
+# Android build output, including Gradle reports. Regenerated on every build.
+mobile/android/build/
