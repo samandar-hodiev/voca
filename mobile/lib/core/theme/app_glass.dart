@@ -5,9 +5,9 @@
 /// once:
 ///
 /// 1. **The fill is genuinely translucent.** An 80%-opaque white is a white card with
-///    extra steps. The tint sits near half: transparent enough that the liquid field
-///    below reads through it, opaque enough that dark body text on top still clears its
-///    contrast requirement.
+///    extra steps. The tint is thin, so the
+///    colour behind reads through; separation comes from the rim, the edge light and
+///    the shadow, and body text still clears its contrast requirement.
 ///
 ///    A warning that cost a redesign: [BoxDecoration] ignores `color` as soon as
 ///    `gradient` is set. Painting the tint and the highlight in one decoration silently
@@ -76,7 +76,7 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   final List<BoxShadow> shadows;
 
   static const light = VocaGlass(
-    tint: Color(0x66FFFFFF),
+    tint: Color(0x33FFFFFF),
     controlOpacity: 0.20,
     selectionOpacity: 0.16,
     highlight: Color(0x40FFFFFF),
@@ -93,8 +93,8 @@ class VocaGlass extends ThemeExtension<VocaGlass> {
   );
 
   static const dark = VocaGlass(
-    tint: Color(0xD91B212C),
-    controlOpacity: 0.52,
+    tint: Color(0x661B212C),
+    controlOpacity: 0.40,
     selectionOpacity: 0.34,
     highlight: Color(0x14FFFFFF),
     borderTop: Color(0x4DFFFFFF),

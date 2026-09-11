@@ -133,7 +133,7 @@ blurred together (`LiquidBackground`). It never moves.
 
 | Piece | Looks like | Used for |
 |---|---|---|
-| `GlassSurface` | blur plus a saturation boost of what is behind, a thin tint, soft light fading from the top, a hairline rim brightest along the top, a soft shadow | cards, lists, sheets, dialogs, the tab bar, glass buttons |
+| `GlassSurface` | clear glass: blur plus a saturation boost of what is behind, a thin tint (20% white in light, 40% in dark), soft light fading from the top, light gathering just inside the rim, a hairline rim brightest along the top, a soft shadow outside only | cards, lists, sheets, dialogs, the tab bar, glass buttons |
 | `LiquidDrop` | glass tinted with a colour: a faint light across the top, a slightly deeper bottom, a hairline rim; the label band in the middle stays the plain colour | the primary button, filled icon wells, progress fills, chart columns, check marks, avatar initials |
 | `GlassBead` | clear glass: a thin fill fading from the top, a hairline rim | filter pills, sound symbols, code cells, the avatar ring, page dots |
 

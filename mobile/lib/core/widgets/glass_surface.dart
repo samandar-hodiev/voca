@@ -13,6 +13,7 @@
 /// * The tint is thin. Separation comes from the blur, the rim and a soft shadow.
 /// * The rim is a hairline that catches the light: brightest along the top, a fainter
 ///   return along the bottom, like the edge of a lens.
+/// * Light gathers just inside the rim and fades inward, the lensing that makes it liquid.
 /// * No glints, blobs or coloured glows. Those turn glass into a cartoon of glass.
 library;
 
@@ -104,9 +105,16 @@ class GlassSurface extends StatelessWidget {
             stops: const [0, 0.5],
           ),
         ),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-          child: child,
+        // Light gathering at the rim, painted behind the content.
+        child: CustomPaint(
+          painter: _EdgeLens(
+            borderRadius: radius,
+            color: glass.borderTop.withValues(alpha: glass.borderTop.a * 0.45),
+          ),
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+            child: child,
+          ),
         ),
       ),
     );
@@ -177,6 +185,39 @@ class GlassSurface extends StatelessWidget {
       child: surface,
     );
   }
+}
+
+/// Light bending at the rim: a soft brightening just inside the edge that fades inward,
+/// the way a thick piece of glass gathers light along its border. It is what makes a clear
+/// pane read as liquid glass rather than a line drawing of one. Kept to the edge, inside
+/// the padding, so it never sits behind text.
+class _EdgeLens extends CustomPainter {
+  const _EdgeLens({required this.borderRadius, required this.color});
+
+  final BorderRadius borderRadius;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final pane = borderRadius.toRRect(Offset.zero & size);
+    canvas
+      ..save()
+      ..clipRRect(pane)
+      ..drawRRect(
+        pane,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 8
+          ..color = color
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      )
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_EdgeLens old) =>
+      old.borderRadius != borderRadius || old.color != color;
 }
 
 /// Paints [shadows] around a pane and never under it.

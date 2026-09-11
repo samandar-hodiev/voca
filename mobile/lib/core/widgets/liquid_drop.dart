@@ -147,7 +147,7 @@ class GlassBead extends StatelessWidget {
   /// the bottom. Public so the contrast test checks text on the lightest part.
   static Color fill(Brightness brightness) => brightness == Brightness.dark
       ? const Color(0x0FFFFFFF)
-      : const Color(0xB3FFFFFF);
+      : const Color(0x80FFFFFF);
 
   @override
   Widget build(BuildContext context) {

@@ -59,7 +59,7 @@ class LiquidBottomBar extends StatefulWidget {
   @visibleForTesting
   static Color lensFill(Brightness brightness) => brightness == Brightness.dark
       ? const Color(0x1AFFFFFF)
-      : const Color(0xA6FFFFFF);
+      : const Color(0x99FFFFFF);
 
   @override
   State<LiquidBottomBar> createState() => _LiquidBottomBarState();
