@@ -283,7 +283,10 @@ end-to-end suite is for:
 make e2e
 ```
 
-It needs a booted simulator and a backend running on :8082 with `EMAIL_OUTBOX_DIR` set.
+It needs a booted simulator and a backend running on :8082 **in outbox mode**. The suite
+reads the signup code out of the outbox, so a backend configured with a real mail provider
+makes it fail: the code goes to an inbox the test cannot open. Comment out
+`RESEND_API_KEY` for the run and leave `EMAIL_OUTBOX_DIR` set.
 It drives the real app and talks to the real backend, and it covers three flows:
 
 | Flow | What it proves |

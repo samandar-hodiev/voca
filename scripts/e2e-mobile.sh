@@ -62,7 +62,14 @@ outbox_name() {
 read_code() {
   file=$(ls -t "$OUTBOX"/*"$1"* 2>/dev/null | head -1)
   if [ -z "$file" ]; then
-    echo "outbox faylida $1 uchun xabar topilmadi ($OUTBOX)" >&2
+    echo "" >&2
+    echo "$1 uchun outbox faylida xabar topilmadi ($OUTBOX)." >&2
+    echo "" >&2
+    echo "Sabab odatda shu: backend haqiqiy pochta provayderi bilan ishlayapti," >&2
+    echo "shuning uchun kod diskka emas, pochtaga ketyapti va test uni o'qiy olmaydi." >&2
+    echo "" >&2
+    echo "Test uchun backend'ni outbox rejimida ishga tushiring: backend/.env da" >&2
+    echo "RESEND_API_KEY va SMTP_HOST ni izohga oling, EMAIL_OUTBOX_DIR ni qoldiring." >&2
     exit 1
   fi
   awk '/code = /{print $3; exit}' "$file"
