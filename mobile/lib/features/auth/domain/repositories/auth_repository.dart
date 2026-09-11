@@ -57,5 +57,10 @@ abstract interface class AuthRepository {
 
   Future<Result<void>> savePreferences(OnboardingAnswers answers);
 
+  /// Uploads a profile picture and returns the URL it was stored at.
+  ///
+  /// Requires a session, so it runs after registration rather than as part of it.
+  Future<Result<String>> uploadAvatar(String filePath);
+
   Future<void> signOut();
 }

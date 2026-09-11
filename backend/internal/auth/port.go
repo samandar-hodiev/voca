@@ -52,3 +52,21 @@ type GoogleTokenVerifier interface {
 	// issued to this application.
 	Verify(ctx context.Context, idToken string) (GoogleIdentity, error)
 }
+
+// AvatarStore keeps profile pictures.
+//
+// The port is owned here so the service never learns whether the bytes end up on a local
+// disk, in S3 or anywhere else. The MVP writes them to a directory; moving to object
+// storage later is a new adapter and no change to this package (ARCHITECTURE.md 7.1,
+// ADR-006).
+type AvatarStore interface {
+	// Put stores the image and returns the URL a client should use to fetch it.
+	//
+	// contentType is the caller's claim and must not be trusted on its own; an adapter is
+	// expected to check the bytes themselves.
+	Put(ctx context.Context, userID string, contentType string, data []byte) (string, error)
+
+	// Remove deletes a previously stored image. Removing something that is not there is
+	// not an error, so replacing an avatar never fails on the cleanup half.
+	Remove(ctx context.Context, url string) error
+}

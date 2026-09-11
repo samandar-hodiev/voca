@@ -420,3 +420,24 @@ From that moment every address a learner types receives its own code.
   exist is one of the fastest ways to get a sender blocked.
 - **Watch the free tier ceiling.** Resend allows 3,000 messages a month and Brevo 300 a
   day. Ten thousand signups a month needs a paid plan, still in the tens of dollars.
+
+## Profile pictures
+
+Uploads go to `POST /api/v1/users/me/avatar` as multipart, behind authentication, and are
+stored wherever `AVATAR_DIR` points (`backend/tmp/avatars` by default). They are served
+back from `/media/avatars/<name>`.
+
+Three things the store enforces, because a client's word is not evidence:
+
+- **The type is decided by sniffing the bytes**, not by the `Content-Type` a client sent.
+  A shell script named `avatar.png` is refused.
+- **Only JPEG, PNG and WebP are accepted.** A store that will hold any bytes at a public
+  URL is a file-hosting service nobody asked for.
+- **Two megabytes is the ceiling**, checked before the body is read into memory.
+
+File names carry random bytes, so an avatar URL cannot be guessed from an account id, and
+replacing a picture does not leave the old URL working.
+
+Object storage is the eventual home. It is a new adapter behind the same `AvatarStore`
+port, and the auth module does not change, because a stored value is a path rather than a
+full URL.

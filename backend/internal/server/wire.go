@@ -19,6 +19,7 @@ import (
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
 	googleauth "github.com/samandar-hodiev/voca/backend/internal/integrations/google"
+	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
 	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
@@ -116,9 +117,16 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 			slog.String("hint", "set GOOGLE_IOS_CLIENT_ID or GOOGLE_ANDROID_CLIENT_ID"))
 	}
 
+	// Avatars are written to a local directory and served back as static files. Object
+	// storage is the eventual home; swapping it is a new adapter behind the same port.
+	avatarStore, err := localfile.NewAvatarStore(cfg.AvatarDir, avatarURLPrefix)
+	if err != nil {
+		return Dependencies{}, err
+	}
+
 	authService := auth.NewService(
 		auth.NewRepository(pool.Pool), issuer, emailProvider,
-		googleVerifier, auth.DefaultPolicy(), log)
+		googleVerifier, avatarStore, auth.DefaultPolicy(), log)
 
 	// Provider selection happens here and nowhere else. Without Telegram credentials the
 	// service still runs and logs what it would have sent, so local development and CI
@@ -137,6 +145,8 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 
 	return Dependencies{
 		Logger:         log,
+		AvatarDir:      avatarStore.Dir(),
+		AvatarPrefix:   avatarStore.PublicPrefix(),
 		CORS:           middleware.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
 		DevhookHandler: devhookHandler,
 		AuthHandler:    auth.NewHandler(authService),

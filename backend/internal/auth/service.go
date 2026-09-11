@@ -51,21 +51,23 @@ func DefaultPolicy() Policy {
 
 // Service implements the authentication use cases.
 type Service struct {
-	repo   Repository
-	issuer *jwt.Issuer
-	email  EmailProvider
-	google GoogleTokenVerifier
-	policy Policy
-	log    *slog.Logger
+	repo    Repository
+	issuer  *jwt.Issuer
+	email   EmailProvider
+	google  GoogleTokenVerifier
+	avatars AvatarStore
+	policy  Policy
+	log     *slog.Logger
 }
 
 // NewService builds the service. A nil google verifier is allowed: Google sign-in then
 // reports itself unavailable rather than the service refusing to start.
 func NewService(repo Repository, issuer *jwt.Issuer, emailProvider EmailProvider,
-	google GoogleTokenVerifier, policy Policy, log *slog.Logger) *Service {
+	google GoogleTokenVerifier, avatars AvatarStore, policy Policy,
+	log *slog.Logger) *Service {
 	return &Service{
 		repo: repo, issuer: issuer, email: emailProvider,
-		google: google, policy: policy, log: log,
+		google: google, avatars: avatars, policy: policy, log: log,
 	}
 }
 
@@ -158,9 +160,16 @@ func (s *Service) issueCode(ctx context.Context, email string,
 		Template: template,
 		Params:   map[string]string{"code": code},
 	}); err != nil {
-		s.log.Error("verification_email_failed", slog.String("error", err.Error()))
+		// The code has already been stored, so the person can still finish if a later
+		// attempt gets through. The message deliberately does not repeat the provider's
+		// reason: that text names the account that owns the mail provider, which is not
+		// something to hand to whoever typed the address.
+		s.log.Error("verification_email_failed",
+			slog.String("to", email),
+			slog.String("error", err.Error()))
 		return apperr.New(apperr.CodeProviderUnavailable, http.StatusServiceUnavailable,
-			"We could not send the email. Please try again.")
+			"Hozircha bu manzilga xat yubora olmadik. "+
+				"Biroz kutib qayta urinib ko‘ring yoki boshqa pochta kiriting.")
 	}
 	return nil
 }
@@ -253,8 +262,16 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (Session, erro
 	}
 
 	if strings.TrimSpace(in.FirstName) == "" || strings.TrimSpace(in.LastName) == "" {
-		return Session{}, apperr.Validation("First name and last name are required.")
+		return Session{}, apperr.Validation("Ism va familiya kiritilishi shart.")
 	}
+	// Checked on the server, not only in the form. A client is free to send whatever it
+	// likes, so a rule that only exists in the app is not a rule.
+	phone, err := normalizePhone(in.Phone)
+	if err != nil {
+		return Session{}, err
+	}
+	in.Phone = &phone
+
 	if err := validateLevelAndGoal(in.CEFRLevel, in.LearningGoal); err != nil {
 		return Session{}, err
 	}
@@ -533,6 +550,48 @@ func (s *Service) newSession(ctx context.Context, user User, rotatedFrom *uuid.U
 // Preferences
 // ---------------------------------------------------------------------------
 
+// SaveAvatar stores a profile picture and points the account at it.
+//
+// The old picture is removed afterwards rather than before: if the write fails the
+// account is left with the image it already had, instead of with none.
+func (s *Service) SaveAvatar(ctx context.Context, userID uuid.UUID,
+	contentType string, data []byte) (string, error) {
+
+	if s.avatars == nil {
+		return "", apperr.New(apperr.CodeProviderUnavailable, http.StatusServiceUnavailable,
+			"Rasm yuklash hozircha ishlamayapti.")
+	}
+
+	previous, err := s.repo.AvatarURL(ctx, userID)
+	if err != nil && !errors.Is(err, ErrNotFound) {
+		return "", apperr.Internal(err)
+	}
+
+	url, err := s.avatars.Put(ctx, userID.String(), contentType, data)
+	if err != nil {
+		// The reason names a size or a file type, both of which the person can act on,
+		// so it is worth returning rather than hiding behind a generic message.
+		s.log.Info("avatar_rejected", slog.String("error", err.Error()))
+		return "", apperr.Validation("Rasmni yuklab bo‘lmadi. " +
+			"JPEG, PNG yoki WebP formatida va 2 MB dan kichik bo‘lsin.")
+	}
+
+	if err := s.repo.SetAvatarURL(ctx, userID, url); err != nil {
+		// The stored file is now orphaned, so clean it up rather than leaving it behind.
+		_ = s.avatars.Remove(ctx, url)
+		return "", apperr.Internal(err)
+	}
+
+	if previous != "" && previous != url {
+		if err := s.avatars.Remove(ctx, previous); err != nil {
+			// Not worth failing the request: the new picture is already in place.
+			s.log.Warn("old_avatar_not_removed", slog.String("error", err.Error()))
+		}
+	}
+
+	return url, nil
+}
+
 // SavePreferences stores the onboarding answers. Each screen may save independently;
 // values not supplied are left as they were.
 func (s *Service) SavePreferences(ctx context.Context, userID uuid.UUID, p Preferences) error {
@@ -577,6 +636,50 @@ func normalizeEmail(raw string) (string, error) {
 			"That does not look like a valid email address.")
 	}
 	return trimmed, nil
+}
+
+// normalizePhone checks a phone number and returns it in a single stored form.
+//
+// Stored as digits with a leading plus, so the same number typed as "+998 90 123 45 67",
+// "998901234567" or "(90) 123-45-67" is one value in the database rather than three.
+// Uzbek numbers are accepted without the country code and get +998 added, because that is
+// how people here write their own number.
+func normalizePhone(raw *string) (string, error) {
+	const invalid = "Telefon raqamni to‘g‘ri kiriting, masalan +998 90 123 45 67."
+
+	if raw == nil {
+		return "", apperr.Validation("Telefon raqam kiritilishi shart.")
+	}
+
+	var digits strings.Builder
+	for _, r := range *raw {
+		if r >= '0' && r <= '9' {
+			digits.WriteRune(r)
+		}
+	}
+	d := digits.String()
+
+	switch {
+	case d == "":
+		return "", apperr.Validation("Telefon raqam kiritilishi shart.")
+
+	// A local Uzbek number: nine digits, no country code.
+	case len(d) == 9:
+		d = "998" + d
+
+	// Written with a leading zero before the operator code, which is how it is dialled
+	// inside the country but is not part of the international number.
+	case len(d) == 10 && strings.HasPrefix(d, "0"):
+		d = "998" + d[1:]
+
+	// Long enough to carry a country code already. The upper bound is the E.164 limit.
+	case len(d) >= 11 && len(d) <= 15:
+
+	default:
+		return "", apperr.Validation(invalid)
+	}
+
+	return "+" + d, nil
 }
 
 func validateLevelAndGoal(level, goal *string) error {

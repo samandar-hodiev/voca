@@ -65,4 +65,19 @@ class AuthRemoteDataSource {
 
   Future<void> savePreferences(Map<String, dynamic> body) =>
       _dio.put<dynamic>('/api/v1/users/me/preferences', data: body);
+
+  /// Uploads a profile picture for the signed-in person.
+  ///
+  /// Multipart rather than a JSON body: base64 inflates an image by a third and forces
+  /// the whole thing through memory twice.
+  Future<String> uploadAvatar(String filePath) async {
+    final form = FormData.fromMap({
+      'avatar': await MultipartFile.fromFile(filePath),
+    });
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/users/me/avatar',
+      data: form,
+    );
+    return (res.data!['data'] as Map<String, dynamic>)['avatar_url'] as String;
+  }
 }

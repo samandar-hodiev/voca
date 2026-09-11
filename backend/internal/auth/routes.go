@@ -33,5 +33,6 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler, requireAuth gin.HandlerFunc
 	{
 		me.GET("/preferences", h.GetPreferences)
 		me.PUT("/preferences", h.UpdatePreferences)
+		me.POST("/avatar", h.UploadAvatar)
 	}
 }

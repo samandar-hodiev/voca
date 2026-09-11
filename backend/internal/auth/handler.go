@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -250,6 +251,44 @@ func (h *Handler) UpdatePreferences(c *gin.Context) {
 		return
 	}
 	httpx.OK(c, http.StatusOK, toPreferencesResponse(prefs))
+}
+
+// UploadAvatar stores a profile picture for the signed-in person.
+//
+// Multipart rather than JSON, because base64 inside a JSON body inflates an image by a
+// third and forces the whole thing into memory twice.
+func (h *Handler) UploadAvatar(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
+	// Bound what will be read before reading it. Without this a client can stream an
+	// arbitrarily large body and the server will hold all of it.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxAvatarUpload)
+
+	file, header, err := c.Request.FormFile("avatar")
+	if err != nil {
+		httpx.FailWith(c, apperr.Validation(
+			"Rasm yuborilmadi. \"avatar\" maydonida fayl yuboring."))
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	data, err := io.ReadAll(io.LimitReader(file, maxAvatarUpload))
+	if err != nil {
+		httpx.FailWith(c, apperr.Validation("Rasmni o‘qib bo‘lmadi."))
+		return
+	}
+
+	url, err := h.svc.SaveAvatar(c.Request.Context(), userID,
+		header.Header.Get("Content-Type"), data)
+	if err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+
+	httpx.OK(c, http.StatusOK, avatarResponse{AvatarURL: url})
 }
 
 // currentUser reads the authenticated identity that middleware placed in the context.

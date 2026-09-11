@@ -5,7 +5,9 @@
 #
 #   * Guest      needs nothing but a running backend.
 #   * Login      needs an account that already exists, so one is created first over HTTP.
-#   * Signup     needs the six-digit code, which only exists in the recipient's inbox. The
+#   * Signup     is covered as far as the profile form. The last step needs a profile
+#                picture, and the picker is a native sheet no widget test can drive.
+#                It also needs the six-digit code, which only exists in the recipient's inbox. The
 #                app asks for a fresh code the moment the address is submitted, so the
 #                code has to be read DURING the run. A small helper on localhost serves it
 #                out of the development outbox; the app is never given the ability to read
@@ -127,7 +129,7 @@ run_flow() {
 
 run_flow "mehmon sifatida kirish" "guest sign-in"
 run_flow "mavjud akkauntga kirish" "signing in to an existing account"
-run_flow "email bilan akkaunt yaratish" "creating an account with email"
+run_flow "email bilan profil shakligacha borish" "creating an account with email"
 
 if [ -n "$FAILED" ]; then
   printf '\nYiqilgan oqimlar:%s\n' "$FAILED" >&2

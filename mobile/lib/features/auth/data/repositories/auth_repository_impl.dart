@@ -176,6 +176,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<void>> savePreferences(OnboardingAnswers answers) =>
       _guard(() => _remote.savePreferences(_answersJson(answers)));
 
+  @override
+  Future<Result<String>> uploadAvatar(String filePath) =>
+      _guard(() => _remote.uploadAvatar(filePath));
+
   Map<String, dynamic> _answersJson(OnboardingAnswers? a) => {
         if (a?.level != null) 'cefr_level': a!.level,
         if (a?.goal != null) 'learning_goal': a!.goal,

@@ -1,10 +1,16 @@
-/// The last step of sign-up: name and password.
+/// The last step of sign-up: picture, name, phone and password.
 ///
-/// Only what an account genuinely needs is required. Phone is optional, because asking
-/// for it here would cost more sign-ups than the number is worth.
+/// Everything here is required. A picture and a number are what let a coach and a
+/// classmate recognise somebody later, and collecting them afterwards means chasing
+/// people who have already stopped thinking about their profile.
+///
+/// The picture is uploaded after the account exists, because the upload endpoint needs a
+/// session. A failure there leaves the account in place and is reported rather than
+/// silently swallowed.
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +21,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/avatar_picker.dart';
 import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
@@ -35,7 +42,9 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
   final _confirm = TextEditingController();
 
   bool _showPassword = false;
-  String? _firstError, _lastError, _passwordError, _confirmError;
+  File? _avatar;
+  String? _firstError, _lastError, _phoneError, _passwordError, _confirmError;
+  String? _avatarError;
 
   @override
   void dispose() {
@@ -47,30 +56,65 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
 
   bool _validate() {
     setState(() {
+      _avatarError = _avatar == null ? 'Profil rasmi kerak.' : null;
       _firstError = _first.text.trim().isEmpty ? 'Ismingizni kiriting.' : null;
       _lastError = _last.text.trim().isEmpty ? 'Familiyangizni kiriting.' : null;
+      _phoneError = _phoneProblem(_phone.text);
       _passwordError = _password.text.length < 8
           ? 'Parol kamida 8 ta belgidan iborat bo‘lsin.'
           : null;
       _confirmError =
           _confirm.text != _password.text ? 'Parollar mos kelmadi.' : null;
     });
-    return [_firstError, _lastError, _passwordError, _confirmError]
+    return [_avatarError, _firstError, _lastError, _phoneError, _passwordError,
+            _confirmError]
         .every((e) => e == null);
+  }
+
+  /// Checks the number the same way the server does, so a mistake is caught while the
+  /// keyboard is still open rather than after a round trip. The server checks it again
+  /// regardless: a rule that only exists in the app is not a rule.
+  String? _phoneProblem(String raw) {
+    final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return 'Telefon raqamni kiriting.';
+    final local = digits.length == 9;
+    final withLeadingZero = digits.length == 10 && digits.startsWith('0');
+    final international = digits.length >= 11 && digits.length <= 15;
+    if (local || withLeadingZero || international) return null;
+    return 'Raqamni to‘g‘ri kiriting, masalan +998 90 123 45 67.';
   }
 
   Future<void> _submit() async {
     if (!_validate()) return;
 
-    final ok = await ref.read(authControllerProvider.notifier).register(
-          password: _password.text,
-          firstName: _first.text.trim(),
-          lastName: _last.text.trim(),
-          phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-        );
+    final controller = ref.read(authControllerProvider.notifier);
+    final ok = await controller.register(
+      password: _password.text,
+      firstName: _first.text.trim(),
+      lastName: _last.text.trim(),
+      phone: _phone.text.trim(),
+    );
+    if (!ok) return;
+
+    // The account now exists and the session is established, which is what the upload
+    // endpoint needs. A failed upload is reported but does not undo the account: making
+    // somebody register twice because a photo did not go through would be worse.
+    final uploaded = await controller.uploadAvatar(_avatar!.path);
+    if (!mounted) return;
+    if (!uploaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Akkaunt yaratildi, lekin rasm yuklanmadi. '
+            'Uni sozlamalardan qo‘shishingiz mumkin.',
+          ),
+        ),
+      );
+    }
+
     // Registration establishes the session, so the flow ends here rather than sending
     // the person to a login screen they have just earned the right to skip.
-    if (ok && mounted) context.go(Routes.home);
+    context.go(Routes.home);
   }
 
   @override
@@ -88,6 +132,19 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AuthErrorBanner(failure: state.failure),
+
+          Center(
+            child: AvatarPicker(
+              file: _avatar,
+              enabled: !state.isBusy,
+              errorText: _avatarError,
+              onChanged: (f) => setState(() {
+                _avatar = f;
+                _avatarError = null;
+              }),
+            ),
+          ),
+          const SizedBox(height: VocaSpacing.lg),
 
           // The verified address, shown but not editable: changing it here would discard
           // the verification that was just completed.
@@ -130,8 +187,9 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
           const SizedBox(height: VocaSpacing.md),
           AppTextField(
             label: 'Telefon raqami',
-            helperText: 'Ixtiyoriy',
+            helperText: 'Masalan +998 90 123 45 67',
             controller: _phone,
+            errorText: _phoneError,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
           ),

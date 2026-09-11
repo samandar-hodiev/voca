@@ -38,6 +38,10 @@ dependencies:
   # (ARCHITECTURE.md 4.5, 18.2).
   flutter_secure_storage: ^9.2.2
 
+  # Choosing a profile picture from the camera or the library. Needed because the
+  # account cannot be created without one.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   integration_test:
     sdk: flutter

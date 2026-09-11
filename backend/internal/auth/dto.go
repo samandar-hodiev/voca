@@ -127,3 +127,12 @@ func toPreferencesResponse(p Preferences) preferencesResponse {
 		OnboardingCompletedAt: p.OnboardingCompletedAt,
 	}
 }
+
+// maxAvatarUpload bounds the request body. Slightly above the store's own limit so an
+// image that is just over it is refused with a message about the image rather than with a
+// truncated read.
+const maxAvatarUpload = 3 << 20
+
+type avatarResponse struct {
+	AvatarURL string `json:"avatar_url"`
+}

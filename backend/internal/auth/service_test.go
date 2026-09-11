@@ -32,6 +32,7 @@ type fakeRepo struct {
 	verifications []Verification
 	codeHashes    map[uuid.UUID]string
 	refresh       map[string]refreshRow
+	avatars       map[uuid.UUID]string
 	createErr     error
 
 	// Set by a test to say which address the next created account should carry, since
@@ -101,6 +102,22 @@ func (f *fakeRepo) CreateUserTx(ctx context.Context, fn func(tx pgx.Tx) (User, e
 		f.nextEmail = ""
 	}
 	return u, nil
+}
+
+func (f *fakeRepo) AvatarURL(_ context.Context, userID uuid.UUID) (string, error) {
+	url, ok := f.avatars[userID]
+	if !ok {
+		return "", nil
+	}
+	return url, nil
+}
+
+func (f *fakeRepo) SetAvatarURL(_ context.Context, userID uuid.UUID, url string) error {
+	if f.avatars == nil {
+		f.avatars = map[uuid.UUID]string{}
+	}
+	f.avatars[userID] = url
+	return nil
 }
 
 func (f *fakeRepo) UserByEmail(_ context.Context, email string) (User, error) {
@@ -275,6 +292,32 @@ func (f *fakeRepo) RevokeAllForUser(_ context.Context, userID uuid.UUID) error {
 // package's interface, so importing it from here would be an import cycle.
 // ---------------------------------------------------------------------------
 
+// fakeAvatars records what would have been stored, so the service's decisions can be
+// checked without touching a disk.
+type fakeAvatars struct {
+	stored  map[string][]byte
+	removed []string
+	err     error
+}
+
+func (f *fakeAvatars) Put(_ context.Context, userID, _ string, data []byte) (string, error) {
+	if f.err != nil {
+		return "", f.err
+	}
+	if f.stored == nil {
+		f.stored = map[string][]byte{}
+	}
+	url := "/media/avatars/" + userID + ".png"
+	f.stored[url] = data
+	return url, nil
+}
+
+func (f *fakeAvatars) Remove(_ context.Context, url string) error {
+	f.removed = append(f.removed, url)
+	delete(f.stored, url)
+	return nil
+}
+
 type fakeEmail struct {
 	sent []EmailMessage
 	err  error
@@ -334,7 +377,8 @@ func newServiceWithGoogle(t *testing.T, google GoogleTokenVerifier) (
 	}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	fake, _ := google.(*fakeGoogle)
-	return NewService(repo, issuer, mail, google, DefaultPolicy(), log), repo, mail, fake
+	return NewService(repo, issuer, mail, google, &fakeAvatars{}, DefaultPolicy(), log),
+		repo, mail, fake
 }
 
 func codeOf(t *testing.T, err error) apperr.Code {
@@ -507,10 +551,10 @@ func TestVerifyCode_PurposesAreNotInterchangeable(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func validRegistration() RegisterInput {
-	level, goal := "B1", "pronunciation"
+	level, goal, phone := "B1", "pronunciation", "+998901234567"
 	return RegisterInput{
 		Email: "new@voca.dev", Password: "password123",
-		FirstName: "Sam", LastName: "Hodiev",
+		FirstName: "Sam", LastName: "Hodiev", Phone: &phone,
 		CEFRLevel: &level, LearningGoal: &goal,
 	}
 }
@@ -901,5 +945,107 @@ func TestSignInWithGoogle_UnavailableWhenNotConfigured(t *testing.T) {
 	_, err := svc.SignInWithGoogle(context.Background(), "any-token", RegisterInput{})
 	if codeOf(t, err) != apperr.CodeProviderUnavailable {
 		t.Fatalf("got %s, want PROVIDER_UNAVAILABLE", codeOf(t, err))
+	}
+}
+
+// A phone number is required, and the same number written in different ways has to end up
+// as one value. Otherwise "+998 90 123 45 67" and "998901234567" are two different people
+// as far as the database is concerned.
+func TestNormalizePhone(t *testing.T) {
+	ok := map[string]string{
+		"+998 90 123 45 67": "+998901234567",
+		"998901234567":      "+998901234567",
+		"(90) 123-45-67":    "+998901234567",
+		"901234567":         "+998901234567",
+		"0901234567":        "+998901234567",
+		"+1 415 555 0132":   "+14155550132",
+	}
+	for input, want := range ok {
+		got, err := normalizePhone(&input)
+		if err != nil {
+			t.Errorf("%q returned %v, want it accepted", input, err)
+			continue
+		}
+		if got != want {
+			t.Errorf("%q became %q, want %q", input, got, want)
+		}
+	}
+
+	bad := []string{"", "   ", "abc", "12345", "+998 90 123 45 67 89 01 23"}
+	for _, input := range bad {
+		if _, err := normalizePhone(&input); err == nil {
+			t.Errorf("%q was accepted, want it rejected", input)
+		}
+	}
+
+	if _, err := normalizePhone(nil); err == nil {
+		t.Error("a missing phone number must be rejected")
+	}
+}
+
+// The rule lives on the server, so a client that simply omits the field cannot skip it.
+func TestRegister_RequiresAPhoneNumber(t *testing.T) {
+	svc, repo, _ := newService(t)
+	repo.addVerification("new@voca.dev", PurposeSignup, "123456",
+		time.Now().Add(time.Minute), 0, true)
+
+	in := validRegistration()
+	in.Phone = nil
+
+	_, err := svc.Register(context.Background(), in)
+	if got := codeOf(t, err); got != apperr.CodeValidation {
+		t.Fatalf("registering with no phone gave %s, want VALIDATION_ERROR", got)
+	}
+}
+
+func TestSaveAvatar_StoresAndPointsTheProfileAtIt(t *testing.T) {
+	svc, repo, _ := newService(t)
+	id := uuid.New()
+
+	url, err := svc.SaveAvatar(context.Background(), id, "image/png", []byte("bytes"))
+	if err != nil {
+		t.Fatalf("SaveAvatar: %v", err)
+	}
+	if url == "" {
+		t.Fatal("a url should be returned")
+	}
+	stored, err := repo.AvatarURL(context.Background(), id)
+	if err != nil {
+		t.Fatalf("AvatarURL: %v", err)
+	}
+	if stored != url {
+		t.Errorf("profile points at %q, want %q", stored, url)
+	}
+}
+
+// Replacing a picture should not leave the old file behind forever.
+func TestSaveAvatar_RemovesThePreviousPicture(t *testing.T) {
+	svc, repo, _ := newService(t)
+	id := uuid.New()
+	ctx := context.Background()
+
+	if err := repo.SetAvatarURL(ctx, id, "/media/avatars/old.png"); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	if _, err := svc.SaveAvatar(ctx, id, "image/png", []byte("bytes")); err != nil {
+		t.Fatalf("SaveAvatar: %v", err)
+	}
+
+	store := svc.avatars.(*fakeAvatars)
+	if len(store.removed) != 1 || store.removed[0] != "/media/avatars/old.png" {
+		t.Errorf("removed = %v, want the previous picture", store.removed)
+	}
+}
+
+// A rejected image is the person's problem to fix, so it must come back as a validation
+// error they can act on rather than as an internal failure.
+func TestSaveAvatar_RejectedImageIsAValidationError(t *testing.T) {
+	svc, _, _ := newService(t)
+	svc.avatars.(*fakeAvatars).err = errors.New("not an accepted image type")
+
+	_, err := svc.SaveAvatar(context.Background(), uuid.New(), "image/png", []byte("x"))
+	if got := codeOf(t, err); got != apperr.CodeValidation {
+		t.Fatalf("got %s, want VALIDATION_ERROR", got)
 	}
 }

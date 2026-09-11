@@ -28,6 +28,9 @@ type Repository interface {
 	UserByID(ctx context.Context, id uuid.UUID) (User, error)
 	PasswordHash(ctx context.Context, userID uuid.UUID) (string, error)
 	LinkGoogleAccount(ctx context.Context, userID uuid.UUID, subject string) error
+
+	AvatarURL(ctx context.Context, userID uuid.UUID) (string, error)
+	SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) error
 	SetPasswordHash(ctx context.Context, email, hash string) error
 	TouchLastLogin(ctx context.Context, userID uuid.UUID) error
 
@@ -164,6 +167,37 @@ func (r *repository) Preferences(ctx context.Context, userID uuid.UUID) (Prefere
 		return Preferences{}, fmt.Errorf("auth: read preferences: %w", err)
 	}
 	return p, nil
+}
+
+// AvatarURL returns the current picture, or an empty string when there is none.
+func (r *repository) AvatarURL(ctx context.Context, userID uuid.UUID) (string, error) {
+	var url *string
+	err := r.pool.QueryRow(ctx,
+		`SELECT avatar_url FROM profiles WHERE user_id = $1`, userID).Scan(&url)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("auth: read avatar url: %w", err)
+	}
+	if url == nil {
+		return "", nil
+	}
+	return *url, nil
+}
+
+// SetAvatarURL points the profile at a stored picture.
+func (r *repository) SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE profiles SET avatar_url = $2, updated_at = now() WHERE user_id = $1`,
+		userID, url)
+	if err != nil {
+		return fmt.Errorf("auth: set avatar url: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *repository) SavePreferences(ctx context.Context, p Preferences) error {

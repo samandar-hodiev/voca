@@ -73,6 +73,10 @@ type Config struct {
 	// never reveals a code. Ignored entirely in production.
 	EmailOutboxDir string
 
+	// AvatarDir is where uploaded profile pictures are written. A local directory is the
+	// MVP store; object storage replaces it behind the same port.
+	AvatarDir string
+
 	// CORSAllowedOrigins lists browser origins permitted to call this API. Empty means
 	// no cross-origin request is allowed, which is the safe default for a deployment
 	// that has not been configured yet.
@@ -124,6 +128,7 @@ func Load() (Config, error) {
 		SMTPFrom:            strings.TrimSpace(os.Getenv("SMTP_FROM")),
 		SMTPFromName:        strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
 		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
+		AvatarDir:           getEnv("AVATAR_DIR", "tmp/avatars"),
 		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
 

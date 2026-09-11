@@ -90,6 +90,10 @@ class AuthNotifier extends Notifier<AuthState> {
       _run(() => _repo.signInWithGoogle(idToken,
           firstName: first, lastName: last, answers: _answers));
 
+  /// Uploads the profile picture for the session that registration just created.
+  Future<bool> uploadAvatar(String filePath) =>
+      _run(() => _repo.uploadAvatar(filePath));
+
   Future<bool> forgotPassword(String email) =>
       _run(() => _repo.forgotPassword(email), email: email);
 

@@ -28,7 +28,16 @@ type Dependencies struct {
 	Capabilities   Capabilities
 	RequireAuth    gin.HandlerFunc
 	DB             *database.Pool
+
+	// AvatarDir and AvatarPrefix let the router serve uploaded pictures back. Serving
+	// them from the API keeps the MVP to one process; a CDN in front of object storage
+	// replaces both without the app noticing, because the stored URL is a path.
+	AvatarDir    string
+	AvatarPrefix string
 }
+
+// avatarURLPrefix is the path uploaded pictures are served under.
+const avatarURLPrefix = "/media/avatars"
 
 // Capabilities tells the client which optional sign-in methods actually work.
 //
@@ -57,6 +66,14 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	// and the platform calls them for rolling deploys and restarts.
 	r.GET("/health", health)
 	r.GET("/healthz", health)
+
+	// Uploaded pictures. Outside /api/v1 because they are files rather than API
+	// resources, and unauthenticated because an avatar is shown next to a name: putting
+	// it behind a token would mean every screen that lists people needs one per image.
+	// The stored name carries random bytes, so a URL cannot be guessed from an account id.
+	if deps.AvatarDir != "" && deps.AvatarPrefix != "" {
+		r.Static(deps.AvatarPrefix, deps.AvatarDir)
+	}
 
 	v1 := r.Group("/api/v1")
 	devhook.RegisterRoutes(v1, deps.DevhookHandler)

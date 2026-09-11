@@ -151,7 +151,7 @@ void main() {
         reason: 'valid credentials should land on the product');
   });
 
-  testWidgets('creating an account with email reaches the product', (tester) async {
+  testWidgets('creating an account with email reaches the profile form', (tester) async {
     expect(codeServer, isNotEmpty, reason: 'runner must pass E2E_CODE_SERVER');
     await resetToSignedOut();
     await launch(tester);
