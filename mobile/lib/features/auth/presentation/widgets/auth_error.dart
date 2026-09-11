@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/glass_surface.dart';
 
 /// Uzbek text for each failure the auth flow can produce.
 String authFailureMessage(Failure failure) {
@@ -59,24 +60,32 @@ class AuthErrorBanner extends StatelessWidget {
 
     return Semantics(
       liveRegion: true,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: VocaSpacing.md),
-        padding: const EdgeInsets.all(VocaSpacing.sm),
-        decoration: BoxDecoration(
-          color: colors.errorMuted,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: VocaSpacing.md),
+        child: GlassSurface(
+          blur: false,
+          showShadow: false,
+          tint: colors.errorMuted,
           borderRadius: VocaRadius.mediumAll,
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline_rounded, size: 18, color: colors.onErrorMuted),
-            const SizedBox(width: VocaSpacing.xs),
-            Expanded(
-              child: Text(
-                authFailureMessage(failure!),
-                style: context.vocaText.bodyMedium.copyWith(color: colors.onErrorMuted),
+          padding: const EdgeInsets.all(VocaSpacing.sm),
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: 18,
+                color: colors.onErrorMuted,
               ),
-            ),
-          ],
+              const SizedBox(width: VocaSpacing.xs),
+              Expanded(
+                child: Text(
+                  authFailureMessage(failure!),
+                  style: context.vocaText.bodyMedium.copyWith(
+                    color: colors.onErrorMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

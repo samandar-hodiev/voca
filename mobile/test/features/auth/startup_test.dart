@@ -12,9 +12,8 @@ import 'package:voca/features/splash/presentation/controllers/splash_controller.
 import '../../helpers/app_harness.dart';
 
 void main() {
-  // Onboarding and the auth screens both carry the liquid background, whose drift repeats
-  // forever by design, so pumpAndSettle would never return. Pumping past the splash
-  // minimum is the right tool for a screen that is never "settled".
+  // Pumping past the splash minimum, rather than settling, keeps the time the splash is
+  // allowed to hold explicit in every test.
   Future<void> pumpPastSplash(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(

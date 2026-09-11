@@ -73,10 +73,8 @@ void main() {
 
   /// Advances time by pumping frames.
   ///
-  /// pumpAndSettle is unusable here: the liquid background animates forever, so there is
-  /// never a frame with nothing scheduled and pumpAndSettle would wait until it times
-  /// out. Pumping a fixed number of frames is the supported way to drive an app with a
-  /// continuous animation.
+  /// A fixed number of frames rather than pumpAndSettle: against a real backend a request
+  /// can keep a spinner turning, and a frame count keeps the timing explicit.
   Future<void> settle(WidgetTester tester, {int frames = 40}) async {
     for (var i = 0; i < frames; i++) {
       await tester.pump(const Duration(milliseconds: 100));

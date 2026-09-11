@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'liquid_drop.dart';
 
 class SoundSymbol extends StatelessWidget {
   const SoundSymbol({super.key, required this.symbol, this.size = 44});
@@ -24,15 +25,10 @@ class SoundSymbol extends StatelessWidget {
     return Semantics(
       label: '$symbol tovushi',
       excludeSemantics: true,
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(size * 0.32),
-          border: Border.all(color: colors.primary.withValues(alpha: 0.26)),
-        ),
+      child: GlassBead(
+        size: size,
+        borderRadius: BorderRadius.circular(size * 0.32),
+        tint: colors.primary.withValues(alpha: 0.10),
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Padding(

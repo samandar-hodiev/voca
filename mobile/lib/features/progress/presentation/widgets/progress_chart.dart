@@ -15,6 +15,8 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/daily_progress.dart';
+import '../../../../core/widgets/glass_surface.dart';
+import '../../../../core/widgets/liquid_drop.dart';
 
 class WeeklyActivityChart extends StatelessWidget {
   const WeeklyActivityChart({super.key, required this.days});
@@ -50,18 +52,15 @@ class WeeklyActivityChart extends StatelessWidget {
     return Semantics(
       label: 'Haftalik faollik. $spoken',
       excludeSemantics: true,
-      child: Container(
+      child: GlassSurface(
+        blur: false,
         padding: const EdgeInsets.fromLTRB(
           VocaSpacing.md,
           VocaSpacing.lg,
           VocaSpacing.md,
           VocaSpacing.md,
         ),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(VocaRadius.large),
-          border: Border.all(color: colors.border),
-        ),
+        borderRadius: BorderRadius.circular(VocaRadius.large),
         child: Column(
           children: [
             SizedBox(
@@ -155,23 +154,14 @@ class _Bar extends StatelessWidget {
               curve: VocaMotion.enterCurve,
               builder: (context, v, _) => FractionallySizedBox(
                 heightFactor: v,
-                child: Container(
+                child: SizedBox(
                   width: 18,
-                  decoration: BoxDecoration(
+                  child: LiquidDrop(
+                    color: goalMet
+                        ? colors.primary
+                        : Color.lerp(colors.primary, colors.surface, 0.55),
+                    glow: goalMet,
                     borderRadius: BorderRadius.circular(VocaRadius.small),
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: goalMet
-                          ? [
-                              colors.primary.withValues(alpha: 0.8),
-                              colors.primary,
-                            ]
-                          : [
-                              colors.primary.withValues(alpha: 0.22),
-                              colors.primary.withValues(alpha: 0.4),
-                            ],
-                    ),
                   ),
                 ),
               ),

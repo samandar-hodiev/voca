@@ -219,13 +219,10 @@ class _Subscription extends StatelessWidget {
     final colors = context.vocaColors;
     final text = context.vocaText;
 
-    return Container(
+    return GlassSurface(
+      blur: false,
       padding: const EdgeInsets.all(VocaSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(VocaRadius.large),
-        border: Border.all(color: colors.border),
-      ),
+      borderRadius: BorderRadius.circular(VocaRadius.large),
       child: Row(
         children: [
           Icon(Icons.workspace_premium_outlined, color: colors.primary),
@@ -266,12 +263,10 @@ class _Group extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.vocaColors;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(VocaRadius.large),
-        border: Border.all(color: colors.border),
-      ),
+    return GlassSurface(
+      blur: false,
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(VocaRadius.large),
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[

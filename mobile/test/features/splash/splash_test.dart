@@ -107,8 +107,8 @@ void main() {
     final (app, _) = buildApp(onboardingCompleted: false);
     await tester.pumpWidget(app);
 
-    // pumpAndSettle would time out here: onboarding carries the liquid background, whose
-    // drift repeats forever by design. Pump past the splash minimum instead.
+    // Pump past the splash minimum rather than settling, so the test says exactly how
+    // long the splash is allowed to hold.
     await tester.pump();
     await tester.pump(
       splashMinimumDuration + const Duration(milliseconds: 400),

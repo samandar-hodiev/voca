@@ -57,9 +57,9 @@ class AppShell extends StatelessWidget {
       // Content scrolls underneath the floating bar instead of stopping above it.
       extendBody: true,
       body: LiquidBackground(
-        // A little calmer than the setup screens, because these pages are dense, but
-        // strong enough that the liquid is plainly there in both themes.
-        intensity: 0.9,
+        // The same quiet wash as every other screen. The liquid is on the cards and
+        // controls in front of it, not in the background.
+        intensity: 1,
         child: navigationShell,
       ),
       bottomNavigationBar: LiquidBottomBar(

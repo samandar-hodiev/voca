@@ -17,10 +17,8 @@ import 'helpers/app_harness.dart';
 ///
 /// Reading GoRouter from a screen's BuildContext breaks as soon as that screen is
 /// disposed by the navigation under test; the container outlives every route.
-/// The signed-in shell carries the liquid background, whose animation repeats forever, so
-/// pumpAndSettle never settles there. A fixed number of frames is the supported way to
-/// drive a screen with a continuous animation; four seconds of them covers the splash and
-/// the first data load.
+/// A fixed number of frames rather than pumpAndSettle keeps each test's timing explicit:
+/// four seconds of them covers the splash minimum and the first data load.
 Future<void> frames(WidgetTester tester, [int count = 40]) async {
   for (var i = 0; i < count; i++) {
     await tester.pump(const Duration(milliseconds: 100));

@@ -19,6 +19,8 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
+import 'liquid_drop.dart';
+import '../theme/app_glass.dart';
 
 enum _Emphasis { primary, secondary, text }
 
@@ -220,18 +222,15 @@ class _VocaButtonState extends State<_VocaButton> {
         onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
         onTap: _enabled ? widget.onPressed : null,
         child: widget.emphasis == _Emphasis.primary
-            // The primary action keeps its brand colour but is rendered as glass: the
-            // colour becomes the tint of a real pane, so it picks up the backdrop blur, a
-            // lit top face and a gradient rim instead of being a flat rectangle of ink.
-            // The tint stays near-opaque, because white text on a see-through fill would
-            // lose its contrast over a pale liquid field.
+            // The primary action is a drop of its brand colour: a lit top, a deeper
+            // bottom, a highlight, a caustic and a glow, instead of a flat rectangle of
+            // ink. The label sits in the middle band, clear of the highlight and caustic.
             ? SizedBox(
                 width: widget.expand ? double.infinity : null,
-                child: GlassSurface(
+                child: LiquidDrop(
+                  color: background,
                   borderRadius: VocaRadius.mediumAll,
-                  tint: background.withValues(alpha: _enabled ? 0.92 : 1),
-                borderWidth: 1.2,
-                  showShadow: _enabled && !_pressed,
+                  glow: _enabled && !_pressed,
                   padding: const EdgeInsets.symmetric(
                     horizontal: VocaSpacing.lg,
                     vertical: VocaSpacing.sm,
@@ -243,6 +242,8 @@ class _VocaButtonState extends State<_VocaButton> {
                   ),
                 ),
               )
+            : widget.emphasis == _Emphasis.secondary
+            ? _secondary(context, content)
             : AnimatedContainer(
                 duration: VocaMotion.respectReducedMotion(
                   context,
@@ -268,6 +269,30 @@ class _VocaButtonState extends State<_VocaButton> {
     );
   }
 
+  /// Secondary is a pane of clear glass. Pressing thickens it, as a finger pressed
+  /// against glass does.
+  Widget _secondary(BuildContext context, Widget content) {
+    final glass = context.vocaGlass;
+    final fill = glass.controlOpacity + (_pressed ? 0.22 : 0);
+    return SizedBox(
+      width: widget.expand ? double.infinity : null,
+      child: GlassSurface(
+        borderRadius: VocaRadius.mediumAll,
+        tint: glass.tint.withValues(alpha: fill.clamp(0.0, 1.0)),
+        borderWidth: 1.2,
+        showShadow: _enabled && !_pressed,
+        padding: const EdgeInsets.symmetric(
+          horizontal: VocaSpacing.lg,
+          vertical: VocaSpacing.sm,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 32),
+          child: Align(alignment: Alignment.center, child: content),
+        ),
+      ),
+    );
+  }
+
   /// Returns background, foreground and optional border for the current state.
   (Color, Color, Color?) _resolveColors(VocaColors colors) {
     if (!_enabled) {
@@ -288,11 +313,9 @@ class _VocaButtonState extends State<_VocaButton> {
         colors.onPrimary,
         null,
       ),
-      _Emphasis.secondary => (
-        _pressed ? colors.primaryMuted : Colors.transparent,
-        colors.primary,
-        colors.borderStrong,
-      ),
+      // The darker brand tone: brand-coloured text on clear glass over the background
+      // would fall below body contrast.
+      _Emphasis.secondary => (Colors.transparent, colors.onPrimaryMuted, null),
       _Emphasis.text => (
         _pressed ? colors.primaryMuted : Colors.transparent,
         colors.primary,

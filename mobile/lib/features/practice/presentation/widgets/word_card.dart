@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_badge.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/word.dart';
+import '../../../../core/widgets/glass_surface.dart';
 
 /// How each status is shown. A label and an icon for every state, so none of them rely on
 /// colour to be told apart.
@@ -55,13 +56,10 @@ class WordCard extends StatelessWidget {
           '${score == null ? '' : ', eng yaxshi natija $score'}. Mashq qilish',
       onTap: onTap,
       child: ExcludeSemantics(
-        child: Container(
+        child: GlassSurface(
+          blur: false,
           padding: const EdgeInsets.all(VocaSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(VocaRadius.large),
-            border: Border.all(color: colors.border),
-          ),
+          borderRadius: BorderRadius.circular(VocaRadius.large),
           child: Row(
             children: [
               SoundSymbol(symbol: word.focusSound),

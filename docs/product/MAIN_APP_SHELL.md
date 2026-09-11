@@ -1,6 +1,6 @@
 # The signed-in app
 
-What a person sees after signing in: four tabs over one liquid field, with a floating glass
+What a person sees after signing in: four tabs over one still background, with a floating glass
 navigation bar.
 
 ## Structure
@@ -8,7 +8,7 @@ navigation bar.
 ```
 StatefulShellRoute.indexedStack      lib/routing/app_router.dart
   AppShell                           lib/routing/app_shell.dart
-    LiquidBackground                 one field, painted once for every tab
+    LiquidBackground                 one still background, painted once for every tab
     LiquidBottomBar                  Home, Practice, Progress, Profile (rightmost)
     branch 0  /home       HomePage
     branch 1  /practice   PracticePage
@@ -73,7 +73,7 @@ because every screen that shows one of them shows the others.
 - With reduced motion, all of it is skipped: content simply appears and the drop moves in
   one step.
 
-The liquid background is the only continuous animation, and it predates this screen.
+The background is still. Nothing on these screens loops.
 
 ## Accessibility
 

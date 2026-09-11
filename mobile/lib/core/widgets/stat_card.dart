@@ -11,6 +11,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'glass_surface.dart';
+import 'liquid_drop.dart';
 
 class StatCard extends StatelessWidget {
   const StatCard({
@@ -43,13 +45,10 @@ class StatCard extends StatelessWidget {
       container: true,
       label: caption == null ? '$label: $value' : '$label: $value. $caption',
       child: ExcludeSemantics(
-        child: Container(
+        child: GlassSurface(
+          blur: false,
           padding: const EdgeInsets.all(VocaSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(VocaRadius.large),
-            border: Border.all(color: colors.border),
-          ),
+          borderRadius: BorderRadius.circular(VocaRadius.large),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -57,13 +56,16 @@ class StatCard extends StatelessWidget {
               Row(
                 children: [
                   if (icon != null) ...[
-                    Container(
+                    LiquidDrop(
+                      color: tint,
+                      glow: false,
+                      borderRadius: BorderRadius.circular(VocaRadius.small),
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: tint.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(VocaRadius.small),
+                      child: Icon(
+                        icon,
+                        size: 16,
+                        color: LiquidDrop.foregroundOn(tint),
                       ),
-                      child: Icon(icon, size: 16, color: tint),
                     ),
                     const SizedBox(width: VocaSpacing.xs),
                   ],

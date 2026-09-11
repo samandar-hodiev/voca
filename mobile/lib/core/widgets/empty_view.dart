@@ -11,6 +11,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
+import 'liquid_drop.dart';
 
 class EmptyView extends StatelessWidget {
   const EmptyView({
@@ -39,12 +40,9 @@ class EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            GlassBead(
+              tint: colors.primaryMuted.withValues(alpha: 0.6),
               padding: const EdgeInsets.all(VocaSpacing.sm),
-              decoration: BoxDecoration(
-                color: colors.primaryMuted,
-                shape: BoxShape.circle,
-              ),
               child: Icon(icon, color: colors.primary, size: 26),
             ),
             const SizedBox(height: VocaSpacing.md),

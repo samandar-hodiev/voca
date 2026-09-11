@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
 
-/// The liquid background animates forever, so pumpAndSettle never settles. A fixed number
-/// of frames is the supported way to drive an app with a continuous animation.
+/// A fixed number of frames rather than pumpAndSettle, so every test states how long it
+/// lets the splash and the tab drop run.
 Future<void> frames(WidgetTester tester, int count) async {
   for (var i = 0; i < count; i++) {
     await tester.pump(const Duration(milliseconds: 100));

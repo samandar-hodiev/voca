@@ -14,6 +14,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
+import 'liquid_drop.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({
@@ -49,13 +50,14 @@ class ErrorView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
+              GlassBead(
+                tint: colors.errorMuted.withValues(alpha: 0.6),
                 padding: const EdgeInsets.all(VocaSpacing.sm),
-                decoration: BoxDecoration(
-                  color: colors.errorMuted,
-                  shape: BoxShape.circle,
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  color: colors.error,
+                  size: 26,
                 ),
-                child: Icon(Icons.error_outline_rounded, color: colors.error, size: 26),
               ),
               const SizedBox(height: VocaSpacing.md),
               if (title != null) ...[

@@ -27,6 +27,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
+import 'liquid_drop.dart';
 
 /// One destination in the bar.
 @immutable
@@ -180,7 +181,7 @@ class _LiquidBottomBarState extends State<LiquidBottomBar>
       top: _NavButton.dropTop + (_NavButton.dropSize - height) / 2,
       width: width,
       height: height,
-      child: const IgnorePointer(child: ExcludeSemantics(child: _BrandDrop())),
+      child: const IgnorePointer(child: ExcludeSemantics(child: LiquidDrop())),
     );
   }
 }
@@ -238,7 +239,7 @@ class _NavButton extends StatelessWidget {
                     Positioned.fill(
                       child: Opacity(
                         opacity: 1 - coverage,
-                        child: const _GlassBead(),
+                        child: const GlassBead(),
                       ),
                     ),
                     Icon(
@@ -266,139 +267,4 @@ class _NavButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A clear glass bead: the resting state of a destination.
-class _GlassBead extends StatelessWidget {
-  const _GlassBead();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.vocaColors;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(VocaRadius.pill),
-        gradient: RadialGradient(
-          center: const Alignment(-0.35, -0.5),
-          radius: 0.95,
-          colors: dark
-              ? const [Color(0x38FFFFFF), Color(0x14FFFFFF), Color(0x08FFFFFF)]
-              : const [Color(0xF2FFFFFF), Color(0x8CFFFFFF), Color(0x40FFFFFF)],
-          stops: const [0, 0.6, 1],
-        ),
-        border: GradientBoxBorder(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: dark
-                ? const [Color(0x59FFFFFF), Color(0x0DFFFFFF)]
-                : [Colors.white, colors.primary.withValues(alpha: 0.22)],
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: dark ? const Color(0x73000000) : const Color(0x262B2B60),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: CustomPaint(painter: _Shine(strength: dark ? 0.4 : 1)),
-    );
-  }
-}
-
-/// The selected destination: a drop of brand-coloured liquid, lit from the top left.
-class _BrandDrop extends StatelessWidget {
-  const _BrandDrop();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.vocaColors;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(VocaRadius.pill),
-        // Lighter where the light enters, the brand colour through the middle where the
-        // icon sits, deeper at the far edge.
-        gradient: RadialGradient(
-          center: const Alignment(-0.3, -0.6),
-          radius: 1.1,
-          colors: [
-            Color.lerp(colors.primary, Colors.white, 0.28)!,
-            colors.primary,
-            Color.lerp(colors.primaryPressed, Colors.black, dark ? 0.15 : 0.1)!,
-          ],
-          stops: const [0, 0.5, 1],
-        ),
-        border: GradientBoxBorder(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withValues(alpha: 0.55),
-              Colors.white.withValues(alpha: 0),
-            ],
-            stops: const [0, 0.6],
-          ),
-        ),
-        // The glow is the liquid's own colour spilling onto the glass under it.
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: dark ? 0.55 : 0.45),
-            blurRadius: 18,
-            spreadRadius: -2,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: const CustomPaint(painter: _Shine(strength: 0.66)),
-    );
-  }
-}
-
-/// A specular highlight across the top and a faint caustic at the bottom: light entering
-/// a drop is focused through it and lands on the far side.
-///
-/// The highlight fades out before the middle, where the icon sits, so it does not wash
-/// the icon out.
-class _Shine extends CustomPainter {
-  const _Shine({required this.strength});
-
-  final double strength;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-    final w = size.width;
-    final h = size.height;
-
-    final top = Rect.fromLTWH(w * 0.22, h * 0.07, w * 0.56, h * 0.24);
-    canvas.drawOval(
-      top,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withValues(alpha: 0.9 * strength),
-            Colors.white.withValues(alpha: 0),
-          ],
-        ).createShader(top),
-    );
-
-    final low = Rect.fromLTWH(w * 0.32, h * 0.8, w * 0.36, h * 0.1);
-    canvas.drawOval(
-      low,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.4 * strength)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_Shine old) => old.strength != strength;
 }

@@ -8,15 +8,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/liquid_drop.dart';
 
 class PageIndicator extends StatelessWidget {
-  const PageIndicator({
-    super.key,
-    required this.count,
-    required this.index,
-  });
+  const PageIndicator({super.key, required this.count, required this.index});
 
   final int count;
   final int index;
@@ -32,15 +28,17 @@ class PageIndicator extends StatelessWidget {
         children: List.generate(count, (i) {
           final active = i == index;
           return AnimatedContainer(
-            duration: VocaMotion.respectReducedMotion(context, VocaMotion.quick),
+            duration: VocaMotion.respectReducedMotion(
+              context,
+              VocaMotion.quick,
+            ),
             curve: VocaMotion.standardCurve,
             margin: const EdgeInsets.symmetric(horizontal: VocaSpacing.xxs),
-            height: 6,
-            width: active ? 22 : 6,
-            decoration: BoxDecoration(
-              color: active ? colors.primary : colors.borderStrong,
-              borderRadius: VocaRadius.pillAll,
-            ),
+            height: 8,
+            width: active ? 26 : 8,
+            child: active
+                ? const LiquidDrop(glow: false)
+                : GlassBead(tint: colors.borderStrong.withValues(alpha: 0.6)),
           );
         }),
       ),

@@ -24,6 +24,8 @@ import '../../domain/entities/word.dart';
 import '../controllers/practice_controller.dart';
 import '../widgets/word_card.dart';
 import '../widgets/word_practice_sheet.dart';
+import '../../../../core/widgets/glass_surface.dart';
+import '../../../../core/widgets/liquid_drop.dart';
 
 class PracticePage extends ConsumerWidget {
   const PracticePage({super.key});
@@ -145,13 +147,10 @@ class _SetSummary extends StatelessWidget {
     return Semantics(
       label: '${words.length} ta so‘z, $done tasi yaxshi yoki o‘zlashtirilgan',
       excludeSemantics: true,
-      child: Container(
+      child: GlassSurface(
+        blur: false,
         padding: const EdgeInsets.all(VocaSpacing.md),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(VocaRadius.large),
-          border: Border.all(color: colors.border),
-        ),
+        borderRadius: BorderRadius.circular(VocaRadius.large),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -232,32 +231,69 @@ class _Pill extends StatelessWidget {
       child: PressScale(
         semanticLabel: '$label darajasi',
         onTap: onTap,
-        child: AnimatedContainer(
+        child: AnimatedSwitcher(
           duration: VocaMotion.respectReducedMotion(context, VocaMotion.quick),
-          curve: VocaMotion.standardCurve,
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(horizontal: VocaSpacing.md),
-          decoration: BoxDecoration(
-            color: selected ? colors.primary : colors.surface,
-            borderRadius: BorderRadius.circular(VocaRadius.pill),
-            border: Border.all(
-              color: selected ? colors.primary : colors.border,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (selected) ...[
-                Icon(Icons.check_rounded, size: 16, color: colors.onPrimary),
-                const SizedBox(width: VocaSpacing.xxs),
-              ],
-              Text(
-                label,
-                style: text.label.copyWith(
-                  color: selected ? colors.onPrimary : colors.textPrimary,
-                ),
-              ),
-            ],
+          child: KeyedSubtree(
+            key: ValueKey(selected),
+            child: selected
+                ? LiquidDrop(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VocaSpacing.md,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (selected) ...[
+                            Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: colors.onPrimary,
+                            ),
+                            const SizedBox(width: VocaSpacing.xxs),
+                          ],
+                          Text(
+                            label,
+                            style: text.label.copyWith(
+                              color: selected
+                                  ? colors.onPrimary
+                                  : colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : GlassBead(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VocaSpacing.md,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (selected) ...[
+                            Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: colors.onPrimary,
+                            ),
+                            const SizedBox(width: VocaSpacing.xxs),
+                          ],
+                          Text(
+                            label,
+                            style: text.label.copyWith(
+                              color: selected
+                                  ? colors.onPrimary
+                                  : colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),

@@ -13,8 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voca/core/theme/app_colors.dart';
 import 'package:voca/core/theme/app_glass.dart';
+import 'package:voca/core/widgets/glass_surface.dart';
 import 'package:voca/core/widgets/liquid_background.dart';
 import 'package:voca/core/widgets/liquid_bottom_bar.dart';
+import 'package:voca/core/widgets/liquid_drop.dart';
 
 /// Relative luminance per WCAG 2.1.
 double _luminance(Color c) {
@@ -174,33 +176,27 @@ void main() {
     });
   }
 
-  // The liquid behind every screen. Text sits straight on it (onboarding, the section
-  // titles in the tabs) and on glass over it, and the liquid moves, so every colour it
-  // can put behind a letter is checked: each body at full strength, under its shaded
-  // side, and under its highlight. The numbers come from the widget itself, so making
-  // the liquid stronger than text can bear fails here rather than on somebody's phone.
-  for (final (name, colors, glass, dark)
-      in <(String, VocaColors, VocaGlass, bool)>[
-        ('light', VocaColors.light, VocaGlass.light, false),
-        ('dark', VocaColors.dark, VocaGlass.dark, true),
+  // The background behind every screen. Text sits straight on it (onboarding, the section
+  // titles in the tabs) and on glass over it, so text is checked where each colour field
+  // is strongest and where all of them stack. The numbers come from the widgets
+  // themselves, so a stronger background that text cannot bear fails here.
+  for (final (name, colors, glass, brightness)
+      in <(String, VocaColors, VocaGlass, Brightness)>[
+        ('light', VocaColors.light, VocaGlass.light, Brightness.light),
+        ('dark', VocaColors.dark, VocaGlass.dark, Brightness.dark),
       ]) {
-    group('$name theme, over the liquid', () {
-      final liquid = LiquidPalette.of(colors, dark: dark);
+    group('$name theme, over the background', () {
+      final fields = LiquidBackground.fields(colors);
       final backdrops = <(String, Color)>[
-        for (final (i, hue) in liquid.hues.indexed)
-          for (final (layer, over) in <(String, Color?)>[
-            ('body', null),
-            ('shaded side', liquid.shade),
-            ('highlight', Colors.white.withValues(alpha: liquid.highlight)),
-          ])
-            (
-              '$layer of body $i',
-              _paint(
-                colors.background,
-                hue.withValues(alpha: liquid.bodyOpacity),
-                over,
-              ),
-            ),
+        for (final (i, (color, _, _)) in fields.indexed)
+          ('centre of field $i', Color.alphaBlend(color, colors.background)),
+        (
+          'all fields stacked',
+          fields.fold(
+            colors.background,
+            (base, field) => Color.alphaBlend(field.$1, base),
+          ),
+        ),
       ];
 
       void expectReadable(
@@ -218,22 +214,47 @@ void main() {
         }
       }
 
-      test('text straight on the liquid meets AA', () {
+      test('text straight on the background meets AA', () {
         expectReadable('primary text', colors.textPrimary, (b) => b);
         expectReadable('secondary text', colors.textSecondary, (b) => b);
       });
 
-      // Compositing the tint over an unblurred body is the worst case: the real card
-      // blurs the body into the page around it, which only moves it towards the plain
-      // background.
-      test('text on a glass card over the liquid meets AA', () {
-        Color card(Color b) => Color.alphaBlend(glass.tint, b);
+      // The tint over an unblurred field, plus the depth shade at the bottom of the pane,
+      // is the worst case: the real card also blurs the field into the page around it.
+      test('text on a glass card meets AA, down to its shaded bottom edge', () {
+        Color card(Color b) => Color.alphaBlend(
+          GlassSurface.depthShade(brightness),
+          Color.alphaBlend(glass.tint, b),
+        );
         expectReadable('primary text', colors.textPrimary, card);
         expectReadable('secondary text', colors.textSecondary, card);
       });
 
+      // The label sits in the middle band of the liquid button. The lighter top of the
+      // liquid and its highlight both have to be gone before that band starts, and the
+      // lightest colour left behind the label must still carry it.
+      test('primary button label on its liquid meets AA', () {
+        expect(
+          LiquidShine.highlightBottom,
+          lessThanOrEqualTo(LiquidDrop.labelBandTop),
+          reason: 'the highlight must end above the label',
+        );
+        final top = brightness == Brightness.dark
+            ? LiquidDrop.topLightenDark
+            : LiquidDrop.topLightenLight;
+        final faded = (1 - LiquidDrop.labelBandTop / LiquidDrop.colourStop)
+            .clamp(0.0, 1.0);
+        final fill = Color.lerp(colors.primary, Colors.white, top * faded)!;
+        final ratio = contrastRatio(colors.onPrimary, fill);
+        expect(
+          ratio,
+          greaterThanOrEqualTo(aaBody),
+          reason: 'label on the button is ${ratio.toStringAsFixed(2)}:1',
+        );
+      });
+
       test('tab labels on the clear bar meet AA', () {
-        final alpha = dark
+        final alpha = brightness == Brightness.dark
             ? LiquidBottomBar.darkGlassAlpha
             : LiquidBottomBar.lightGlassAlpha;
         Color bar(Color b) =>
@@ -243,10 +264,4 @@ void main() {
       });
     });
   }
-}
-
-/// [body] painted on [page], then [over] on top of that if given.
-Color _paint(Color page, Color body, Color? over) {
-  final painted = Color.alphaBlend(body, page);
-  return over == null ? painted : Color.alphaBlend(over, painted);
 }

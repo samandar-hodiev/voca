@@ -26,6 +26,7 @@ import '../../../../core/widgets/setup_scaffold.dart';
 import '../../../../routing/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_error.dart';
+import '../../../../core/widgets/glass_surface.dart';
 
 class CreateProfilePage extends ConsumerStatefulWidget {
   const CreateProfilePage({super.key});
@@ -58,17 +59,25 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
     setState(() {
       _avatarError = _avatar == null ? 'Profil rasmi kerak.' : null;
       _firstError = _first.text.trim().isEmpty ? 'Ismingizni kiriting.' : null;
-      _lastError = _last.text.trim().isEmpty ? 'Familiyangizni kiriting.' : null;
+      _lastError = _last.text.trim().isEmpty
+          ? 'Familiyangizni kiriting.'
+          : null;
       _phoneError = _phoneProblem(_phone.text);
       _passwordError = _password.text.length < 8
           ? 'Parol kamida 8 ta belgidan iborat bo‘lsin.'
           : null;
-      _confirmError =
-          _confirm.text != _password.text ? 'Parollar mos kelmadi.' : null;
+      _confirmError = _confirm.text != _password.text
+          ? 'Parollar mos kelmadi.'
+          : null;
     });
-    return [_avatarError, _firstError, _lastError, _phoneError, _passwordError,
-            _confirmError]
-        .every((e) => e == null);
+    return [
+      _avatarError,
+      _firstError,
+      _lastError,
+      _phoneError,
+      _passwordError,
+      _confirmError,
+    ].every((e) => e == null);
   }
 
   /// Checks the number the same way the server does, so a mistake is caught while the
@@ -148,24 +157,32 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
 
           // The verified address, shown but not editable: changing it here would discard
           // the verification that was just completed.
-          Container(
+          GlassSurface(
+            blur: false,
+            showShadow: false,
+            tint: colors.successMuted,
+            borderRadius: VocaRadius.mediumAll,
             padding: const EdgeInsets.all(VocaSpacing.sm),
-            decoration: BoxDecoration(
-              color: colors.successMuted,
-              borderRadius: VocaRadius.mediumAll,
-            ),
             child: Row(
               children: [
-                Icon(Icons.check_circle_rounded, size: 18, color: colors.onSuccessMuted),
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: 18,
+                  color: colors.onSuccessMuted,
+                ),
                 const SizedBox(width: VocaSpacing.xs),
                 Expanded(
                   child: Text(
                     state.email ?? '',
-                    style: text.bodyMedium.copyWith(color: colors.onSuccessMuted),
+                    style: text.bodyMedium.copyWith(
+                      color: colors.onSuccessMuted,
+                    ),
                   ),
                 ),
-                Text('Tasdiqlangan',
-                    style: text.caption.copyWith(color: colors.onSuccessMuted)),
+                Text(
+                  'Tasdiqlangan',
+                  style: text.caption.copyWith(color: colors.onSuccessMuted),
+                ),
               ],
             ),
           ),
@@ -205,10 +222,14 @@ class _CreateProfilePageState extends ConsumerState<CreateProfilePage> {
               // Being able to see what was typed prevents more failed sign-ups than
               // hiding it prevents shoulder surfing.
               onPressed: () => setState(() => _showPassword = !_showPassword),
-              icon: Icon(_showPassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined),
-              tooltip: _showPassword ? 'Parolni yashirish' : 'Parolni ko‘rsatish',
+              icon: Icon(
+                _showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              tooltip: _showPassword
+                  ? 'Parolni yashirish'
+                  : 'Parolni ko‘rsatish',
             ),
           ),
           const SizedBox(height: VocaSpacing.md),

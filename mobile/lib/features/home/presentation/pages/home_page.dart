@@ -304,13 +304,10 @@ class _SuggestionTile extends StatelessWidget {
       semanticLabel: '${item.word} so‘zini mashq qilish, ${item.level} daraja',
       onTap: () => context.go(Routes.practice),
       child: ExcludeSemantics(
-        child: Container(
+        child: GlassSurface(
+          blur: false,
           padding: const EdgeInsets.all(VocaSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(VocaRadius.large),
-            border: Border.all(color: colors.border),
-          ),
+          borderRadius: BorderRadius.circular(VocaRadius.large),
           child: Row(
             children: [
               SoundSymbol(symbol: item.focusSound),

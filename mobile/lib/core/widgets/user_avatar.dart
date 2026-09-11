@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'liquid_drop.dart';
 
 class UserAvatar extends StatelessWidget {
   const UserAvatar({
@@ -26,24 +27,19 @@ class UserAvatar extends StatelessWidget {
     final colors = context.vocaColors;
     final text = context.vocaText;
 
-    final fallback = Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primary, colors.primary.withValues(alpha: 0.72)],
-        ),
-      ),
-      child: Text(
-        initials,
-        style: text.label.copyWith(
-          color: colors.onPrimary,
-          fontSize: size * 0.36,
-          fontWeight: FontWeight.w700,
+    final fallback = SizedBox.square(
+      dimension: size,
+      child: LiquidDrop(
+        glow: false,
+        child: Center(
+          child: Text(
+            initials,
+            style: text.label.copyWith(
+              color: colors.onPrimary,
+              fontSize: size * 0.36,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ),
     );
@@ -65,13 +61,6 @@ class UserAvatar extends StatelessWidget {
             ),
           );
 
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: colors.border, width: 1.5),
-      ),
-      child: picture,
-    );
+    return GlassBead(padding: const EdgeInsets.all(3), child: picture);
   }
 }

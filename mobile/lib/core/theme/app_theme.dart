@@ -14,9 +14,11 @@ import 'app_radius.dart';
 import 'app_typography.dart';
 
 abstract final class VocaTheme {
-  static ThemeData light() => _build(VocaColors.light, VocaGlass.light, Brightness.light);
+  static ThemeData light() =>
+      _build(VocaColors.light, VocaGlass.light, Brightness.light);
 
-  static ThemeData dark() => _build(VocaColors.dark, VocaGlass.dark, Brightness.dark);
+  static ThemeData dark() =>
+      _build(VocaColors.dark, VocaGlass.dark, Brightness.dark);
 
   static ThemeData _build(VocaColors c, VocaGlass g, Brightness brightness) {
     final textTheme = VocaTypography.textTheme().apply(
@@ -31,16 +33,17 @@ abstract final class VocaTheme {
       canvasColor: c.background,
       textTheme: textTheme,
 
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: c.primary,
-        brightness: brightness,
-      ).copyWith(
-        primary: c.primary,
-        onPrimary: c.onPrimary,
-        surface: c.surface,
-        onSurface: c.textPrimary,
-        error: c.error,
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: c.primary,
+            brightness: brightness,
+          ).copyWith(
+            primary: c.primary,
+            onPrimary: c.onPrimary,
+            surface: c.surface,
+            onSurface: c.textPrimary,
+            error: c.error,
+          ),
 
       // Voca's own tokens travel with the theme, so dark mode resolves automatically.
       extensions: <ThemeExtension<dynamic>>[c, g],
@@ -58,11 +61,7 @@ abstract final class VocaTheme {
             : SystemUiOverlayStyle.light,
       ),
 
-      dividerTheme: DividerThemeData(
-        color: c.border,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: c.border, thickness: 1, space: 1),
 
       cardTheme: CardThemeData(
         color: c.surface,
@@ -74,7 +73,8 @@ abstract final class VocaTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: c.surface,
+        // Translucent, so a field reads as part of the glass it sits on.
+        fillColor: c.surface.withValues(alpha: 0.72),
         hintStyle: textTheme.bodyLarge?.copyWith(color: c.textSecondary),
         border: OutlineInputBorder(
           borderRadius: VocaRadius.mediumAll,

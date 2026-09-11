@@ -41,7 +41,7 @@ Semantic names only. A raw hex value outside the token file is a bug.
 | `background` | `#F7F8FA` | The page |
 | `surface` | `#FFFFFF` | Cards and sheets |
 | `textPrimary` | `#111827` | Body and headings |
-| `textSecondary` | `#374151` (dark `#CBD0D8`) | Supporting text. Darker than the usual gray-500 because it sits on the liquid; `contrast_test` checks it over every body of the liquid |
+| `textSecondary` | `#374151` (dark `#CBD0D8`) | Supporting text. Darker than the usual gray-500 because it sits on the coloured background and on glass; `contrast_test` checks it over every background field |
 | `textDisabled` | `#D1D5DB` | Unavailable content |
 | `border` | `#E5E7EB` | Hairline separation |
 | `borderStrong` | `#D1D5DB` | Input outlines |
@@ -121,6 +121,21 @@ language-learning look Voca is avoiding. `pill` is for chips and badges, never c
 Two rules govern every value. **Blur stays low**: heavy blur is expensive on mid-range
 Android and turns the background into noise behind text. **Contrast outranks the effect**:
 the tint is opaque enough that body text on glass still meets contrast requirements.
+
+### Liquid and glass on the UI
+
+The background is a still, barely-there wash: two indigo fields and a quiet green one,
+blurred together (`LiquidBackground`). It never moves. The material lives on the UI in
+front of it, through two primitives in `liquid_drop.dart`:
+
+| Primitive | Looks like | Used for |
+|---|---|---|
+| `LiquidDrop` | coloured liquid: lighter top, deeper bottom, highlight, caustic, glow | primary buttons, the selected tab, selected pills, progress fills, chart columns, check marks, avatar initials |
+| `GlassBead` | clear glass: lit face, rim, shadow, highlight, caustic | resting tabs, filter pills, sound symbols, code cells, icon wells, the avatar ring, page dots |
+
+Cards and lists are `GlassSurface` panes. They darken slightly toward the bottom and carry
+a second inner edge, so they read as thick glass rather than a flat sheet. Highlights stay
+in the top band and caustics in the bottom band, never behind a label.
 
 Glass is deliberately **not** used in the admin. Translucency behind a dense data table
 hurts readability for no benefit.

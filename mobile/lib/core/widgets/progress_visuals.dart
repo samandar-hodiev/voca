@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_radius.dart';
+import 'liquid_drop.dart';
 
 /// A horizontal bar filled to [value], between 0 and 1.
 class AnimatedProgressBar extends StatelessWidget {
@@ -44,19 +45,24 @@ class AnimatedProgressBar extends StatelessWidget {
           height: height,
           child: Stack(
             children: [
-              Positioned.fill(child: ColoredBox(color: colors.border)),
-              FractionallySizedBox(
-                widthFactor: v,
+              // A groove in the glass, darker along its top edge where it is in shadow.
+              Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [
-                        (color ?? colors.primary).withValues(alpha: 0.75),
-                        color ?? colors.primary,
+                        Color.lerp(colors.border, colors.textPrimary, 0.14)!,
+                        colors.border,
                       ],
                     ),
                   ),
                 ),
+              ),
+              FractionallySizedBox(
+                widthFactor: v,
+                child: LiquidDrop(color: color ?? colors.primary, glow: false),
               ),
             ],
           ),
@@ -138,10 +144,25 @@ class _RingPainter extends CustomPainter {
     canvas.drawArc(arcRect, 0, math.pi * 2, false, base..color = track);
     if (value <= 0) return;
 
+    final sweep = math.pi * 2 * value;
+
+    // A soft glow of the liquid's own colour under the tube.
     canvas.drawArc(
       arcRect,
       -math.pi / 2,
-      math.pi * 2 * value,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = fill.withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+    );
+    canvas.drawArc(
+      arcRect,
+      -math.pi / 2,
+      sweep,
       false,
       base
         ..shader = SweepGradient(
@@ -149,6 +170,20 @@ class _RingPainter extends CustomPainter {
           endAngle: math.pi * 1.5,
           colors: [fill.withValues(alpha: 0.7), fill],
         ).createShader(rect),
+    );
+
+    // A thin lighter line along the outer edge, which makes the stroke read as a round
+    // tube of liquid rather than a flat band.
+    canvas.drawArc(
+      rect.deflate(stroke * 0.3),
+      -math.pi / 2,
+      sweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke * 0.28
+        ..strokeCap = StrokeCap.round
+        ..color = Colors.white.withValues(alpha: 0.45),
     );
   }
 

@@ -13,6 +13,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/progress_visuals.dart';
 import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/weak_sound.dart';
+import '../../../../core/widgets/glass_surface.dart';
 
 class WeakSoundTile extends StatelessWidget {
   const WeakSoundTile({super.key, required this.sound});
@@ -34,13 +35,10 @@ class WeakSoundTile extends StatelessWidget {
           '/${sound.symbol}/ tovushi, masalan ${sound.example}. '
           'Aniqlik ${sound.accuracy} foiz',
       excludeSemantics: true,
-      child: Container(
+      child: GlassSurface(
+        blur: false,
         padding: const EdgeInsets.all(VocaSpacing.md),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(VocaRadius.large),
-          border: Border.all(color: colors.border),
-        ),
+        borderRadius: BorderRadius.circular(VocaRadius.large),
         child: Row(
           children: [
             SoundSymbol(symbol: sound.symbol),

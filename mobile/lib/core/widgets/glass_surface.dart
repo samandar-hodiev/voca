@@ -57,9 +57,17 @@ class GlassSurface extends StatelessWidget {
 
   final bool showShadow;
 
+  /// The shade that deepens toward the bottom of a pane, which is what makes it read as
+  /// a thick block of glass rather than a sheet. Public so the contrast test includes it.
+  static Color depthShade(Brightness brightness) =>
+      brightness == Brightness.dark
+      ? const Color(0x33000000)
+      : const Color(0x0F1E1B6E);
+
   @override
   Widget build(BuildContext context) {
     final glass = context.vocaGlass;
+    final shade = depthShade(Theme.of(context).brightness);
     final radius = borderRadius ?? BorderRadius.circular(glass.radius);
 
     // The pane itself: translucent fill, then a highlight that fades down the surface so
@@ -74,32 +82,45 @@ class GlassSurface extends StatelessWidget {
         color: tint ?? glass.tint,
         borderRadius: radius,
       ),
+      // Depth: the lower half of the pane darkens slightly, as light passing down through
+      // a thick piece of glass does.
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [glass.highlight, Colors.transparent],
-            stops: const [0, 0.55],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [shade.withValues(alpha: 0), shade],
+            stops: const [0.5, 1],
           ),
         ),
-        // The glint is painted behind the content and kept to the top edge, inside the
-        // padding, so it never sits under a line of text. Passthrough keeps the content's
-        // constraints exactly what they were without the stack.
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            Positioned.fill(
-              child: IgnorePointer(
-                child: CustomPaint(painter: _Glint(color: glass.borderTop)),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [glass.highlight, Colors.transparent],
+              stops: const [0, 0.55],
+            ),
+          ),
+          // The glint is painted behind the content and kept to the top edge, inside the
+          // padding, so it never sits under a line of text. Passthrough keeps the content's
+          // constraints exactly what they were without the stack.
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(painter: _Glint(color: glass.borderTop)),
+                ),
               ),
-            ),
-            Padding(
-              padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
-              child: child,
-            ),
-          ],
+              Padding(
+                padding: padding ?? const EdgeInsets.all(VocaSpacing.md),
+                child: child,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -117,7 +138,10 @@ class GlassSurface extends StatelessWidget {
     // The rim, painted over the clipped pane. A gradient rather than a flat line: real
     // glass is bright where light enters and dim where it leaves, and that difference is
     // most of what makes an edge look like glass.
+    // Passthrough, so a pane given a fixed size (a card stretched to match its neighbour)
+    // fills it instead of shrinking to its content inside a full-size rim.
     final surface = Stack(
+      fit: StackFit.passthrough,
       children: [
         ClipRRect(borderRadius: radius, child: pane),
         Positioned.fill(
@@ -241,7 +265,8 @@ class _Glint extends CustomPainter {
 }
 
 /// A second, fainter line just inside the rim, bright along the top and gone a third of
-/// the way down. Two edges a hair apart are what make a pane read as having thickness.
+/// the way down, with a dimmer return along the bottom where light that crossed the pane
+/// comes out. Two edges a hair apart are what make a pane read as having thickness.
 class _InnerEdge extends CustomPainter {
   const _InnerEdge({
     required this.borderRadius,
@@ -270,6 +295,21 @@ class _InnerEdge extends CustomPainter {
             color.withValues(alpha: 0),
           ],
           stops: const [0, 0.35],
+        ).createShader(rect),
+    );
+    canvas.drawRRect(
+      borderRadius.toRRect(rect).deflate(inset),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: 0),
+            color.withValues(alpha: color.a * 0.3),
+          ],
+          stops: const [0.8, 1],
         ).createShader(rect),
     );
   }

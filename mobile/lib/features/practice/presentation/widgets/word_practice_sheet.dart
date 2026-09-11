@@ -15,6 +15,7 @@ import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/sound_symbol.dart';
 import '../../domain/entities/practice_item.dart';
 import '../../domain/entities/word.dart';
+import '../../../../core/widgets/liquid_drop.dart';
 
 Future<void> showWordPracticeSheet(BuildContext context, Word word) {
   return showModalBottomSheet<void>(
@@ -83,17 +84,17 @@ class _WordPracticeSheet extends StatelessWidget {
               enabled: false,
               label: 'Ovozni yozib olish, hozircha mavjud emas',
               child: ExcludeSemantics(
-                child: Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colors.primary.withValues(alpha: 0.32),
-                  ),
-                  child: Icon(
-                    Icons.mic_rounded,
-                    size: 36,
-                    color: colors.onPrimary,
+                child: SizedBox.square(
+                  dimension: 88,
+                  child: Opacity(
+                    opacity: 0.45,
+                    child: LiquidDrop(
+                      child: Icon(
+                        Icons.mic_rounded,
+                        size: 36,
+                        color: colors.onPrimary,
+                      ),
+                    ),
                   ),
                 ),
               ),

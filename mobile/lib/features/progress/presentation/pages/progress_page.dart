@@ -23,6 +23,7 @@ import '../../domain/entities/progress_summary.dart';
 import '../controllers/progress_controller.dart';
 import '../widgets/progress_chart.dart';
 import '../widgets/weak_sound_tile.dart';
+import '../../../../core/widgets/glass_surface.dart';
 
 class ProgressPage extends ConsumerWidget {
   const ProgressPage({super.key});
@@ -170,13 +171,10 @@ class _ScoreHero extends StatelessWidget {
       ],
     );
 
-    return Container(
+    return GlassSurface(
+      blur: false,
       padding: const EdgeInsets.all(VocaSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(VocaRadius.xlarge),
-        border: Border.all(color: colors.border),
-      ),
+      borderRadius: BorderRadius.circular(VocaRadius.xlarge),
       child: LayoutBuilder(
         builder: (context, box) {
           if (box.maxWidth < 300) {
@@ -264,12 +262,10 @@ class _RecentList extends StatelessWidget {
       );
     }
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(VocaRadius.large),
-        border: Border.all(color: colors.border),
-      ),
+    return GlassSurface(
+      blur: false,
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(VocaRadius.large),
       child: Column(
         children: [
           for (var i = 0; i < records.length; i++) ...[

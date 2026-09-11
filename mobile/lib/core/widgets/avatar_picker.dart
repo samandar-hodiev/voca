@@ -19,6 +19,7 @@ import '../theme/app_glass.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'glass_surface.dart';
+import 'liquid_drop.dart';
 
 class AvatarPicker extends StatelessWidget {
   const AvatarPicker({
@@ -69,7 +70,10 @@ class AvatarPicker extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.photo_camera_outlined, color: colors.primary),
+                  leading: Icon(
+                    Icons.photo_camera_outlined,
+                    color: colors.primary,
+                  ),
                   title: Text('Suratga olish', style: text.subtitle),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
@@ -77,7 +81,10 @@ class AvatarPicker extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library_outlined, color: colors.primary),
+                  leading: Icon(
+                    Icons.photo_library_outlined,
+                    color: colors.primary,
+                  ),
                   title: Text('Galereyadan tanlash', style: text.subtitle),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
@@ -86,9 +93,14 @@ class AvatarPicker extends StatelessWidget {
                 ),
                 if (file != null)
                   ListTile(
-                    leading: Icon(Icons.delete_outline_rounded, color: colors.error),
-                    title: Text('Rasmni olib tashlash',
-                        style: text.subtitle.copyWith(color: colors.error)),
+                    leading: Icon(
+                      Icons.delete_outline_rounded,
+                      color: colors.error,
+                    ),
+                    title: Text(
+                      'Rasmni olib tashlash',
+                      style: text.subtitle.copyWith(color: colors.error),
+                    ),
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       onChanged(null);
@@ -113,7 +125,9 @@ class AvatarPicker extends StatelessWidget {
       children: [
         Semantics(
           button: true,
-          label: file == null ? 'Profil rasmini tanlash' : 'Profil rasmini almashtirish',
+          label: file == null
+              ? 'Profil rasmini tanlash'
+              : 'Profil rasmini almashtirish',
           child: GestureDetector(
             onTap: enabled ? () => _openSheet(context) : null,
             child: SizedBox(
@@ -132,7 +146,9 @@ class AvatarPicker extends StatelessWidget {
                               child: Icon(
                                 Icons.add_a_photo_outlined,
                                 size: size * 0.3,
-                                color: hasError ? colors.error : colors.textSecondary,
+                                color: hasError
+                                    ? colors.error
+                                    : colors.textSecondary,
                               ),
                             )
                           : ClipRRect(
@@ -153,15 +169,13 @@ class AvatarPicker extends StatelessWidget {
                     Positioned(
                       right: 0,
                       bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(VocaSpacing.xxs),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.background, width: 2),
+                      child: LiquidDrop(
+                        padding: const EdgeInsets.all(VocaSpacing.xxs + 2),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          size: 14,
+                          color: colors.onPrimary,
                         ),
-                        child: Icon(Icons.edit_rounded,
-                            size: 14, color: colors.onPrimary),
                       ),
                     ),
                 ],
@@ -171,7 +185,8 @@ class AvatarPicker extends StatelessWidget {
         ),
         const SizedBox(height: VocaSpacing.xs),
         Text(
-          errorText ?? (file == null ? 'Profil rasmini qo‘shing' : 'Rasm tanlandi'),
+          errorText ??
+              (file == null ? 'Profil rasmini qo‘shing' : 'Rasm tanlandi'),
           style: text.caption.copyWith(
             color: hasError ? colors.error : colors.textSecondary,
           ),
