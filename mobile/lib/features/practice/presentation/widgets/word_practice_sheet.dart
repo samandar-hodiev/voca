@@ -21,6 +21,12 @@ import '../../../../l10n/l10n.dart';
 Future<void> showWordPracticeSheet(BuildContext context, Word word) {
   return showModalBottomSheet<void>(
     context: context,
+    // On the root navigator, not the tab's own. The shell paints the floating bar in the
+    // Scaffold's bottomNavigationBar slot, which sits above everything inside the body;
+    // a sheet pushed onto the branch navigator lives in that body and comes up UNDER the
+    // bar, with its close button unreachable. The root navigator is above the shell, so
+    // the sheet and its barrier cover the bar the way a modal should.
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
