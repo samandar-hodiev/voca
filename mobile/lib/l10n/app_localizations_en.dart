@@ -323,6 +323,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSelectTitle => 'Choose language';
 
   @override
+  String get viewProfilePhoto => 'View profile photo';
+
+  @override
+  String get appearanceSelectTitle => 'Choose appearance';
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get saveChanges => 'Save changes';
+
+  @override
+  String get profileSaved => 'Your profile has been saved.';
+
+  @override
+  String get emailNotEditable =>
+      'Your email is how you sign in, so it cannot be changed here.';
+
+  @override
   String get signOut => 'Sign out';
 
   @override

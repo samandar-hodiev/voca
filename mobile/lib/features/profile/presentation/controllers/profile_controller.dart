@@ -13,6 +13,7 @@ import '../../data/repositories/profile_repository_impl.dart';
 import '../../domain/entities/profile.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/get_profile.dart';
+import '../../domain/usecases/update_profile.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepositoryImpl(
@@ -23,6 +24,10 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 
 final getProfileProvider = Provider<GetProfile>((ref) {
   return GetProfile(ref.watch(profileRepositoryProvider));
+});
+
+final updateProfileProvider = Provider<UpdateProfile>((ref) {
+  return UpdateProfile(ref.watch(profileRepositoryProvider));
 });
 
 /// The signed-in person. Invalidate it after anything that changes the profile.

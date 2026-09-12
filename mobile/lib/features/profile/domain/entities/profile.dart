@@ -13,6 +13,7 @@ class Profile {
     this.email,
     this.firstName,
     this.lastName,
+    this.phone,
     this.avatarUrl,
     this.cefrLevel,
     this.learningGoal,
@@ -25,6 +26,7 @@ class Profile {
   final String? email;
   final String? firstName;
   final String? lastName;
+  final String? phone;
 
   /// Absolute, ready to load. The backend stores its own uploads as paths, and this is
   /// resolved against the API base before it reaches a widget.

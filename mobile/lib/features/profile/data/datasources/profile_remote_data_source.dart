@@ -12,4 +12,7 @@ class ProfileRemoteDataSource {
     final res = await _dio.get<Map<String, dynamic>>('/api/v1/users/me');
     return res.data!['data'] as Map<String, dynamic>;
   }
+
+  Future<void> updateProfile(Map<String, dynamic> body) =>
+      _dio.put<dynamic>('/api/v1/users/me/profile', data: body);
 }

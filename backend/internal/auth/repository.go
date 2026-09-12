@@ -32,6 +32,7 @@ type Repository interface {
 	AvatarURL(ctx context.Context, userID uuid.UUID) (string, error)
 	Profile(ctx context.Context, userID uuid.UUID) (ProfileInfo, error)
 	SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) error
+	UpdateProfile(ctx context.Context, userID uuid.UUID, first, last, phone string) error
 	SetPasswordHash(ctx context.Context, email, hash string) error
 	TouchLastLogin(ctx context.Context, userID uuid.UUID) error
 
@@ -178,8 +179,8 @@ func (r *repository) Preferences(ctx context.Context, userID uuid.UUID) (Prefere
 func (r *repository) Profile(ctx context.Context, userID uuid.UUID) (ProfileInfo, error) {
 	var p ProfileInfo
 	err := r.pool.QueryRow(ctx,
-		`SELECT first_name, last_name, avatar_url FROM profiles WHERE user_id = $1`,
-		userID).Scan(&p.FirstName, &p.LastName, &p.AvatarURL)
+		`SELECT first_name, last_name, phone, avatar_url FROM profiles WHERE user_id = $1`,
+		userID).Scan(&p.FirstName, &p.LastName, &p.Phone, &p.AvatarURL)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ProfileInfo{}, ErrNotFound
 	}
@@ -207,6 +208,24 @@ func (r *repository) AvatarURL(ctx context.Context, userID uuid.UUID) (string, e
 }
 
 // SetAvatarURL points the profile at a stored picture.
+// UpdateProfile writes the editable half of a profile. The picture has its own endpoint
+// and is left alone here, so saving a name never clears a photo.
+func (r *repository) UpdateProfile(ctx context.Context, userID uuid.UUID,
+	first, last, phone string) error {
+
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE profiles SET first_name = $2, last_name = $3, phone = $4,
+		        updated_at = now()
+		 WHERE user_id = $1`, userID, first, last, phone)
+	if err != nil {
+		return fmt.Errorf("auth: update profile: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (r *repository) SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) error {
 	tag, err := r.pool.Exec(ctx,
 		`UPDATE profiles SET avatar_url = $2, updated_at = now() WHERE user_id = $1`,

@@ -289,6 +289,20 @@ func (f *fakeRepo) RevokeRefreshToken(_ context.Context, id uuid.UUID) error {
 // The real repository keeps the row and filters every read on deleted_at IS NULL, so from
 // a caller's point of view an unreachable row and a removed one are the same thing. The
 // fake takes the simpler of the two.
+func (f *fakeRepo) UpdateProfile(_ context.Context, userID uuid.UUID,
+	first, last, phone string) error {
+
+	// newFakeRepo does not build this map: nothing wrote to it until profiles became
+	// editable, and a nil map panics on the first assignment rather than growing.
+	if f.profiles == nil {
+		f.profiles = map[uuid.UUID]ProfileInfo{}
+	}
+	p := f.profiles[userID]
+	p.FirstName, p.LastName, p.Phone = &first, &last, &phone
+	f.profiles[userID] = p
+	return nil
+}
+
 func (f *fakeRepo) SoftDeleteUser(_ context.Context, userID uuid.UUID) error {
 	for email, u := range f.users {
 		if u.ID == userID {
@@ -1421,5 +1435,57 @@ func TestConfirmAccountDeletion_ASignOutCodeCannotDeleteAnAccount(t *testing.T) 
 	}
 	if _, err := repo.UserByID(ctx, u.ID); err != nil {
 		t.Fatal("the account must survive a code issued for another purpose")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Editing a profile
+// ---------------------------------------------------------------------------
+
+func TestUpdateProfile_SavesTheNameAndNumber(t *testing.T) {
+	svc, repo, _ := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	phone := "901234567"
+
+	if err := svc.UpdateProfile(context.Background(), u.ID,
+		"  Ali  ", "  Valiyev  ", &phone); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	p := repo.profiles[u.ID]
+	if p.FirstName == nil || *p.FirstName != "Ali" {
+		t.Fatalf("the name must be trimmed and stored, got %v", p.FirstName)
+	}
+	if p.LastName == nil || *p.LastName != "Valiyev" {
+		t.Fatalf("the family name must be trimmed and stored, got %v", p.LastName)
+	}
+	// Stored the way sign-up stores it, so an edited profile and a new one match.
+	if p.Phone == nil || !strings.HasPrefix(*p.Phone, "+") {
+		t.Fatalf("the number must be normalised, got %v", p.Phone)
+	}
+}
+
+func TestUpdateProfile_RefusesAnEmptyName(t *testing.T) {
+	svc, repo, _ := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	phone := "901234567"
+
+	err := svc.UpdateProfile(context.Background(), u.ID, "   ", "Valiyev", &phone)
+	if codeOf(t, err) != apperr.CodeValidation {
+		t.Fatalf("an empty first name must be refused, got %v", err)
+	}
+	if _, saved := repo.profiles[u.ID]; saved {
+		t.Fatal("nothing may be written when the request is refused")
+	}
+}
+
+func TestUpdateProfile_RefusesAnUnusableNumber(t *testing.T) {
+	svc, repo, _ := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	phone := "123"
+
+	err := svc.UpdateProfile(context.Background(), u.ID, "Ali", "Valiyev", &phone)
+	if codeOf(t, err) != apperr.CodeValidation {
+		t.Fatalf("a number that is too short must be refused, got %v", err)
 	}
 }

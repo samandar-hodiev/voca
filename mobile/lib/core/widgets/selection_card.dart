@@ -31,6 +31,7 @@ class SelectionCard extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.leading,
+    this.icon,
     this.badge,
   });
 
@@ -39,6 +40,9 @@ class SelectionCard extends StatelessWidget {
 
   /// A short marker such as a CEFR code.
   final String? leading;
+
+  /// Shown in the same slot as [leading], for a choice a symbol names better than a word.
+  final IconData? icon;
 
   /// An optional pill, for example the recommended option.
   final String? badge;
@@ -102,6 +106,21 @@ class SelectionCard extends StatelessWidget {
                   constraints: const BoxConstraints(minHeight: 48),
                   child: Row(
                     children: [
+                      if (icon != null) ...[
+                        SizedBox(
+                          width: 44,
+                          child: Center(
+                            child: Icon(
+                              icon,
+                              size: 24,
+                              color: selected
+                                  ? colors.primary
+                                  : colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: VocaSpacing.sm),
+                      ],
                       if (leading != null) ...[
                         SizedBox(
                           width: 44,

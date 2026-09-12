@@ -885,6 +885,7 @@ func normalizePhone(raw *string) (string, error) {
 type ProfileInfo struct {
 	FirstName *string
 	LastName  *string
+	Phone     *string
 	AvatarURL *string
 }
 
@@ -895,6 +896,41 @@ type Me struct {
 	User        User
 	Profile     ProfileInfo
 	Preferences Preferences
+}
+
+// UpdateProfile changes the name and number on the signed-in person's profile.
+//
+// The account's address is not editable here. Changing it would change how the person
+// signs in and where every confirmation code goes, so it belongs to a flow of its own that
+// proves the new address first.
+//
+// The number is normalised the same way sign-up normalises it, so a profile edited later
+// is stored exactly as one filled in at the start.
+func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID,
+	rawFirst, rawLast string, rawPhone *string) error {
+
+	first := strings.TrimSpace(rawFirst)
+	last := strings.TrimSpace(rawLast)
+	if first == "" {
+		return apperr.Validation("Ismni kiriting.")
+	}
+	if last == "" {
+		return apperr.Validation("Familiyani kiriting.")
+	}
+
+	phone, err := normalizePhone(rawPhone)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.UpdateProfile(ctx, userID, first, last, phone); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return apperr.New(apperr.CodeNotFound, http.StatusNotFound,
+				"Profil topilmadi.")
+		}
+		return apperr.Internal(err)
+	}
+	return nil
 }
 
 // Me returns the signed-in person's account, profile and preferences.

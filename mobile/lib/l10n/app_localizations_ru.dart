@@ -327,6 +327,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageSelectTitle => 'Выберите язык';
 
   @override
+  String get viewProfilePhoto => 'Посмотреть фото профиля';
+
+  @override
+  String get appearanceSelectTitle => 'Выберите оформление';
+
+  @override
+  String get editProfile => 'Редактировать профиль';
+
+  @override
+  String get saveChanges => 'Сохранить';
+
+  @override
+  String get profileSaved => 'Профиль сохранён.';
+
+  @override
+  String get emailNotEditable =>
+      'Почта — это ваш вход в аккаунт, поэтому изменить её здесь нельзя.';
+
+  @override
   String get signOut => 'Выйти из аккаунта';
 
   @override

@@ -325,6 +325,25 @@ class AppLocalizationsUz extends AppLocalizations {
   String get languageSelectTitle => 'Tilni tanlang';
 
   @override
+  String get viewProfilePhoto => 'Profil rasmini ko‘rish';
+
+  @override
+  String get appearanceSelectTitle => 'Ko‘rinishni tanlang';
+
+  @override
+  String get editProfile => 'Profilni tahrirlash';
+
+  @override
+  String get saveChanges => 'Saqlash';
+
+  @override
+  String get profileSaved => 'Profil saqlandi.';
+
+  @override
+  String get emailNotEditable =>
+      'Pochta orqali tizimga kirasiz, shuning uchun uni bu yerdan o‘zgartirib bo‘lmaydi.';
+
+  @override
   String get signOut => 'Hisobdan chiqish';
 
   @override

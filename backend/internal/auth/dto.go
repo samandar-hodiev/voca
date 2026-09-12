@@ -64,6 +64,14 @@ type deleteAccountRequest struct {
 	Code string `json:"code" binding:"required"`
 }
 
+// updateProfileRequest is the editable half of a profile. No address and no picture: the
+// first needs its own verified flow, the second has its own endpoint.
+type updateProfileRequest struct {
+	FirstName string  `json:"first_name" binding:"required"`
+	LastName  string  `json:"last_name" binding:"required"`
+	Phone     *string `json:"phone"`
+}
+
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
@@ -157,6 +165,7 @@ type meResponse struct {
 	userResponse
 	FirstName   *string             `json:"first_name"`
 	LastName    *string             `json:"last_name"`
+	Phone       *string             `json:"phone"`
 	AvatarURL   *string             `json:"avatar_url"`
 	Preferences preferencesResponse `json:"preferences"`
 }
@@ -166,6 +175,7 @@ func toMeResponse(m Me) meResponse {
 		userResponse: toUserResponse(m.User),
 		FirstName:    m.Profile.FirstName,
 		LastName:     m.Profile.LastName,
+		Phone:        m.Profile.Phone,
 		AvatarURL:    m.Profile.AvatarURL,
 		Preferences:  toPreferencesResponse(m.Preferences),
 	}

@@ -96,6 +96,13 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
 
 /// A signed-in learner with a complete profile, answered without a network.
 class FakeProfileRepository implements ProfileRepository {
+  @override
+  Future<Result<void>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String phone,
+  }) async => const Ok(null);
+
   const FakeProfileRepository();
 
   @override

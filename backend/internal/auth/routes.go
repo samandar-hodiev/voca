@@ -42,6 +42,7 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler,
 		me.GET("/preferences", h.GetPreferences)
 		me.PUT("/preferences", h.UpdatePreferences)
 		me.POST("/avatar", h.UploadAvatar)
+		me.PUT("/profile", h.UpdateProfile)
 	}
 
 	// Signing out is confirmed with a code sent to the account's own address. It needs a

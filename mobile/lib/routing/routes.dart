@@ -68,6 +68,10 @@ abstract final class Routes {
   static const settings = '/settings';
   static const settingsName = 'settings';
 
+  /// Editing the profile: picture, name and number. Reached from Settings.
+  static const editProfile = '/settings/profile';
+  static const editProfileName = 'editProfile';
+
   /// Deleting the account. A page of its own rather than a sheet: it is a decision, not a
   /// toggle, and it needs room for the warning, the address and the code.
   static const deleteAccount = '/settings/delete-account';

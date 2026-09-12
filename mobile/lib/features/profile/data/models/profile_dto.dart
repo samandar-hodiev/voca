@@ -21,6 +21,7 @@ class ProfileDto {
       email: _json['email'] as String?,
       firstName: _json['first_name'] as String?,
       lastName: _json['last_name'] as String?,
+      phone: _json['phone'] as String?,
       avatarUrl: _resolve(_json['avatar_url'] as String?, apiBaseUrl),
       cefrLevel: prefs['cefr_level'] as String?,
       learningGoal: prefs['learning_goal'] as String?,

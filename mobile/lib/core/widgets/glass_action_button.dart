@@ -82,7 +82,12 @@ class _GlassActionButtonState extends State<GlassActionButton> {
       borderRadius: VocaRadius.largeAll,
       tint: tint,
       borderWidth: _enabled ? 1.4 : 1,
-      showShadow: _enabled && !_pressed,
+      // No shadow. These buttons are always stacked a few points apart, and at that
+      // spacing each one's shadow reaches into the gaps on both sides; the overlapping
+      // shadows join into a single darker block that reads as a container drawn around
+      // the group rather than as separate buttons. The rim and the tint are what make
+      // the button read as glass.
+      showShadow: false,
       padding: const EdgeInsets.symmetric(
         horizontal: VocaSpacing.md,
         vertical: VocaSpacing.sm,

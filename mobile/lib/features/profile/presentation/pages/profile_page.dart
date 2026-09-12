@@ -10,6 +10,8 @@
 /// on this screen are the words the person chose from.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +26,7 @@ import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../../core/widgets/reveal.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/tab_scaffold.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -173,7 +176,20 @@ class _IdentityCard extends StatelessWidget {
       padding: const EdgeInsets.all(VocaSpacing.xl),
       child: Column(
         children: [
-          UserAvatar(initials: p.initials, imageUrl: p.avatarUrl, size: 88),
+          if (p.avatarUrl == null)
+            UserAvatar(initials: p.initials, imageUrl: null, size: 88)
+          else
+            PressScale(
+              semanticLabel: context.l10n.viewProfilePhoto,
+              onTap: () => unawaited(showProfilePhoto(context, p.avatarUrl!)),
+              child: ExcludeSemantics(
+                child: UserAvatar(
+                  initials: p.initials,
+                  imageUrl: p.avatarUrl,
+                  size: 88,
+                ),
+              ),
+            ),
           const SizedBox(height: VocaSpacing.md),
           Semantics(
             header: true,
@@ -224,6 +240,7 @@ class _Subscription extends StatelessWidget {
 
     return GlassSurface(
       blur: false,
+      showShadow: false,
       padding: const EdgeInsets.all(VocaSpacing.md),
       borderRadius: BorderRadius.circular(VocaRadius.large),
       child: Row(
@@ -268,6 +285,9 @@ class _Group extends StatelessWidget {
 
     return GlassSurface(
       blur: false,
+      // See SelectionCard: stacked surfaces put their shadows into the gaps, and the
+      // overlap reads as a box drawn around the group rather than as separate cards.
+      showShadow: false,
       padding: EdgeInsets.zero,
       borderRadius: BorderRadius.circular(VocaRadius.large),
       child: Column(
@@ -345,6 +365,85 @@ class _Row extends StatelessWidget {
       semanticLabel: label,
       onTap: onTap,
       child: ExcludeSemantics(child: row),
+    );
+  }
+}
+
+/// Shows the profile picture at the size it was uploaded at.
+///
+/// A framed pane rather than a bare image: on a light background a photo with a pale edge
+/// would otherwise bleed into the page and lose its shape. The picture is fitted, never
+/// cropped, because this is the one place somebody looks to check the whole photo.
+Future<void> showProfilePhoto(BuildContext context, String url) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (dialog) => Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(VocaSpacing.lg),
+      child: GlassCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Flexible, so the picture gives way on a short screen instead of pushing
+            // the close button off the bottom. Fitted rather than cropped: this is the
+            // one place somebody looks to check the whole photo.
+            Flexible(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(VocaRadius.large),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const AspectRatio(
+                    aspectRatio: 1,
+                    child: _PhotoUnavailable(),
+                  ),
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : const AspectRatio(
+                          aspectRatio: 1,
+                          child: _PhotoLoading(),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(height: VocaSpacing.md),
+            Center(
+              child: VocaTextButton(
+                label: context.l10n.close,
+                onPressed: () => Navigator.of(dialog).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _PhotoLoading extends StatelessWidget {
+  const _PhotoLoading();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: CircularProgressIndicator(color: context.vocaColors.primary),
+  );
+}
+
+class _PhotoUnavailable extends StatelessWidget {
+  const _PhotoUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    return Center(
+      child: Icon(
+        Icons.broken_image_outlined,
+        size: 40,
+        color: colors.textSecondary,
+      ),
     );
   }
 }

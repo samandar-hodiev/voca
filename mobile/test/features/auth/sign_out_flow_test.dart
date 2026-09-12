@@ -111,6 +111,13 @@ class FakeGoogle implements GoogleIdentityTokenProvider {
 }
 
 class GuestProfile implements ProfileRepository {
+  @override
+  Future<Result<void>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String phone,
+  }) async => const Ok(null);
+
   const GuestProfile();
 
   @override

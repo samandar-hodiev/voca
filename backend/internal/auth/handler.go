@@ -341,6 +341,25 @@ func (h *Handler) UploadAvatar(c *gin.Context) {
 }
 
 // currentUser reads the authenticated identity that middleware placed in the context.
+// UpdateProfile saves the name and number. Which profile is edited comes from the
+// session, never from the body.
+func (h *Handler) UpdateProfile(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	req, bound := bind[updateProfileRequest](c)
+	if !bound {
+		return
+	}
+	if err := h.svc.UpdateProfile(c.Request.Context(), userID,
+		req.FirstName, req.LastName, req.Phone); err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 // StartAccountDeletion sends a deletion code to the account's own address.
 //
 // The address is taken from the session, not from the body: the body's address is only

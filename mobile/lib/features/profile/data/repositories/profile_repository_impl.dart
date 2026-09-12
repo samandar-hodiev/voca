@@ -28,4 +28,24 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return const Err(UnknownFailure(message: 'Could not load the profile.'));
     }
   }
+
+  @override
+  Future<Result<void>> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String phone,
+  }) async {
+    try {
+      await _remote.updateProfile({
+        'first_name': firstName,
+        'last_name': lastName,
+        'phone': phone,
+      });
+      return const Ok(null);
+    } on DioException catch (e) {
+      return Err(ErrorMapper.fromDioException(e));
+    } catch (_) {
+      return const Err(UnknownFailure(message: 'Could not save the profile.'));
+    }
+  }
 }

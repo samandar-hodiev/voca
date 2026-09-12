@@ -23,12 +23,12 @@ import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/appearance_sheet.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/language_button.dart';
 import '../../../../core/widgets/liquid_background.dart';
 import '../../../../core/widgets/press_scale.dart';
 import '../../../../routing/routes.dart';
-import '../../../../core/widgets/selection_card.dart';
 import '../../../../l10n/l10n.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -87,18 +87,12 @@ class SettingsPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: VocaSpacing.md),
-
-                      for (final option in _appearanceOptions(l)) ...[
-                        SelectionCard(
-                          title: option.title,
-                          subtitle: option.subtitle,
-                          selected: mode == option.mode,
-                          onTap: () => ref
-                              .read(themeModeProvider.notifier)
-                              .select(option.mode),
-                        ),
-                        const SizedBox(height: VocaSpacing.sm),
-                      ],
+                      _SettingRow(
+                        icon: appearanceIcon(mode),
+                        label: l.settingsAppearance,
+                        value: appearanceName(l, mode),
+                        onTap: () => unawaited(showAppearanceSheet(context)),
+                      ),
 
                       const SizedBox(height: VocaSpacing.xl),
                       Text(l.settingsLanguage, style: text.subtitle),
@@ -113,7 +107,9 @@ class SettingsPage extends ConsumerWidget {
                       // One row, not three cards. Appearance is a choice you compare;
                       // language is one you already know the answer to, so it only has to
                       // say what is set and open the list on demand.
-                      _LanguageRow(
+                      _SettingRow(
+                        icon: Icons.language_rounded,
+                        label: l.settingsLanguage,
                         value: switch (locale.languageCode) {
                           'uz' => l.languageNameUz,
                           'ru' => l.languageNameRu,
@@ -125,6 +121,16 @@ class SettingsPage extends ConsumerWidget {
                       const SizedBox(height: VocaSpacing.xl),
                       Text(l.settingsAccount, style: text.subtitle),
                       const SizedBox(height: VocaSpacing.md),
+                      // The account itself before the ways out of it.
+                      if (profile?.isGuest != true) ...[
+                        _ActionRow(
+                          icon: Icons.person_outline_rounded,
+                          label: l.editProfile,
+                          onTap: () =>
+                              unawaited(context.push(Routes.editProfile)),
+                        ),
+                        const SizedBox(height: VocaSpacing.sm),
+                      ],
                       const SignOutButton(),
                       // Hidden for a guest: there is no mailbox to confirm from and
                       // nothing of theirs on the server to delete.
@@ -144,29 +150,20 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
-/// The three appearance choices.
+/// A settings row: what is set, and a way into the list that changes it.
 ///
-/// "System" is listed first and is the default: somebody whose phone switches at sunset
-/// expects the app to switch with it, and that is the answer most people want without
-/// knowing they want it.
-class _Appearance {
-  const _Appearance(this.mode, this.title, this.subtitle);
+/// Appearance and Language are both "one answer you already know", so they get the same
+/// row rather than one being a row and the other three permanent cards.
+class _SettingRow extends StatelessWidget {
+  const _SettingRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
 
-  final ThemeMode mode;
-  final String title;
-  final String subtitle;
-}
-
-List<_Appearance> _appearanceOptions(AppLocalizations l) => [
-  _Appearance(ThemeMode.system, l.themeSystem, l.themeSystemHint),
-  _Appearance(ThemeMode.light, l.themeLight, l.themeLightHint),
-  _Appearance(ThemeMode.dark, l.themeDark, l.themeDarkHint),
-];
-
-/// The language row: what is set, and a way into the list.
-class _LanguageRow extends StatelessWidget {
-  const _LanguageRow({required this.value, required this.onTap});
-
+  final IconData icon;
+  final String label;
   final String value;
   final VoidCallback onTap;
 
@@ -176,22 +173,21 @@ class _LanguageRow extends StatelessWidget {
     final text = context.vocaText;
 
     return PressScale(
-      semanticLabel: '${context.l10n.settingsLanguage}: $value',
+      semanticLabel: '$label: $value',
       onTap: onTap,
       child: ExcludeSemantics(
         child: GlassSurface(
           blur: false,
+          // See SelectionCard: stacked rows drop their shadows into the gaps between
+          // them, and the overlap reads as a box drawn around the whole group.
+          showShadow: false,
           padding: const EdgeInsets.all(VocaSpacing.md),
           borderRadius: BorderRadius.circular(VocaRadius.large),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Row(
               children: [
-                Icon(
-                  Icons.language_rounded,
-                  size: 24,
-                  color: colors.textSecondary,
-                ),
+                Icon(icon, size: 24, color: colors.textSecondary),
                 const SizedBox(width: VocaSpacing.md),
                 Expanded(
                   child: Text(
@@ -254,6 +250,54 @@ class _DeleteAccountRow extends StatelessWidget {
                   size: 20,
                   color: colors.onErrorMuted,
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A settings row that goes somewhere rather than showing a value.
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    final text = context.vocaText;
+
+    return PressScale(
+      semanticLabel: label,
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: GlassSurface(
+          blur: false,
+          showShadow: false,
+          padding: const EdgeInsets.all(VocaSpacing.md),
+          borderRadius: BorderRadius.circular(VocaRadius.large),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Row(
+              children: [
+                Icon(icon, size: 24, color: colors.textSecondary),
+                const SizedBox(width: VocaSpacing.md),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: text.body.copyWith(color: colors.textPrimary),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: colors.textSecondary),
               ],
             ),
           ),

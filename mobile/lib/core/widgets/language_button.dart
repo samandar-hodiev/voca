@@ -37,39 +37,44 @@ Future<void> showLanguageSheet(BuildContext context) {
       child: Padding(
         padding: const EdgeInsets.all(VocaSpacing.md),
         child: GlassCard(
-          child: Consumer(
-            builder: (context, ref, _) {
-              final current = ref.watch(localeProvider).languageCode;
-              final l = context.l10n;
-              final names = {
-                'en': l.languageNameEn,
-                'uz': l.languageNameUz,
-                'ru': l.languageNameRu,
-              };
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(l.languageSelectTitle, style: context.vocaText.title),
-                  const SizedBox(height: VocaSpacing.md),
-                  // Each language is named in itself, so anyone can find their own.
-                  for (final (code, flag) in languageChoices) ...[
-                    SelectionCard(
-                      leading: flag,
-                      title: names[code]!,
-                      selected: current == code,
-                      onTap: () {
-                        unawaited(
-                          ref.read(localeProvider.notifier).select(code),
-                        );
-                        Navigator.of(sheet).pop();
-                      },
-                    ),
-                    const SizedBox(height: VocaSpacing.sm),
+          // Scrolls rather than overflows: three options with their hints are taller
+          // than a short screen leaves a bottom sheet, and a sheet that overflows shows
+          // a striped bar instead of the last choice.
+          child: SingleChildScrollView(
+            child: Consumer(
+              builder: (context, ref, _) {
+                final current = ref.watch(localeProvider).languageCode;
+                final l = context.l10n;
+                final names = {
+                  'en': l.languageNameEn,
+                  'uz': l.languageNameUz,
+                  'ru': l.languageNameRu,
+                };
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(l.languageSelectTitle, style: context.vocaText.title),
+                    const SizedBox(height: VocaSpacing.md),
+                    // Each language is named in itself, so anyone can find their own.
+                    for (final (code, flag) in languageChoices) ...[
+                      SelectionCard(
+                        leading: flag,
+                        title: names[code]!,
+                        selected: current == code,
+                        onTap: () {
+                          unawaited(
+                            ref.read(localeProvider.notifier).select(code),
+                          );
+                          Navigator.of(sheet).pop();
+                        },
+                      ),
+                      const SizedBox(height: VocaSpacing.sm),
+                    ],
                   ],
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),

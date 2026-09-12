@@ -694,6 +694,42 @@ abstract class AppLocalizations {
   /// **'Choose language'**
   String get languageSelectTitle;
 
+  /// No description provided for @viewProfilePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'View profile photo'**
+  String get viewProfilePhoto;
+
+  /// No description provided for @appearanceSelectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose appearance'**
+  String get appearanceSelectTitle;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get saveChanges;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile has been saved.'**
+  String get profileSaved;
+
+  /// No description provided for @emailNotEditable.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email is how you sign in, so it cannot be changed here.'**
+  String get emailNotEditable;
+
   /// No description provided for @signOut.
   ///
   /// In en, this message translates to:

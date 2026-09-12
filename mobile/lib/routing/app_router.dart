@@ -27,6 +27,7 @@ import '../features/onboarding/presentation/pages/level_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/settings/presentation/pages/delete_account_page.dart';
+import '../features/profile/presentation/pages/edit_profile_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/practice/presentation/pages/practice_page.dart';
@@ -160,6 +161,12 @@ abstract final class AppRouter {
           path: Routes.settings,
           name: Routes.settingsName,
           builder: (_, __) => const SettingsPage(),
+        ),
+
+        GoRoute(
+          path: Routes.editProfile,
+          name: Routes.editProfileName,
+          builder: (_, __) => const EditProfilePage(),
         ),
 
         // Reached from Settings, and only from there. Outside the shell for the same
