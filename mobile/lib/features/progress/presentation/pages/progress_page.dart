@@ -78,7 +78,7 @@ class ProgressPage extends ConsumerWidget {
             Reveal(index: 0, child: _ScoreHero(summary: s)),
             const SizedBox(height: VocaSpacing.md),
             Reveal(index: 1, child: _Stats(summary: s)),
-            const SizedBox(height: VocaSpacing.xl),
+            const SizedBox(height: VocaSpacing.xxl),
             Reveal(
               index: 2,
               child: SectionHeader(
@@ -87,7 +87,7 @@ class ProgressPage extends ConsumerWidget {
               ),
             ),
             Reveal(index: 2, child: WeeklyActivityChart(days: s.week)),
-            const SizedBox(height: VocaSpacing.xl),
+            const SizedBox(height: VocaSpacing.xxl),
             Reveal(
               index: 3,
               child: SectionHeader(
@@ -173,6 +173,7 @@ class _ScoreHero extends StatelessWidget {
     );
 
     return GlassSurface(
+      edgeGlow: true,
       blur: false,
       padding: const EdgeInsets.all(VocaSpacing.lg),
       borderRadius: BorderRadius.circular(VocaRadius.xlarge),

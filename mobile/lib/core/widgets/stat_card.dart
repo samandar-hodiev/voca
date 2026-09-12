@@ -73,7 +73,7 @@ class StatCard extends StatelessWidget {
                     child: Text(
                       label,
                       style: text.caption.copyWith(color: colors.textSecondary),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

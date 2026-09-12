@@ -14,13 +14,16 @@ import 'package:voca/core/storage/secure_storage.dart';
 import 'package:voca/features/auth/domain/repositories/auth_repository.dart';
 import 'package:voca/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:voca/features/home/data/repositories/home_repository_impl.dart';
+import 'package:voca/features/home/domain/repositories/home_repository.dart';
 import 'package:voca/features/home/presentation/controllers/home_controller.dart';
 import 'package:voca/features/practice/data/repositories/practice_repository_impl.dart';
+import 'package:voca/features/practice/domain/repositories/practice_repository.dart';
 import 'package:voca/features/practice/presentation/controllers/practice_controller.dart';
 import 'package:voca/features/profile/domain/entities/profile.dart';
 import 'package:voca/features/profile/domain/repositories/profile_repository.dart';
 import 'package:voca/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:voca/features/progress/data/repositories/progress_repository_impl.dart';
+import 'package:voca/features/progress/domain/repositories/progress_repository.dart';
 import 'package:voca/features/progress/presentation/controllers/progress_controller.dart';
 
 /// Returns the widget to pump and the container, so a test can read providers directly.
@@ -35,6 +38,11 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
   ProfileRepository profileRepository = const FakeProfileRepository(),
   AuthRepository? authRepository,
   GoogleIdentityTokenProvider? googleTokens,
+  // The three dashboards default to their mocks. A test passes its own only to put a
+  // screen in a state the mock never produces: an empty set, a goal already met.
+  HomeRepository? homeRepository,
+  PracticeRepository? practiceRepository,
+  ProgressRepository? progressRepository,
 }) {
   // A stored session is what the startup state machine checks, so seeding the tokens is
   // how a test says "this person is already signed in".
@@ -68,13 +76,14 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
       if (googleTokens != null)
         googleIdentityTokenProvider.overrideWithValue(googleTokens),
       homeRepositoryProvider.overrideWithValue(
-        const MockHomeRepository(latency: Duration.zero),
+        homeRepository ?? const MockHomeRepository(latency: Duration.zero),
       ),
       practiceRepositoryProvider.overrideWithValue(
-        const MockPracticeRepository(latency: Duration.zero),
+        practiceRepository ??
+            const MockPracticeRepository(latency: Duration.zero),
       ),
       progressRepositoryProvider.overrideWithValue(
-        MockProgressRepository(latency: Duration.zero),
+        progressRepository ?? MockProgressRepository(latency: Duration.zero),
       ),
     ],
   );

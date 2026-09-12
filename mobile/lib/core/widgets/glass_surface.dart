@@ -34,7 +34,7 @@ class GlassSurface extends StatelessWidget {
     this.showShadow = true,
     this.tint,
     this.borderWidth = 1,
-    this.edgeGlow = true,
+    this.edgeGlow = false,
     this.blurSigma,
     this.highlight,
     this.tintGradient,
@@ -61,9 +61,10 @@ class GlassSurface extends StatelessWidget {
 
   final bool showShadow;
 
-  /// Whether light pools at the top-right and bottom-left corners. On for cards, sheets
-  /// and dialogs; off for controls and the tab bar, whose rim is a plain hairline, so a
-  /// screen has one kind of lit object rather than a dozen.
+  /// Whether light pools at the top-right and bottom-left corners. Off by default and
+  /// turned on for the one card a screen is about — the daily goal, the score, the
+  /// identity card — so the lit object marks the primary surface instead of every
+  /// surface. Secondary cards keep their hairline rim and shadow and stay quiet.
   final bool edgeGlow;
 
   /// Overrides how strongly what is behind is blurred. The tab bar blurs less, so what
@@ -485,6 +486,7 @@ class GlassCard extends StatelessWidget {
     this.blur = true,
     this.semanticLabel,
     this.clear = false,
+    this.edgeGlow = false,
   });
 
   final Widget child;
@@ -498,6 +500,9 @@ class GlassCard extends StatelessWidget {
   /// bottom, light gathered inside the edge, a bright rim and the corner light. For a card
   /// that stands on the page, not a sheet or dialog that opens over content.
   final bool clear;
+
+  /// Whether the card carries the corner light. On for the one card a screen is about.
+  final bool edgeGlow;
 
   /// The tint of a [clear] card, per theme. Public so the contrast test checks text on it.
   @visibleForTesting
@@ -515,6 +520,7 @@ class GlassCard extends StatelessWidget {
       padding: padding,
       borderRadius: radius,
       blur: blur,
+      edgeGlow: edgeGlow,
       tint: clear ? clearTint(Theme.of(context).brightness) : null,
       highlight: clear ? Color(dark ? 0x14FFFFFF : 0x59FFFFFF) : null,
       tintGradient: clear

@@ -74,7 +74,7 @@ class WordCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             word.text,
-                            style: text.subtitle.copyWith(
+                            style: text.title.copyWith(
                               color: colors.textPrimary,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -84,7 +84,7 @@ class WordCard extends StatelessWidget {
                         AppBadge(label: word.level),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: VocaSpacing.xxs),
                     Text(
                       // The meanings on hand are Uzbek, so they are shown with the Uzbek
                       // interface only; the other languages show the sounds.

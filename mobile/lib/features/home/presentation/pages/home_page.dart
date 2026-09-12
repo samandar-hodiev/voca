@@ -76,7 +76,7 @@ class HomePage extends ConsumerWidget {
             Reveal(index: 0, child: _HeroCard(summary: s)),
             const SizedBox(height: VocaSpacing.md),
             Reveal(index: 1, child: _Stats(summary: s)),
-            const SizedBox(height: VocaSpacing.xl),
+            const SizedBox(height: VocaSpacing.xxl),
             Reveal(
               index: 2,
               child: SectionHeader(
@@ -231,6 +231,7 @@ class _HeroCard extends StatelessWidget {
     );
 
     return GlassCard(
+      edgeGlow: true,
       padding: const EdgeInsets.all(VocaSpacing.lg),
       child: LayoutBuilder(
         builder: (context, box) {
@@ -319,9 +320,9 @@ class _SuggestionTile extends StatelessWidget {
                   children: [
                     Text(
                       item.word,
-                      style: text.subtitle.copyWith(color: colors.textPrimary),
+                      style: text.title.copyWith(color: colors.textPrimary),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: VocaSpacing.xxs),
                     Text(
                       item.ipa,
                       style: text.bodyMedium.copyWith(

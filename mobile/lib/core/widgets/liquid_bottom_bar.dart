@@ -403,7 +403,7 @@ class _NavButton extends StatelessWidget {
               children: [
                 Icon(
                   selected ? item.activeIcon : item.icon,
-                  size: 26,
+                  size: 24,
                   color: foreground,
                   shadows: halo,
                 ),
@@ -414,7 +414,7 @@ class _NavButton extends StatelessWidget {
                   overflow: TextOverflow.fade,
                   softWrap: false,
                   style: text.caption.copyWith(
-                    fontSize: 10.5,
+                    fontSize: 11,
                     color: foreground,
                     shadows: halo,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

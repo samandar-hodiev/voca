@@ -87,7 +87,7 @@ class ProfilePage extends ConsumerWidget {
             ],
             data: (p) => [
               Reveal(index: 0, child: _IdentityCard(profile: p)),
-              const SizedBox(height: VocaSpacing.xl),
+              const SizedBox(height: VocaSpacing.xxl),
               Reveal(
                 index: 1,
                 child: SectionHeader(title: context.l10n.learningSettings),
@@ -116,13 +116,13 @@ class ProfilePage extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: VocaSpacing.xl),
+              const SizedBox(height: VocaSpacing.xxl),
               Reveal(
                 index: 2,
                 child: SectionHeader(title: context.l10n.subscription),
               ),
               const Reveal(index: 2, child: _Subscription()),
-              const SizedBox(height: VocaSpacing.xl),
+              const SizedBox(height: VocaSpacing.xxl),
               Reveal(
                 index: 3,
                 child: SectionHeader(title: context.l10n.appSection),
@@ -170,6 +170,7 @@ class _IdentityCard extends StatelessWidget {
     };
 
     return GlassCard(
+      edgeGlow: true,
       padding: const EdgeInsets.all(VocaSpacing.xl),
       child: Column(
         children: [

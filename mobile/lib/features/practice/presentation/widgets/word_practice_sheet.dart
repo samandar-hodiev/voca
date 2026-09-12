@@ -48,73 +48,79 @@ class _WordPracticeSheet extends StatelessWidget {
           VocaSpacing.xl,
           VocaSpacing.xl,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.borderStrong,
-                borderRadius: BorderRadius.circular(2),
+        // Scrolls rather than overflows: at the largest text sizes on a small phone the
+        // word, its sounds, the record control and the close button are taller than the
+        // sheet is allowed to be.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.borderStrong,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: VocaSpacing.lg),
-            SoundSymbol(symbol: word.focusSound, size: 56),
-            const SizedBox(height: VocaSpacing.md),
-            Semantics(
-              header: true,
-              child: Text(
-                word.text,
-                style: text.display.copyWith(color: colors.textPrimary),
-                textAlign: TextAlign.center,
+              const SizedBox(height: VocaSpacing.lg),
+              SoundSymbol(symbol: word.focusSound, size: 56),
+              const SizedBox(height: VocaSpacing.md),
+              Semantics(
+                header: true,
+                child: Text(
+                  word.text,
+                  style: text.display.copyWith(color: colors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            Text(
-              word.ipa,
-              style: text.title.copyWith(color: colors.textSecondary),
-            ),
-            const SizedBox(height: VocaSpacing.xs),
-            Text(
+              Text(
+                word.ipa,
+                style: text.title.copyWith(color: colors.textSecondary),
+              ),
               // The meanings on hand are Uzbek, so only the Uzbek interface shows one.
-              Localizations.localeOf(context).languageCode == 'uz'
-                  ? word.meaningUz
-                  : '',
-              style: text.body.copyWith(color: colors.textSecondary),
-            ),
-            const SizedBox(height: VocaSpacing.xl),
-            Semantics(
-              button: true,
-              enabled: false,
-              label: context.l10n.recordingUnavailable,
-              child: ExcludeSemantics(
-                child: SizedBox.square(
-                  dimension: 88,
-                  child: Opacity(
-                    opacity: 0.45,
-                    child: LiquidDrop(
-                      child: Icon(
-                        Icons.mic_rounded,
-                        size: 36,
-                        color: colors.onPrimary,
+              // The other languages skip the line rather than leave a gap where it would be.
+              if (Localizations.localeOf(context).languageCode == 'uz') ...[
+                const SizedBox(height: VocaSpacing.xs),
+                Text(
+                  word.meaningUz,
+                  style: text.body.copyWith(color: colors.textSecondary),
+                ),
+              ],
+              const SizedBox(height: VocaSpacing.xl),
+              Semantics(
+                button: true,
+                enabled: false,
+                label: context.l10n.recordingUnavailable,
+                child: ExcludeSemantics(
+                  child: SizedBox.square(
+                    dimension: 88,
+                    child: Opacity(
+                      opacity: 0.45,
+                      child: LiquidDrop(
+                        child: Icon(
+                          Icons.mic_rounded,
+                          size: 36,
+                          color: colors.onPrimary,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: VocaSpacing.sm),
-            Text(
-              context.l10n.scoringComingNext,
-              style: text.caption.copyWith(color: colors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: VocaSpacing.lg),
-            SecondaryButton(
-              label: context.l10n.close,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
+              const SizedBox(height: VocaSpacing.sm),
+              Text(
+                context.l10n.scoringComingNext,
+                style: text.caption.copyWith(color: colors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: VocaSpacing.lg),
+              SecondaryButton(
+                label: context.l10n.close,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
         ),
       ),
     );
