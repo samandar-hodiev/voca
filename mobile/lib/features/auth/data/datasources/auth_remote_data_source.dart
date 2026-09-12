@@ -17,60 +17,103 @@ class AuthRemoteDataSource {
   Future<void> resendCode(String email) =>
       _dio.post<dynamic>('/api/v1/auth/email/resend', data: {'email': email});
 
-  Future<void> verifyEmail(String email, String code) =>
-      _dio.post<dynamic>('/api/v1/auth/email/verify', data: {'email': email, 'code': code});
+  Future<void> verifyEmail(String email, String code) => _dio.post<dynamic>(
+    '/api/v1/auth/email/verify',
+    data: {'email': email, 'code': code},
+  );
 
   Future<Map<String, dynamic>> register(Map<String, dynamic> body) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/register', data: body);
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/register',
+      data: body,
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/login',
-        data: {'email': email, 'password': password});
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/login',
+      data: {'email': email, 'password': password},
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> guest(Map<String, dynamic> body) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/guest', data: body);
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/guest',
+      data: body,
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> google(Map<String, dynamic> body) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/google', data: body);
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/google',
+      data: body,
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> refresh(String refreshToken) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/refresh',
-        data: {'refresh_token': refreshToken});
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/refresh',
+      data: {'refresh_token': refreshToken},
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 
-  Future<void> logout(String refreshToken) =>
-      _dio.post<dynamic>('/api/v1/auth/logout', data: {'refresh_token': refreshToken});
+  Future<void> logout(String refreshToken) => _dio.post<dynamic>(
+    '/api/v1/auth/logout',
+    data: {'refresh_token': refreshToken},
+  );
 
   /// Sends a sign-out code to the signed-in account's own address. The server refuses
   /// an address that is not the account's.
-  Future<void> startSignOut(String email) =>
-      _dio.post<dynamic>('/api/v1/users/me/sign-out/start', data: {'email': email});
+  Future<void> startSignOut(String email) => _dio.post<dynamic>(
+    '/api/v1/users/me/sign-out/start',
+    data: {'email': email},
+  );
 
   /// Ends the session on the server, once the emailed code is right.
-  Future<void> confirmSignOut(String code, String refreshToken) => _dio.post<dynamic>(
+  Future<void> confirmSignOut(String code, String refreshToken) =>
+      _dio.post<dynamic>(
         '/api/v1/users/me/sign-out/confirm',
         data: {'code': code, 'refresh_token': refreshToken},
       );
 
-  Future<void> forgotPassword(String email) =>
-      _dio.post<dynamic>('/api/v1/auth/password/forgot', data: {'email': email});
+  /// Sends an account-deletion code to the signed-in account's own address. The server
+  /// refuses an address that is not the account's.
+  Future<void> startAccountDeletion(String email) => _dio.post<dynamic>(
+    '/api/v1/users/me/delete/start',
+    data: {'email': email},
+  );
+
+  /// Deletes the account on the server, once the emailed code is right. Which account is
+  /// deleted comes from the session, so nothing identifying it is sent.
+  Future<void> confirmAccountDeletion(String code) => _dio.post<dynamic>(
+    '/api/v1/users/me/delete/confirm',
+    data: {'code': code},
+  );
+
+  Future<void> forgotPassword(String email) => _dio.post<dynamic>(
+    '/api/v1/auth/password/forgot',
+    data: {'email': email},
+  );
 
   Future<void> verifyPasswordCode(String email, String code) =>
-      _dio.post<dynamic>('/api/v1/auth/password/verify',
-          data: {'email': email, 'code': code});
+      _dio.post<dynamic>(
+        '/api/v1/auth/password/verify',
+        data: {'email': email, 'code': code},
+      );
 
-  Future<Map<String, dynamic>> resetPassword(String email, String password) async {
-    final res = await _dio.post<Map<String, dynamic>>('/api/v1/auth/password/reset',
-        data: {'email': email, 'password': password});
+  Future<Map<String, dynamic>> resetPassword(
+    String email,
+    String password,
+  ) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/auth/password/reset',
+      data: {'email': email, 'password': password},
+    );
     return res.data!['data'] as Map<String, dynamic>;
   }
 

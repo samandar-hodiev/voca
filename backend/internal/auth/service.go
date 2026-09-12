@@ -645,6 +645,61 @@ func (s *Service) ConfirmSignOut(ctx context.Context, userID uuid.UUID,
 }
 
 // signOutAddress is where a sign-out code goes: the account's own address, normalised.
+// StartAccountDeletion sends a deletion code to the account's own address.
+//
+// Deliberately identical in shape to StartSignOut: the address comes from the session, the
+// one typed by the caller only has to match it, and a mismatch sends nothing at all. A
+// guest has no mailbox and cannot reach this, which is correct — there is no identity to
+// prove and nothing of theirs is kept on the server.
+func (s *Service) StartAccountDeletion(ctx context.Context, userID uuid.UUID, rawEmail string) error {
+	account, err := s.signOutAddress(ctx, userID)
+	if err != nil {
+		return err
+	}
+	typed, err := normalizeEmail(rawEmail)
+	if err != nil {
+		return err
+	}
+	if typed != account {
+		return apperr.New(apperr.CodeEmailMismatch, http.StatusBadRequest,
+			"Bu pochta hisobingizga tegishli emas. Hisob ochilgan pochtani kiriting.")
+	}
+	return s.issueCode(ctx, account, PurposeDeleteAccount, TemplateDeleteAccountCode)
+}
+
+// ConfirmAccountDeletion deletes the account once the emailed code is right.
+//
+// Order matters. The code is checked and consumed first, so a wrong or replayed code
+// destroys nothing. Only then is the account marked deleted and every session revoked, in
+// that order: a revoked token on a live account is a nuisance, a live token on a deleted
+// account is a hole.
+func (s *Service) ConfirmAccountDeletion(ctx context.Context, userID uuid.UUID, code string) error {
+	account, err := s.signOutAddress(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := s.VerifyCode(ctx, account, PurposeDeleteAccount, code); err != nil {
+		return err
+	}
+	v, err := s.repo.LatestVerification(ctx, account, PurposeDeleteAccount)
+	if err != nil {
+		return apperr.Internal(err)
+	}
+	if err := s.repo.ConsumeVerification(ctx, v.ID); err != nil {
+		return apperr.Internal(err)
+	}
+
+	if err := s.repo.SoftDeleteUser(ctx, userID); err != nil {
+		return apperr.Internal(err)
+	}
+	if err := s.repo.RevokeAllForUser(ctx, userID); err != nil {
+		return apperr.Internal(err)
+	}
+	// The account is gone and its sessions with it. Nothing about the person is logged.
+	s.log.Info("account_deleted")
+	return nil
+}
+
 func (s *Service) signOutAddress(ctx context.Context, userID uuid.UUID) (string, error) {
 	user, err := s.repo.UserByID(ctx, userID)
 	if err != nil {

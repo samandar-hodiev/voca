@@ -63,14 +63,14 @@ void main() {
     expect(find.textContaining('Test'), findsWidgets);
   });
 
-  testWidgets('profile shows the account and offers sign out', (tester) async {
+  testWidgets('profile shows the account and offers settings', (tester) async {
     await openSignedIn(tester);
     await tester.tap(nav(3));
     await frames(tester, 8);
 
     expect(find.text('test@voca.dev'), findsOneWidget);
 
-    // Sign-out sits at the end of a list the viewport does not reach, and a ListView only
+    // Settings sits at the end of a list the viewport does not reach, and a ListView only
     // builds what is near the screen. Scroll the profile's own list to it: the other tabs
     // stay alive offstage and have lists of their own.
     final profileList = find
@@ -80,10 +80,13 @@ void main() {
         )
         .first;
     await tester.scrollUntilVisible(
-      find.text('Hisobdan chiqish'),
+      find.text('Sozlamalar'),
       200,
       scrollable: profileList,
     );
-    expect(find.text('Hisobdan chiqish'), findsOneWidget);
+    expect(find.text('Sozlamalar'), findsOneWidget);
+
+    // Account management lives in Settings now, so Profile must not offer it too.
+    expect(find.text('Hisobdan chiqish'), findsNothing);
   });
 }

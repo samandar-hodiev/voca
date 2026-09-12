@@ -68,6 +68,11 @@ abstract final class Routes {
   static const settings = '/settings';
   static const settingsName = 'settings';
 
+  /// Deleting the account. A page of its own rather than a sheet: it is a decision, not a
+  /// toggle, and it needs room for the warning, the address and the code.
+  static const deleteAccount = '/settings/delete-account';
+  static const deleteAccountName = 'deleteAccount';
+
   /// The design-system gallery. Development builds only; see [AppRouter].
   static const designSystem = '/_design';
   static const designSystemName = 'designSystem';

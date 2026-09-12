@@ -72,4 +72,13 @@ abstract interface class AuthRepository {
   /// Checks the emailed code. The server ends the session only if it is right. Local
   /// storage is not touched here; [signOut] clears it once this succeeds.
   Future<Result<void>> confirmSignOutCode(String code);
+
+  /// Asks for an account-deletion code at [email], which must be the account's own
+  /// address. Kept apart from [requestSignOutCode] so neither code can stand in for the
+  /// other: one ends a session, the other destroys the account.
+  Future<Result<void>> requestAccountDeletionCode(String email);
+
+  /// Deletes the account on the server if the emailed code is right. Local storage is not
+  /// touched here; [signOut] clears it once this succeeds.
+  Future<Result<void>> confirmAccountDeletion(String code);
 }

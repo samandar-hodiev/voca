@@ -55,4 +55,16 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler,
 		signOut.POST("/start", h.StartSignOut)
 		signOut.POST("/confirm", h.ConfirmSignOut)
 	}
+
+	// Deleting an account is confirmed the same way, and for the same reason: the code is
+	// the thing an attacker with a stolen token would have to guess. Kept separate from
+	// sign-out so neither flow's code can stand in for the other's.
+	deleteAccount := v1.Group("/users/me/delete", requireAuth)
+	if rateLimit != nil {
+		deleteAccount.Use(rateLimit)
+	}
+	{
+		deleteAccount.POST("/start", h.StartAccountDeletion)
+		deleteAccount.POST("/confirm", h.ConfirmAccountDeletion)
+	}
 }

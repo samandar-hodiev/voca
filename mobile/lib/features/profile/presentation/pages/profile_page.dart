@@ -1,8 +1,10 @@
 /// The signed-in person's account.
 ///
-/// Who they are, how they practise, their plan, and the way out. Sign-out is always shown,
-/// even when the profile fails to load: somebody who wants to leave must never be stuck
-/// behind a network error.
+/// Who they are, how they practise, their plan, and the way into Settings.
+///
+/// Signing out lives in Settings, under Account, next to deleting the account. Both are
+/// account management, and having one of them here and the other there gave the app two
+/// places to look for the same kind of decision.
 ///
 /// Level and goal labels come from the onboarding lists that collected them, so the words
 /// on this screen are the words the person chose from.
@@ -26,7 +28,6 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/tab_scaffold.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../routing/routes.dart';
-import '../../../auth/presentation/widgets/sign_out_button.dart';
 import '../../../onboarding/presentation/controllers/setup_controller.dart';
 import '../../domain/entities/profile.dart';
 import '../controllers/profile_controller.dart';
@@ -141,8 +142,6 @@ class ProfilePage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: VocaSpacing.xl),
-          const SignOutButton(),
         ],
       ),
     );

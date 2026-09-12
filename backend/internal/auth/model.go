@@ -28,6 +28,11 @@ const (
 	PurposeSignup        VerificationPurpose = "signup"
 	PurposePasswordReset VerificationPurpose = "password_reset"
 	PurposeSignOut       VerificationPurpose = "sign_out"
+
+	// PurposeDeleteAccount proves the person asking to delete an account owns its
+	// mailbox. Kept apart from PurposeSignOut on purpose: a code issued to end a session
+	// must never be usable to destroy the account behind it.
+	PurposeDeleteAccount VerificationPurpose = "delete_account"
 )
 
 // User is an account.

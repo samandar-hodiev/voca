@@ -27,6 +27,8 @@ func Subject(t auth.EmailTemplate) string {
 		return "Voca: bu pochta allaqachon ro'yxatdan o'tgan"
 	case auth.TemplateSignOutCode:
 		return "Voca: hisobdan chiqishni tasdiqlash kodi"
+	case auth.TemplateDeleteAccountCode:
+		return "Voca: hisobni o'chirishni tasdiqlash kodi"
 	default:
 		return "Voca"
 	}
@@ -89,6 +91,23 @@ func Body(msg auth.EmailMessage) string {
 			"",
 			"Agar hisobdan chiqishni siz so'ramagan bo'lsangiz, kodni hech kimga bermang.",
 			"Kodsiz hisobingizdan hech kim chiqara olmaydi.",
+		)
+	case auth.TemplateDeleteAccountCode:
+		// Deliberately blunt about what the code does. Somebody who did not ask for this
+		// has to understand, from the first line, what is about to be destroyed.
+		return join(
+			"Salom!",
+			"",
+			"Voca hisobingizni butunlay o'chirishni tasdiqlash uchun kodingiz:",
+			"",
+			"    "+code,
+			"",
+			"Kod 10 daqiqa amal qiladi.",
+			"",
+			"Hisob o'chirilsa, mashqlaringiz, natijalaringiz va obunangiz qaytarilmaydi.",
+			"",
+			"Agar hisobni o'chirishni siz so'ramagan bo'lsangiz, kodni hech kimga bermang.",
+			"Kodsiz hisobingizni hech kim o'chira olmaydi.",
 		)
 	default:
 		return fmt.Sprintf("Voca: %s", code)

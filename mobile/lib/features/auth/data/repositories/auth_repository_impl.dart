@@ -88,6 +88,14 @@ class AuthRepositoryImpl implements AuthRepository {
     return _guard(() => _remote.confirmSignOut(code, refresh));
   }
 
+  @override
+  Future<Result<void>> requestAccountDeletionCode(String email) =>
+      _guard(() => _remote.startAccountDeletion(email.trim()));
+
+  @override
+  Future<Result<void>> confirmAccountDeletion(String code) =>
+      _guard(() => _remote.confirmAccountDeletion(code));
+
   /// Runs a call and turns any transport or API error into a typed failure.
   Future<Result<T>> _guard<T>(Future<T> Function() call) async {
     try {
@@ -104,7 +112,8 @@ class AuthRepositoryImpl implements AuthRepository {
       _guard(() => _remote.startEmailVerification(email));
 
   @override
-  Future<Result<void>> resendCode(String email) => _guard(() => _remote.resendCode(email));
+  Future<Result<void>> resendCode(String email) =>
+      _guard(() => _remote.resendCode(email));
 
   @override
   Future<Result<void>> verifyEmail(String email, String code) =>
@@ -135,8 +144,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<AuthSession>> login(String email, String password) => _guard(() async {
-        final session = SessionDto.fromJson(await _remote.login(email, password)).toDomain();
+  Future<Result<AuthSession>> login(String email, String password) =>
+      _guard(() async {
+        final session = SessionDto.fromJson(
+          await _remote.login(email, password),
+        ).toDomain();
         await _persist(session);
         return session;
       });
@@ -144,8 +156,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthSession>> continueAsGuest(OnboardingAnswers? answers) =>
       _guard(() async {
-        final session =
-            SessionDto.fromJson(await _remote.guest(_answersJson(answers))).toDomain();
+        final session = SessionDto.fromJson(
+          await _remote.guest(_answersJson(answers)),
+        ).toDomain();
         await _persist(session);
         return session;
       });
@@ -154,18 +167,16 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<AuthSession>> signInWithGoogle(
     String idToken, {
     OnboardingAnswers? answers,
-  }) =>
-      _guard(() async {
-        // Only the token and the preferences go up. The backend reads the name and the
-        // picture from the token's signed claims, so sending them from here would be
-        // both pointless and a thing to be believed that should not be.
-        final session = SessionDto.fromJson(await _remote.google({
-          'id_token': idToken,
-          ..._answersJson(answers),
-        })).toDomain();
-        await _persist(session);
-        return session;
-      });
+  }) => _guard(() async {
+    // Only the token and the preferences go up. The backend reads the name and the
+    // picture from the token's signed claims, so sending them from here would be
+    // both pointless and a thing to be believed that should not be.
+    final session = SessionDto.fromJson(
+      await _remote.google({'id_token': idToken, ..._answersJson(answers)}),
+    ).toDomain();
+    await _persist(session);
+    return session;
+  });
 
   @override
   Future<Result<void>> forgotPassword(String email) =>
@@ -178,8 +189,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthSession>> resetPassword(String email, String password) =>
       _guard(() async {
-        final session =
-            SessionDto.fromJson(await _remote.resetPassword(email, password)).toDomain();
+        final session = SessionDto.fromJson(
+          await _remote.resetPassword(email, password),
+        ).toDomain();
         await _persist(session);
         return session;
       });
@@ -193,10 +205,10 @@ class AuthRepositoryImpl implements AuthRepository {
       _guard(() => _remote.uploadAvatar(filePath));
 
   Map<String, dynamic> _answersJson(OnboardingAnswers? a) => {
-        if (a?.level != null) 'cefr_level': a!.level,
-        if (a?.goal != null) 'learning_goal': a!.goal,
-        if (a?.dailyGoalWords != null) 'daily_goal_words': a!.dailyGoalWords,
-      };
+    if (a?.level != null) 'cefr_level': a!.level,
+    if (a?.goal != null) 'learning_goal': a!.goal,
+    if (a?.dailyGoalWords != null) 'daily_goal_words': a!.dailyGoalWords,
+  };
 
   /// The access token for the auth interceptor.
   Future<String?> accessToken() => _store.read(_accessKey);
@@ -207,7 +219,9 @@ class AuthRepositoryImpl implements AuthRepository {
     final refresh = await _store.read(_refreshKey);
     if (refresh == null) return false;
     try {
-      final session = SessionDto.fromJson(await _remote.refresh(refresh)).toDomain();
+      final session = SessionDto.fromJson(
+        await _remote.refresh(refresh),
+      ).toDomain();
       await _persist(session);
       return true;
     } on DioException {

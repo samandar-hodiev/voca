@@ -341,6 +341,43 @@ func (h *Handler) UploadAvatar(c *gin.Context) {
 }
 
 // currentUser reads the authenticated identity that middleware placed in the context.
+// StartAccountDeletion sends a deletion code to the account's own address.
+//
+// The address is taken from the session, not from the body: the body's address is only
+// checked against it, so a stolen token cannot redirect the code somewhere else.
+func (h *Handler) StartAccountDeletion(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	req, ok := bind[emailRequest](c)
+	if !ok {
+		return
+	}
+	if err := h.svc.StartAccountDeletion(c.Request.Context(), userID, req.Email); err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, gin.H{"status": "sent"})
+}
+
+// ConfirmAccountDeletion deletes the account once the emailed code is right.
+func (h *Handler) ConfirmAccountDeletion(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	req, ok := bind[deleteAccountRequest](c)
+	if !ok {
+		return
+	}
+	if err := h.svc.ConfirmAccountDeletion(c.Request.Context(), userID, req.Code); err != nil {
+		httpx.FailWith(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 func currentUser(c *gin.Context) (uuid.UUID, bool) {
 	raw, ok := ctxutil.UserID(c.Request.Context())
 	if !ok {

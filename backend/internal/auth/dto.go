@@ -58,6 +58,12 @@ type confirmSignOutRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+// deleteAccountRequest carries only the emailed code. Which account is being deleted is
+// taken from the authenticated session, never from the client.
+type deleteAccountRequest struct {
+	Code string `json:"code" binding:"required"`
+}
+
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }

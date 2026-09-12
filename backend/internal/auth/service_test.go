@@ -284,6 +284,21 @@ func (f *fakeRepo) RevokeRefreshToken(_ context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// SoftDeleteUser drops the account from the fake's map.
+//
+// The real repository keeps the row and filters every read on deleted_at IS NULL, so from
+// a caller's point of view an unreachable row and a removed one are the same thing. The
+// fake takes the simpler of the two.
+func (f *fakeRepo) SoftDeleteUser(_ context.Context, userID uuid.UUID) error {
+	for email, u := range f.users {
+		if u.ID == userID {
+			delete(f.users, email)
+			return nil
+		}
+	}
+	return nil
+}
+
 func (f *fakeRepo) RevokeAllForUser(_ context.Context, userID uuid.UUID) error {
 	for h, r := range f.refresh {
 		if r.userID == userID {
@@ -1311,5 +1326,100 @@ func TestConfirmSignOut_LeavesAnotherAccountsSessionAlone(t *testing.T) {
 	}
 	if repo.refresh[token.Hash(other.RefreshToken)].revoked {
 		t.Fatal("one account must not be able to end another's session")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Account deletion
+//
+// The same rules as sign-out, guarding something that cannot be undone: the code goes only
+// to the address the account already has, and no other flow's code may stand in for it.
+// ---------------------------------------------------------------------------
+
+func TestStartAccountDeletion_SendsTheCodeToTheAccountsOwnAddress(t *testing.T) {
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+
+	if err := svc.StartAccountDeletion(context.Background(), u.ID, "  Ali@Example.com "); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	msg, ok := mail.Last()
+	if !ok || msg.Template != TemplateDeleteAccountCode || msg.To != "ali@example.com" {
+		t.Fatalf("the code must go to the account's own address, got %+v", msg)
+	}
+}
+
+func TestStartAccountDeletion_RefusesAnotherAddressAndSendsNothing(t *testing.T) {
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+
+	err := svc.StartAccountDeletion(context.Background(), u.ID, "someone@example.com")
+	if codeOf(t, err) != apperr.CodeEmailMismatch {
+		t.Fatalf("another address must be refused, got %v", err)
+	}
+	if _, ok := mail.Last(); ok {
+		t.Fatal("nothing may be sent when the address does not match")
+	}
+}
+
+func TestConfirmAccountDeletion_DeletesOnlyWithTheRightCode(t *testing.T) {
+	ctx := context.Background()
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	session, err := svc.Login(ctx, "ali@example.com", "correct horse battery")
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+	if err := svc.StartAccountDeletion(ctx, u.ID, "ali@example.com"); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	msg, _ := mail.Last()
+	code := msg.Params["code"]
+	wrong := "000000"
+	if code == wrong {
+		wrong = "111111"
+	}
+
+	alive := func() bool {
+		_, err := repo.UserByID(ctx, u.ID)
+		return err == nil
+	}
+	revoked := func() bool { return repo.refresh[token.Hash(session.RefreshToken)].revoked }
+
+	err = svc.ConfirmAccountDeletion(ctx, u.ID, wrong)
+	if codeOf(t, err) != apperr.CodeInvalidCode {
+		t.Fatalf("a wrong code must be refused, got %v", err)
+	}
+	if !alive() {
+		t.Fatal("a wrong code must not delete the account")
+	}
+
+	if err := svc.ConfirmAccountDeletion(ctx, u.ID, code); err != nil {
+		t.Fatalf("confirm: %v", err)
+	}
+	if alive() {
+		t.Fatal("the right code must delete the account")
+	}
+	if !revoked() {
+		t.Fatal("deleting the account must end its sessions")
+	}
+}
+
+func TestConfirmAccountDeletion_ASignOutCodeCannotDeleteAnAccount(t *testing.T) {
+	ctx := context.Background()
+	svc, repo, mail := newService(t)
+	u := repo.addUser("ali@example.com", "correct horse battery")
+	if err := svc.StartSignOut(ctx, u.ID, "ali@example.com"); err != nil {
+		t.Fatalf("start sign-out: %v", err)
+	}
+	msg, _ := mail.Last()
+
+	err := svc.ConfirmAccountDeletion(ctx, u.ID, msg.Params["code"])
+	if codeOf(t, err) != apperr.CodeInvalidCode {
+		t.Fatalf("a code for another purpose must be refused, got %v", err)
+	}
+	if _, err := repo.UserByID(ctx, u.ID); err != nil {
+		t.Fatal("the account must survive a code issued for another purpose")
 	}
 }

@@ -294,6 +294,37 @@ class AppLocalizationsUz extends AppLocalizations {
       'Bu manzilga xat yubora olmadik. Boshqa pochta kiriting yoki keyinroq urinib ko‘ring.';
 
   @override
+  String get deleteAccount => 'Hisobni o‘chirish';
+
+  @override
+  String get deleteAccountIntro =>
+      'Hisobni o‘chirish qaytarib bo‘lmaydigan amal.';
+
+  @override
+  String get deleteAccountEmailNote =>
+      'Hisob ochilgan pochtani kiriting. Unga tasdiqlash kodi yuboramiz.';
+
+  @override
+  String get deleteConfirmTitle => 'Hisob o‘chirilsinmi?';
+
+  @override
+  String get deleteConfirmQuestion =>
+      'Rostdan ham hisobingizni o‘chirmoqchimisiz?';
+
+  @override
+  String get deleteConfirmWarning =>
+      'Hisob o‘chirilgach, avvalgi mashqlaringiz, natijalaringiz va premium obunangiz saqlanmaydi.';
+
+  @override
+  String get deleteConfirmYes => 'Ha, o‘chirilsin';
+
+  @override
+  String get answerNo => 'Yo‘q';
+
+  @override
+  String get languageSelectTitle => 'Tilni tanlang';
+
+  @override
   String get signOut => 'Hisobdan chiqish';
 
   @override

@@ -297,6 +297,36 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось отправить письмо на этот адрес. Укажите другую почту или попробуйте позже.';
 
   @override
+  String get deleteAccount => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountIntro => 'Удаление аккаунта необратимо.';
+
+  @override
+  String get deleteAccountEmailNote =>
+      'Введите почту вашего аккаунта. Мы отправим на неё код подтверждения.';
+
+  @override
+  String get deleteConfirmTitle => 'Удалить аккаунт?';
+
+  @override
+  String get deleteConfirmQuestion =>
+      'Вы действительно хотите удалить аккаунт?';
+
+  @override
+  String get deleteConfirmWarning =>
+      'После удаления аккаунта ваши занятия, прогресс и премиум-подписка не сохранятся.';
+
+  @override
+  String get deleteConfirmYes => 'Да, удалить';
+
+  @override
+  String get answerNo => 'Нет';
+
+  @override
+  String get languageSelectTitle => 'Выберите язык';
+
+  @override
   String get signOut => 'Выйти из аккаунта';
 
   @override

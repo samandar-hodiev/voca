@@ -8,7 +8,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'dart:async';
+
+import 'package:go_router/go_router.dart';
+
 import '../../../auth/presentation/widgets/sign_out_button.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -17,12 +22,19 @@ import '../../../../core/l10n/locale_controller.dart';
 import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/glass_surface.dart';
+import '../../../../core/widgets/language_button.dart';
 import '../../../../core/widgets/liquid_background.dart';
+import '../../../../core/widgets/press_scale.dart';
+import '../../../../routing/routes.dart';
 import '../../../../core/widgets/selection_card.dart';
 import '../../../../l10n/l10n.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
+
+  static const pageKey = ValueKey('settings-page');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,9 +42,11 @@ class SettingsPage extends ConsumerWidget {
     final text = context.vocaText;
     final mode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final profile = ref.watch(profileProvider).valueOrNull;
     final l = context.l10n;
 
     return Scaffold(
+      key: pageKey,
       body: LiquidBackground(
         child: SafeArea(
           child: Column(
@@ -96,25 +110,28 @@ class SettingsPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: VocaSpacing.md),
-                      // Each language is named in itself, so anyone can find their own.
-                      for (final (code, name) in [
-                        ('en', l.languageNameEn),
-                        ('uz', l.languageNameUz),
-                        ('ru', l.languageNameRu),
-                      ]) ...[
-                        SelectionCard(
-                          title: name,
-                          selected: locale.languageCode == code,
-                          onTap: () =>
-                              ref.read(localeProvider.notifier).select(code),
-                        ),
-                        const SizedBox(height: VocaSpacing.sm),
-                      ],
+                      // One row, not three cards. Appearance is a choice you compare;
+                      // language is one you already know the answer to, so it only has to
+                      // say what is set and open the list on demand.
+                      _LanguageRow(
+                        value: switch (locale.languageCode) {
+                          'uz' => l.languageNameUz,
+                          'ru' => l.languageNameRu,
+                          _ => l.languageNameEn,
+                        },
+                        onTap: () => unawaited(showLanguageSheet(context)),
+                      ),
 
                       const SizedBox(height: VocaSpacing.xl),
                       Text(l.settingsAccount, style: text.subtitle),
                       const SizedBox(height: VocaSpacing.md),
                       const SignOutButton(),
+                      // Hidden for a guest: there is no mailbox to confirm from and
+                      // nothing of theirs on the server to delete.
+                      if (profile?.isGuest != true) ...[
+                        const SizedBox(height: VocaSpacing.sm),
+                        const _DeleteAccountRow(),
+                      ],
                     ],
                   ),
                 ),
@@ -145,3 +162,103 @@ List<_Appearance> _appearanceOptions(AppLocalizations l) => [
   _Appearance(ThemeMode.light, l.themeLight, l.themeLightHint),
   _Appearance(ThemeMode.dark, l.themeDark, l.themeDarkHint),
 ];
+
+/// The language row: what is set, and a way into the list.
+class _LanguageRow extends StatelessWidget {
+  const _LanguageRow({required this.value, required this.onTap});
+
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    final text = context.vocaText;
+
+    return PressScale(
+      semanticLabel: '${context.l10n.settingsLanguage}: $value',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: GlassSurface(
+          blur: false,
+          padding: const EdgeInsets.all(VocaSpacing.md),
+          borderRadius: BorderRadius.circular(VocaRadius.large),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.language_rounded,
+                  size: 24,
+                  color: colors.textSecondary,
+                ),
+                const SizedBox(width: VocaSpacing.md),
+                Expanded(
+                  child: Text(
+                    value,
+                    style: text.body.copyWith(color: colors.textPrimary),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: colors.textSecondary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The way out that cannot be undone.
+///
+/// Marked by three things at once, so it never depends on colour alone: its own tint, an
+/// icon, and wording that says what it destroys. It reads as dangerous in both themes and
+/// to somebody who cannot tell the tint from the page.
+class _DeleteAccountRow extends StatelessWidget {
+  const _DeleteAccountRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    final text = context.vocaText;
+
+    return PressScale(
+      semanticLabel: context.l10n.deleteAccount,
+      onTap: () => unawaited(context.push(Routes.deleteAccount)),
+      child: ExcludeSemantics(
+        child: GlassSurface(
+          edgeGlow: false,
+          blur: false,
+          showShadow: false,
+          tint: colors.errorMuted,
+          borderRadius: BorderRadius.circular(VocaRadius.large),
+          padding: const EdgeInsets.all(VocaSpacing.md),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: colors.onErrorMuted,
+                ),
+                const SizedBox(width: VocaSpacing.md),
+                Expanded(
+                  child: Text(
+                    context.l10n.deleteAccount,
+                    style: text.body.copyWith(color: colors.onErrorMuted),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.onErrorMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

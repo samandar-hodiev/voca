@@ -25,6 +25,7 @@ import '../../features/auth/data/datasources/firebase_google_tokens.dart';
 import '../../features/auth/domain/usecases/sign_in_with_google.dart';
 import '../../features/auth/domain/usecases/sign_out.dart';
 import '../../features/auth/domain/usecases/confirmed_sign_out.dart';
+import '../../features/auth/domain/usecases/delete_account.dart';
 import '../storage/secure_storage.dart';
 
 /// Overridden in [bootstrap] with the flavor's configuration. Reading it without an
@@ -44,12 +45,16 @@ final platformProvider = Provider<String>((ref) => 'unknown');
 /// Overridden in [bootstrap] with the opened store. Reading it without an override is a
 /// wiring mistake, so it throws rather than silently losing writes.
 final keyValueStoreProvider = Provider<KeyValueStore>((ref) {
-  throw UnimplementedError('keyValueStoreProvider must be overridden in bootstrap');
+  throw UnimplementedError(
+    'keyValueStoreProvider must be overridden in bootstrap',
+  );
 });
 
 /// Secure storage for tokens. Overridden in [bootstrap].
 final secureStoreProvider = Provider<SecureStore>((ref) {
-  throw UnimplementedError('secureStoreProvider must be overridden in bootstrap');
+  throw UnimplementedError(
+    'secureStoreProvider must be overridden in bootstrap',
+  );
 });
 
 /// The single HTTP client, without the auth interceptor.
@@ -96,7 +101,9 @@ class _RepositoryTokens implements SessionTokens {
 /// Turns a Google account into a Firebase ID token.
 ///
 /// Overridden in tests with a fake, so no test has to reach Google or Firebase.
-final googleIdentityTokenProvider = Provider<GoogleIdentityTokenProvider>((ref) {
+final googleIdentityTokenProvider = Provider<GoogleIdentityTokenProvider>((
+  ref,
+) {
   return FirebaseGoogleTokens();
 });
 
@@ -124,6 +131,22 @@ final requestSignOutCodeProvider = Provider<RequestSignOutCode>((ref) {
 /// The second half: the code is checked on the server, then both sessions end.
 final confirmSignOutProvider = Provider<ConfirmSignOut>((ref) {
   return ConfirmSignOut(
+    ref.watch(authRepositoryProvider),
+    ref.watch(signOutProvider),
+  );
+});
+
+/// The first half of an account deletion: a code to the account's own address.
+final requestAccountDeletionCodeProvider = Provider<RequestAccountDeletionCode>(
+  (ref) {
+    return RequestAccountDeletionCode(ref.watch(authRepositoryProvider));
+  },
+);
+
+/// The second half: the server deletes the account and revokes its sessions, then the
+/// local and Google sessions are cleared.
+final deleteAccountProvider = Provider<DeleteAccount>((ref) {
+  return DeleteAccount(
     ref.watch(authRepositoryProvider),
     ref.watch(signOutProvider),
   );

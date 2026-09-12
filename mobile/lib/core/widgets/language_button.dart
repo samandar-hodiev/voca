@@ -19,6 +19,64 @@ import 'liquid_drop.dart';
 import 'press_scale.dart';
 import 'selection_card.dart';
 
+/// The three languages, with the flag of where each is spoken.
+///
+/// A flag is not a language, but it is what the eye finds first in a list of three, and
+/// the name beside it in its own script is what actually identifies it.
+const languageChoices = [('en', '🇬🇧'), ('uz', '🇺🇿'), ('ru', '🇷🇺')];
+
+/// Opens the language picker.
+///
+/// One sheet for the whole app: the first screen's button and the Settings row both call
+/// this, so the choice looks and behaves the same wherever it is made.
+Future<void> showLanguageSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheet) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(VocaSpacing.md),
+        child: GlassCard(
+          child: Consumer(
+            builder: (context, ref, _) {
+              final current = ref.watch(localeProvider).languageCode;
+              final l = context.l10n;
+              final names = {
+                'en': l.languageNameEn,
+                'uz': l.languageNameUz,
+                'ru': l.languageNameRu,
+              };
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l.languageSelectTitle, style: context.vocaText.title),
+                  const SizedBox(height: VocaSpacing.md),
+                  // Each language is named in itself, so anyone can find their own.
+                  for (final (code, flag) in languageChoices) ...[
+                    SelectionCard(
+                      leading: flag,
+                      title: names[code]!,
+                      selected: current == code,
+                      onTap: () {
+                        unawaited(
+                          ref.read(localeProvider.notifier).select(code),
+                        );
+                        Navigator.of(sheet).pop();
+                      },
+                    ),
+                    const SizedBox(height: VocaSpacing.sm),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class LanguageButton extends ConsumerWidget {
   const LanguageButton({super.key});
 
@@ -30,7 +88,7 @@ class LanguageButton extends ConsumerWidget {
 
     return PressScale(
       semanticLabel: context.l10n.settingsLanguage,
-      onTap: () => unawaited(_choose(context)),
+      onTap: () => unawaited(showLanguageSheet(context)),
       child: GlassBead(
         padding: const EdgeInsets.symmetric(
           horizontal: VocaSpacing.sm,
@@ -46,52 +104,6 @@ class LanguageButton extends ConsumerWidget {
               style: text.label.copyWith(color: colors.textPrimary),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _choose(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(VocaSpacing.md),
-          child: GlassCard(
-            child: Consumer(
-              builder: (context, ref, _) {
-                final current = ref.watch(localeProvider).languageCode;
-                final l = context.l10n;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(l.settingsLanguage, style: context.vocaText.title),
-                    const SizedBox(height: VocaSpacing.md),
-                    // Each language is named in itself, so anyone can find their own.
-                    for (final (code, name) in [
-                      ('en', l.languageNameEn),
-                      ('uz', l.languageNameUz),
-                      ('ru', l.languageNameRu),
-                    ]) ...[
-                      SelectionCard(
-                        title: name,
-                        selected: current == code,
-                        onTap: () {
-                          unawaited(
-                            ref.read(localeProvider.notifier).select(code),
-                          );
-                          Navigator.of(sheet).pop();
-                        },
-                      ),
-                      const SizedBox(height: VocaSpacing.sm),
-                    ],
-                  ],
-                );
-              },
-            ),
-          ),
         ),
       ),
     );

@@ -54,6 +54,10 @@ type Repository interface {
 		revoked bool, expiresAt time.Time, err error)
 	RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
 	RevokeAllForUser(ctx context.Context, userID uuid.UUID) error
+
+	// SoftDeleteUser marks an account deleted. Every read in this repository filters on
+	// deleted_at IS NULL, so the row stops being reachable the moment this returns.
+	SoftDeleteUser(ctx context.Context, userID uuid.UUID) error
 }
 
 type repository struct {
@@ -408,6 +412,28 @@ func (r *repository) RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
 //
 // Used on password reset and on refresh-token reuse: if a token was replayed we must
 // assume it was stolen, so the entire family goes (ARCHITECTURE.md 8.2).
+// SoftDeleteUser marks the account deleted rather than removing the row.
+//
+// The schema is built for this: users carries status and deleted_at, and every query here
+// already filters deleted_at IS NULL, so a deleted account cannot be read, signed into or
+// refreshed from the moment this commits. The row survives because profiles, preferences
+// and tokens hang off it by foreign key, and destroying it would take the practice history
+// with it in a single unrecoverable step.
+//
+// The unique index on email is partial (WHERE email IS NOT NULL AND deleted_at IS NULL),
+// so the address is released and the same person can sign up again.
+//
+// Idempotent: deleting an already-deleted account changes nothing and reports no error.
+func (r *repository) SoftDeleteUser(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET status = 'deleted', deleted_at = now(), updated_at = now()
+		 WHERE id = $1 AND deleted_at IS NULL`, userID)
+	if err != nil {
+		return fmt.Errorf("auth: soft delete user: %w", err)
+	}
+	return nil
+}
+
 func (r *repository) RevokeAllForUser(ctx context.Context, userID uuid.UUID) error {
 	_, err := r.pool.Exec(ctx,
 		`UPDATE refresh_tokens SET revoked_at = now()

@@ -640,6 +640,60 @@ abstract class AppLocalizations {
   /// **'We couldn’t send an email to this address. Try another email or try again later.'**
   String get errorEmailDelivery;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account is permanent. It cannot be undone.'**
+  String get deleteAccountIntro;
+
+  /// No description provided for @deleteAccountEmailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email your account uses. We’ll send a confirmation code to it.'**
+  String get deleteAccountEmailNote;
+
+  /// No description provided for @deleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteConfirmTitle;
+
+  /// No description provided for @deleteConfirmQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account?'**
+  String get deleteConfirmQuestion;
+
+  /// No description provided for @deleteConfirmWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Your previous practice data, progress and premium subscription will not be saved after account deletion.'**
+  String get deleteConfirmWarning;
+
+  /// No description provided for @deleteConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, delete'**
+  String get deleteConfirmYes;
+
+  /// No description provided for @answerNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get answerNo;
+
+  /// No description provided for @languageSelectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose language'**
+  String get languageSelectTitle;
+
   /// No description provided for @signOut.
   ///
   /// In en, this message translates to:

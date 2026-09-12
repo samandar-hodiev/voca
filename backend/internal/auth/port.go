@@ -32,6 +32,10 @@ const (
 	// TemplateSignOutCode confirms a sign-out. It only ever goes to the address the
 	// account already has.
 	TemplateSignOutCode EmailTemplate = "sign_out_code"
+
+	// TemplateDeleteAccountCode confirms an account deletion. Like the sign-out code it
+	// only ever goes to the address the account already has.
+	TemplateDeleteAccountCode EmailTemplate = "delete_account_code"
 )
 
 // EmailProvider delivers transactional email.

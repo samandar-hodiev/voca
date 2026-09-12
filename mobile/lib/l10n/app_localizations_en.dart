@@ -292,6 +292,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn’t send an email to this address. Try another email or try again later.';
 
   @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountIntro =>
+      'Deleting your account is permanent. It cannot be undone.';
+
+  @override
+  String get deleteAccountEmailNote =>
+      'Enter the email your account uses. We’ll send a confirmation code to it.';
+
+  @override
+  String get deleteConfirmTitle => 'Delete your account?';
+
+  @override
+  String get deleteConfirmQuestion =>
+      'Are you sure you want to delete your account?';
+
+  @override
+  String get deleteConfirmWarning =>
+      'Your previous practice data, progress and premium subscription will not be saved after account deletion.';
+
+  @override
+  String get deleteConfirmYes => 'Yes, delete';
+
+  @override
+  String get answerNo => 'No';
+
+  @override
+  String get languageSelectTitle => 'Choose language';
+
+  @override
   String get signOut => 'Sign out';
 
   @override

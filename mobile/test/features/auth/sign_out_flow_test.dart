@@ -22,6 +22,10 @@ Future<void> frames(WidgetTester tester, int count) async {
 /// Answers the sign-out calls the way the server does: a code only for the account's
 /// own address, and only the right code ends the session.
 class FakeSignOutAuth implements AuthRepository {
+  final requestedDeletion = <String>[];
+  final confirmedDeletion = <String>[];
+  var deleted = false;
+
   final requested = <String>[];
   final confirmed = <String>[];
   var signedOut = false;
@@ -63,6 +67,35 @@ class FakeSignOutAuth implements AuthRepository {
   Future<void> signOut() async => signedOut = true;
 
   @override
+  Future<Result<void>> requestAccountDeletionCode(String email) async {
+    requestedDeletion.add(email);
+    if (email != 'test@voca.dev') {
+      return const Err(
+        ApiFailure(
+          code: 'EMAIL_MISMATCH',
+          message: 'Bu pochta hisobingizga tegishli emas.',
+        ),
+      );
+    }
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void>> confirmAccountDeletion(String code) async {
+    confirmedDeletion.add(code);
+    if (code != '123456') {
+      return const Err(
+        ApiFailure(
+          code: 'INVALID_VERIFICATION_CODE',
+          message: 'Kod noto‘g‘ri.',
+        ),
+      );
+    }
+    deleted = true;
+    return const Ok(null);
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -86,7 +119,7 @@ class GuestProfile implements ProfileRepository {
   );
 }
 
-Future<void> openProfile(
+Future<void> openSignOut(
   WidgetTester tester,
   FakeSignOutAuth auth, {
   ProfileRepository profile = const FakeProfileRepository(),
@@ -103,21 +136,40 @@ Future<void> openProfile(
   await tester.tap(find.byKey(const ValueKey('liquid-nav-3')));
   await frames(tester, 10);
 
-  final list = find
+  // Sign-out moved out of Profile and into Settings, under Account, next to deleting the
+  // account. Profile's only account row now is the way into Settings, so the journey is
+  // one step longer than it used to be.
+  final profileList = find
       .descendant(
         of: find.byKey(const ValueKey('profile-page')),
         matching: find.byType(Scrollable),
       )
       .first;
   await tester.scrollUntilVisible(
-    find.text('Hisobdan chiqish'),
+    find.text('Sozlamalar'),
     200,
-    scrollable: list,
+    scrollable: profileList,
   );
   // "Visible" can still mean under the floating tab bar. The list ends with room for the
-  // bar, so scrolling to its end brings the button clear of it.
-  await tester.drag(list, const Offset(0, -600));
+  // bar, so scrolling to its end brings the row clear of it.
+  await tester.drag(profileList, const Offset(0, -600));
   await frames(tester, 4);
+  await tester.tap(find.text('Sozlamalar'));
+  await frames(tester, 10);
+
+  // Settings is taller than the test viewport, and a ListView only builds what is near
+  // the screen, so the button has to be scrolled to before it can be tapped.
+  final settingsList = find
+      .descendant(
+        of: find.byKey(const ValueKey('settings-page')),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  await tester.scrollUntilVisible(
+    find.text('Hisobdan chiqish'),
+    200,
+    scrollable: settingsList,
+  );
   await tester.tap(find.text('Hisobdan chiqish'));
   await frames(tester, 6);
 }
@@ -132,7 +184,7 @@ void main() {
     tester,
   ) async {
     final auth = FakeSignOutAuth();
-    await openProfile(tester, auth);
+    await openSignOut(tester, auth);
 
     expect(find.text('Rostdan ham hisobdan chiqmoqchimisiz?'), findsOneWidget);
     await tester.tap(find.text('Ha, chiqish'));
@@ -173,21 +225,22 @@ void main() {
 
   testWidgets('cancelling leaves the person signed in', (tester) async {
     final auth = FakeSignOutAuth();
-    await openProfile(tester, auth);
+    await openSignOut(tester, auth);
 
     await tester.tap(find.text('Bekor qilish'));
     await frames(tester, 6);
 
     expect(auth.signedOut, isFalse);
     expect(auth.requested, isEmpty);
-    expect(find.byKey(const ValueKey('profile-page')), findsOneWidget);
+    // Still on Settings, with the button it was opened from.
+    expect(find.text('Hisobdan chiqish'), findsOneWidget);
   });
 
   testWidgets('a guest is warned, then signed out without a code', (
     tester,
   ) async {
     final auth = FakeSignOutAuth();
-    await openProfile(tester, auth, profile: const GuestProfile());
+    await openSignOut(tester, auth, profile: const GuestProfile());
 
     expect(find.textContaining('Mehmon hisobida pochta yo‘q'), findsOneWidget);
     await tester.tap(find.text('Ha, chiqish'));
