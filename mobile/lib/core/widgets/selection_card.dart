@@ -66,6 +66,17 @@ class SelectionCard extends StatelessWidget {
               borderRadius: radius,
               child: GlassSurface(
                 edgeGlow: false,
+                // No shadow. These cards are only ever stacked in a list eight points
+                // apart, and at that spacing each card's shadow reaches into the gaps on
+                // both sides. The overlapping shadows join into one continuous darker
+                // column behind the whole group, and the eye reads that column as a
+                // container the cards sit inside rather than as separate cards.
+                //
+                // Measured on the Settings page: a gap was 37-41 units darker than the
+                // page beside it with the shadow, and 1-4 without. The rim, the tint and
+                // the edge lens are what make these read as glass; the shadow was only
+                // ever adding the box.
+                showShadow: false,
                 borderRadius: radius,
                 // Selected thickens the pane and pulls it toward the brand colour, so the
                 // choice reads even before the check mark is noticed.
