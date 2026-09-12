@@ -289,6 +289,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorNoInternet => 'Нет подключения к интернету.';
 
   @override
+  String get errorServerUnreachable =>
+      'Не удалось связаться с сервером. Проверьте, что он запущен и вы в одной сети.';
+
+  @override
   String get errorEmailDelivery =>
       'Не удалось отправить письмо на этот адрес. Укажите другую почту или попробуйте позже.';
 

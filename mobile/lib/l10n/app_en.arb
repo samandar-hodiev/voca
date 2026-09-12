@@ -114,6 +114,7 @@
   "errorGeneric": "Something went wrong. Try again.",
   "errorSessionExpired": "Your session has ended. Sign in again.",
   "errorNoInternet": "No internet connection.",
+  "errorServerUnreachable": "Couldn’t reach the server. Check that it is running and that you are on the same network.",
   "errorEmailDelivery": "We couldn’t send an email to this address. Try another email or try again later.",
   "signOut": "Sign out",
   "signOutQuestion": "Are you sure you want to sign out?",

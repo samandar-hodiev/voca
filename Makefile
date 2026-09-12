@@ -4,7 +4,7 @@
 
 MOBILE_RUN_DIR := /tmp/voca-run/mobile
 
-.PHONY: help backend admin mobile mobile-fresh mobile-reset test lint migrate
+.PHONY: help backend admin mobile mobile-fresh mobile-reset android lan-ip test lint migrate
 
 BUNDLE_ID := com.voca.voca
 
@@ -64,6 +64,30 @@ mobile: mobile-sync
 	@cd $(MOBILE_RUN_DIR) && flutter run -d $$(xcrun simctl list devices booted -j \
 		| python3 -c "import sys,json; d=json.load(sys.stdin)['devices']; \
 print(next(x['udid'] for v in d.values() for x in v))")
+
+## android: run on the connected Android phone, pointed at this Mac's LAN address
+#
+# localhost on a physical phone means the phone, not this Mac, so the app has to be built
+# with the Mac's address on the Wi-Fi both devices share. It goes in through API_BASE_URL,
+# the --dart-define the configuration already reads; nothing is hardcoded in the source.
+#
+# USB is needed only to install the app and to stream its logs. What is compiled in is a
+# LAN address, not a tunnel, so the app keeps reaching the backend after the cable is
+# unplugged, as long as the phone stays on the same Wi-Fi.
+android:
+	@ip=$$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null); \
+	if [ -z "$$ip" ]; then echo "en0/en1 da LAN manzil yo'q; Wi-Fi ga ulaning"; exit 1; fi; \
+	adb=$$(command -v adb || echo $$HOME/Library/Android/sdk/platform-tools/adb); \
+	dev=$$($$adb devices | awk 'NR>1 && $$2=="device" {print $$1; exit}'); \
+	if [ -z "$$dev" ]; then echo "ulangan Android qurilma yo'q"; exit 1; fi; \
+	echo "backend: http://$$ip:8082  ->  $$dev"; \
+	cd mobile && flutter run -d $$dev --dart-define=API_BASE_URL=http://$$ip:8082
+
+## lan-ip: print the address a phone on the same Wi-Fi should use for the backend
+lan-ip:
+	@ip=$$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null); \
+	if [ -z "$$ip" ]; then echo "en0/en1 da LAN manzil yo'q"; exit 1; fi; \
+	echo "http://$$ip:8082"
 
 ## mobile-reset: erase the app from the simulator, so onboarding shows again
 #

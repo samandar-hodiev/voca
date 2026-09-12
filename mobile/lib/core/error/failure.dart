@@ -21,6 +21,18 @@ class NetworkFailure extends Failure {
   const NetworkFailure({required super.message, super.requestId});
 }
 
+/// The device has a network, but the backend could not be reached: nothing is listening
+/// at the configured address, a firewall dropped the connection, or the base URL points
+/// somewhere else entirely.
+///
+/// A subtype of [NetworkFailure] so every existing `NetworkFailure()` branch still catches
+/// it, and separate so a screen can say "cannot reach the server" instead of accusing the
+/// person's Wi-Fi. During development this is the usual answer when the API base URL is
+/// still localhost on a real phone.
+class ServerUnreachableFailure extends NetworkFailure {
+  const ServerUnreachableFailure({required super.message, super.requestId});
+}
+
 /// The server answered, but with an error the client should act on.
 class ApiFailure extends Failure {
   const ApiFailure({

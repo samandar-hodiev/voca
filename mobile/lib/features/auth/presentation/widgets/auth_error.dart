@@ -36,6 +36,8 @@ String authFailureMessage(AppLocalizations l, Failure failure) {
     // did, and "sign-in failed" would be both wrong and irritating.
     CancelledFailure() => '',
     UnauthenticatedFailure() => l.errorSessionExpired,
+    // Before NetworkFailure: it is a subtype, so the wider branch would swallow it.
+    ServerUnreachableFailure() => l.errorServerUnreachable,
     NetworkFailure() => l.errorNoInternet,
     // Sending is the only provider the auth flow talks to, so this is always about an
     // email that could not be delivered. Saying so is more useful than naming a service

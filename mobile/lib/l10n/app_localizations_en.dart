@@ -284,6 +284,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorNoInternet => 'No internet connection.';
 
   @override
+  String get errorServerUnreachable =>
+      'Couldn’t reach the server. Check that it is running and that you are on the same network.';
+
+  @override
   String get errorEmailDelivery =>
       'We couldn’t send an email to this address. Try another email or try again later.';
 

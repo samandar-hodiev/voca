@@ -9,10 +9,7 @@ library;
 import 'flavor.dart';
 
 class AppConfig {
-  const AppConfig({
-    required this.flavor,
-    required this.apiBaseUrl,
-  });
+  const AppConfig({required this.flavor, required this.apiBaseUrl});
 
   final Flavor flavor;
 
@@ -32,13 +29,18 @@ class AppConfig {
   }
 
   static String _defaultBaseUrl(Flavor flavor) => switch (flavor) {
-        // The backend listens on 8082 by default. 10.0.2.2 is how the Android emulator
-        // reaches the host machine; iOS simulators can use localhost directly, so this
-        // default is overridden with --dart-define when running on iOS.
-        Flavor.dev => 'http://localhost:8082',
-        Flavor.staging => 'https://staging-api.voca.example',
-        Flavor.prod => 'https://api.voca.example',
-      };
+    // The backend listens on 8082 by default. localhost is correct for an iOS
+    // simulator and for a macOS or web build, which share the host's loopback.
+    //
+    // It is WRONG on any physical device and on the Android emulator, where localhost
+    // means the device itself: an emulator reaches the host at 10.0.2.2, and a real
+    // phone needs this Mac's address on the Wi-Fi they share. Both are passed in with
+    // --dart-define=API_BASE_URL, which `make android` fills in automatically. Nothing
+    // machine-specific belongs in this file.
+    Flavor.dev => 'http://localhost:8082',
+    Flavor.staging => 'https://staging-api.voca.example',
+    Flavor.prod => 'https://api.voca.example',
+  };
 
   bool get isProd => flavor == Flavor.prod;
 }

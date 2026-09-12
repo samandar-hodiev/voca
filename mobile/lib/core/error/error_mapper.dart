@@ -21,19 +21,22 @@ abstract final class ErrorMapper {
           message: 'The server took too long to respond.',
         );
 
+      // The connection never opened. That is the backend being unreachable, which is a
+      // different problem from the phone having no network, and telling them apart is
+      // what stops a wrong base URL from being reported as "no internet".
       case DioExceptionType.connectionError:
-      case DioExceptionType.unknown:
-        return const NetworkFailure(
-          message: 'No internet connection.',
+        return const ServerUnreachableFailure(
+          message: 'Could not reach the server.',
         );
+
+      case DioExceptionType.unknown:
+        return const NetworkFailure(message: 'No internet connection.');
 
       case DioExceptionType.cancel:
         return const UnknownFailure(message: 'The request was cancelled.');
 
       case DioExceptionType.badCertificate:
-        return const NetworkFailure(
-          message: 'The connection is not secure.',
-        );
+        return const NetworkFailure(message: 'The connection is not secure.');
 
       case DioExceptionType.badResponse:
         return _fromResponse(e.response);
@@ -51,28 +54,26 @@ abstract final class ErrorMapper {
 
     return switch (parsed.code) {
       'UNAUTHENTICATED' || 'TOKEN_EXPIRED' => UnauthenticatedFailure(
-          message: parsed.message,
-          requestId: parsed.requestId,
-        ),
+        message: parsed.message,
+        requestId: parsed.requestId,
+      ),
       'PREMIUM_REQUIRED' => PremiumRequiredFailure(
-          message: parsed.message,
-          requestId: parsed.requestId,
-        ),
+        message: parsed.message,
+        requestId: parsed.requestId,
+      ),
       'USAGE_LIMIT_REACHED' => UsageLimitFailure(
-          message: parsed.message,
-          requestId: parsed.requestId,
-          resetsAt: _readResetsAt(parsed.details),
-        ),
-      'PROVIDER_ERROR' ||
-      'PROVIDER_UNAVAILABLE' ||
-      'PROVIDER_TIMEOUT' =>
+        message: parsed.message,
+        requestId: parsed.requestId,
+        resetsAt: _readResetsAt(parsed.details),
+      ),
+      'PROVIDER_ERROR' || 'PROVIDER_UNAVAILABLE' || 'PROVIDER_TIMEOUT' =>
         ProviderFailure(message: parsed.message, requestId: parsed.requestId),
       _ => ApiFailure(
-          code: parsed.code,
-          message: parsed.message,
-          requestId: parsed.requestId,
-          details: parsed.details,
-        ),
+        code: parsed.code,
+        message: parsed.message,
+        requestId: parsed.requestId,
+        details: parsed.details,
+      ),
     };
   }
 

@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Development backends run over plain HTTP on the local network. This attribute is
+         merged into debug builds only; release builds keep Android's HTTPS-only default.
+    -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
 </manifest>

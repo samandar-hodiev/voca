@@ -286,6 +286,10 @@ class AppLocalizationsUz extends AppLocalizations {
   String get errorNoInternet => 'Internet aloqasi yo‘q.';
 
   @override
+  String get errorServerUnreachable =>
+      'Serverga ulanib bo‘lmadi. U ishlayotganini va bir tarmoqda ekaningizni tekshiring.';
+
+  @override
   String get errorEmailDelivery =>
       'Bu manzilga xat yubora olmadik. Boshqa pochta kiriting yoki keyinroq urinib ko‘ring.';
 

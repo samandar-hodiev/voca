@@ -3,11 +3,21 @@
 # The server entrypoint is cmd/api (ARCHITECTURE.md section 28). There is deliberately
 # no cmd/server: competing entrypoints drift apart.
 
-.PHONY: run build test lint fmt vet tidy help migrate
+.PHONY: run run-lan build test lint fmt vet tidy help migrate
 
 ## run: start the API server (PORT from .env, default 8082)
 run:
 	go run ./cmd/api
+
+## run-lan: run from a fixed binary path, so a phone on the same Wi-Fi can reach the API
+#
+# `go run` compiles to a new path under /var/folders on every start, and the macOS firewall
+# keys its rules on the executable path: each restart looks like an unknown program and
+# incoming LAN connections are dropped, while localhost keeps working. A fixed path is
+# allowed once and stays allowed. See docs/runbooks/local-development.md.
+run-lan:
+	go build -o bin/api ./cmd/api
+	./bin/api
 
 ## migrate: apply pending database migrations
 migrate:

@@ -1,0 +1,3 @@
+
+# Fixed-path build for local LAN development (make run-lan)
+bin/

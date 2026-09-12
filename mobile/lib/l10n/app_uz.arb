@@ -88,6 +88,7 @@
   "errorGeneric": "Nimadir xato ketdi. Qaytadan urinib ko‘ring.",
   "errorSessionExpired": "Sessiya tugagan. Qaytadan kiring.",
   "errorNoInternet": "Internet aloqasi yo‘q.",
+  "errorServerUnreachable": "Serverga ulanib bo‘lmadi. U ishlayotganini va bir tarmoqda ekaningizni tekshiring.",
   "errorEmailDelivery": "Bu manzilga xat yubora olmadik. Boshqa pochta kiriting yoki keyinroq urinib ko‘ring.",
   "signOut": "Hisobdan chiqish",
   "signOutQuestion": "Rostdan ham hisobdan chiqmoqchimisiz?",

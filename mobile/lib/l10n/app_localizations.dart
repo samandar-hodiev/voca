@@ -628,6 +628,12 @@ abstract class AppLocalizations {
   /// **'No internet connection.'**
   String get errorNoInternet;
 
+  /// No description provided for @errorServerUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach the server. Check that it is running and that you are on the same network.'**
+  String get errorServerUnreachable;
+
   /// No description provided for @errorEmailDelivery.
   ///
   /// In en, this message translates to:

@@ -103,14 +103,89 @@ Moving the repository to a plain ASCII path fixes this too.
 
 ## Android
 
-Not usable on this machine yet: SDK licences are unaccepted and no AVD exists.
+Android does not codesign, so it is immune to the iCloud problem above. A physical phone
+works over Wi-Fi; the USB cable is only needed to install the app and stream its logs.
 
-```
-flutter doctor --android-licenses     # a legal agreement; accept it yourself
-flutter emulators --create
+```sh
+make android          # detects this Mac's LAN address and runs on the connected phone
+make lan-ip           # prints just the address, to check it by hand
 ```
 
-Android does not codesign, so it is immune to the iCloud problem above.
+### Why localhost cannot work on a phone
+
+`localhost` on a physical Android phone means *the phone*. The dev default base URL is
+`http://localhost:8082`, so on a real device every request goes nowhere and the app
+reports that it cannot reach the server. `make android` fixes this by passing this Mac's
+LAN address through the define the configuration already reads:
+
+```sh
+flutter run -d <device> --dart-define=API_BASE_URL=http://<mac-lan-ip>:8082
+```
+
+Nothing machine-specific is committed. The emulator is the exception: it reaches the host
+at the fixed alias `10.0.2.2`, so `--dart-define=API_BASE_URL=http://10.0.2.2:8082` works
+there without knowing any address.
+
+### The macOS firewall blocks the backend
+
+This is the failure that looks like a bug in the app. The phone opens a TCP connection
+successfully and then gets no HTTP response, because the firewall is set to block all
+incoming connections and lists the backend binary as blocked:
+
+```sh
+/usr/libexec/ApplicationFirewall/socketfilterfw --listapps | grep -A1 api
+curl http://$(ipconfig getifaddr en0):8082/health    # empty, exit 52, while localhost works
+```
+
+Two separate things are wrong, and both have to be fixed.
+
+**1. Block-all mode overrides the allow list.** The firewall is set to "block all incoming
+connections", and in that mode an allow-list entry has no effect. Turn the mode off; the
+firewall stays on and keeps deciding per application:
+
+```sh
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall off
+```
+
+**2. `go run` looks like a new program every time.** It compiles to a **new** path under
+`/var/folders` on each start, and the firewall keys its rules on the executable path, so
+every restart is an unknown binary and gets blocked again. Run from a fixed path and allow
+that one:
+
+```sh
+cd backend && make run-lan          # builds ./bin/api, then runs it
+
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add "$PWD/bin/api"
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp "$PWD/bin/api"
+```
+
+To put the firewall back the way it was: `sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall on`.
+
+Verify from the Mac, then from the phone:
+
+```sh
+curl http://$(ipconfig getifaddr en0):8082/health        # {"data":{"status":"ok"},...}
+adb shell curl -s http://<mac-lan-ip>:8082/health        # the same, from the phone
+```
+
+`ping` is not a valid test here: stealth mode is on, so the Mac ignores ICMP even when TCP
+is open.
+
+### Cleartext HTTP
+
+Android has blocked plain HTTP since API 28. `android/app/src/debug/res/xml/network_security_config.xml`
+permits it, and lives under `src/debug`, so it is merged into debug builds only. Release
+builds keep Android's HTTPS-only default.
+
+### Checklist when the phone cannot reach the backend
+
+| Check | Command |
+|---|---|
+| Backend up | `curl http://localhost:8082/health` |
+| Reachable on the LAN | `curl http://$(ipconfig getifaddr en0):8082/health` |
+| Same subnet | `adb shell ip -f inet addr show wlan0` vs `ipconfig getifaddr en0` |
+| From the phone | `adb shell curl -s http://<mac-lan-ip>:8082/health` |
+| Built with the right URL | the run log prints `backend: http://<ip>:8082` |
 
 ## Reading a verification code during development
 
