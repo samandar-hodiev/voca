@@ -277,25 +277,70 @@ STARTTLS or the send fails rather than crossing the network in plain text.
 
 ## Enabling Google sign-in
 
-The button renders disabled until the backend reports the capability, and the backend
-reports it only when at least one OAuth client ID is configured. Create the client IDs in
-the Google Cloud console under APIs & Services -> Credentials, then set them in
-`backend/.env`:
+The button needs BOTH halves, and they fail independently:
 
 ```
-GOOGLE_IOS_CLIENT_ID=...apps.googleusercontent.com
-GOOGLE_ANDROID_CLIENT_ID=...apps.googleusercontent.com
-GOOGLE_WEB_CLIENT_ID=...apps.googleusercontent.com
+googleReady = caps.googleSignIn && isFirebaseReady
+              server can verify     app can produce
 ```
 
-Each configured ID becomes an accepted audience, so a token minted for the iOS app is
-accepted only if the iOS client ID is listed. Check it took effect:
+**Server half.** `firebaseauth.New(ctx, cfg.FirebaseProjectID)` builds the verifier from
+`FIREBASE_PROJECT_ID` alone, and `Configured()` is true once that client exists. No OAuth
+client ID is read anywhere: the Firebase SDK checks the token's signature, issuer, audience
+and expiry against the project, so a token minted for a different project is rejected on
+its own. Setting `GOOGLE_*_CLIENT_ID` in `backend/.env` does nothing.
 
 ```sh
-curl -s localhost:8082/api/v1/config
+curl -s localhost:8082/api/v1/config     # "google_sign_in": true
 ```
 
-`google_sign_in` flips to `true` and the app enables the button on its next launch.
+**App half.** `initialiseFirebase()` passes no options, so each platform reads its own
+configuration file. Missing that file, `Firebase.initializeApp()` throws, `isFirebaseReady`
+stays false and the button reads "coming soon" however healthy the server is.
+
+| Platform | File | In git? |
+|---|---|---|
+| iOS | `mobile/ios/Runner/GoogleService-Info.plist` | no, gitignored |
+| Android | `mobile/android/app/google-services.json` | no, gitignored |
+
+Both files are gitignored, so a fresh clone has neither and every machine fetches its own.
+
+### Android, step by step
+
+The Android app has to exist in the SAME Firebase project the backend verifies against
+(`voca-508308`), or its tokens are rejected as a wrong audience.
+
+1. Firebase console -> project `voca-508308` -> Add app -> Android.
+2. Package name: `com.voca.voca` (it must match `applicationId` in
+   `android/app/build.gradle.kts`).
+3. Add the debug signing fingerprint. **Google Sign-In on Android does not work without
+   it**: the picker opens and then fails with `ApiException: 10`.
+
+   ```sh
+   keytool -list -v -keystore ~/.android/debug.keystore \
+     -alias androiddebugkey -storepass android -keypass android | grep SHA
+   ```
+
+4. Download `google-services.json` into `mobile/android/app/`.
+5. Only now wire up the Gradle plugin. Applying it while the file is absent **fails the
+   build**, so this step comes last:
+
+   `android/settings.gradle.kts`
+
+   ```kotlin
+   id("com.google.gms.google-services") version "4.4.2" apply false
+   ```
+
+   `android/app/build.gradle.kts`
+
+   ```kotlin
+   id("com.google.gms.google-services")
+   ```
+
+6. Rebuild. A hot restart is not enough: the configuration is read at native startup.
+
+Each release keystore needs its own fingerprint added the same way, so a Play build signed
+by Play App Signing uses the fingerprint Google shows in the console, not the local one.
 
 ### Creating the iOS client ID, step by step
 
