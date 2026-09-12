@@ -5,8 +5,6 @@
 /// worse than one that is honestly unavailable.
 library;
 
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -121,12 +119,18 @@ class _WordPracticeSheet extends StatelessWidget {
   }
 }
 
-/// The record control: the same premium green glass as the primary button, in a circle.
+/// The record control: premium green liquid glass, in a circle.
 ///
 /// It used to be a solid brand-coloured drop under a flat 45% opacity, which is why it
 /// came out as a grey disc with no light in it: opacity fades the highlight and the shade
 /// along with the colour, so what is left is flat. The colour is thinned instead, and the
 /// light is kept.
+///
+/// Built on [GlassSurface] rather than by hand, so it gets the same liquid the rest of the
+/// app is made of: the backdrop blur and saturation boost, the light bending round the
+/// inside of the rim, and the specular rim itself. On top of that sits the one thing a
+/// flat pane does not need — a caustic, the pool of light that gathers inside a drop and
+/// is what makes a circle read as domed rather than printed.
 ///
 /// Disabled until pronunciation scoring exists, and it says so three ways that do not rely
 /// on colour: the semantics mark the button disabled, the caption underneath says the
@@ -151,100 +155,101 @@ class _MicButton extends StatelessWidget {
 
     // Thinner than the primary button in light, because the control cannot be used yet
     // and should read as green glass waiting rather than as a call to action. Thicker in
-    // dark, because thinning a colour over black darkens it instead of lightening it,
-    // which is the opposite of what a light green glass disc should do.
+    // dark, because thinning a colour over black darkens it instead of lightening it.
     final alpha = dark ? 0.70 : PremiumGreen.alphaLight * 0.72;
-
-    // The deep green mark in both themes: it sits on mint either way, so the colour that
-    // reads on mint is the one to use.
-    const ink = PremiumGreen.label;
-
-    final glass = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.compose(
-          outer: const ColorFilter.matrix(GlassSurface.saturation),
-          inner: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                start.withValues(alpha: alpha),
-                end.withValues(alpha: alpha),
-              ],
-            ),
-          ),
-          // A specular band across the top that has faded before the icon, and a faint
-          // caustic along the bottom: the light that makes a flat disc look domed.
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: 0.42),
-                  Colors.white.withValues(alpha: 0),
-                  Colors.white.withValues(alpha: 0),
-                  Colors.white.withValues(alpha: 0.20),
-                ],
-                stops: const [0, 0.42, 0.78, 1],
-              ),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.mic_rounded,
-                size: size * 0.4,
-                color: ink.withValues(alpha: 0.8),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
 
     return SizedBox.square(
       dimension: size,
-      // The glow falls outside the glass only: under half-clear glass an ordinary shadow
-      // shows through and fills the circle back in. Soft, because a bright halo would
-      // promise a control that cannot be pressed.
-      child: CustomPaint(
-        painter: OuterShadowPainter(
-          borderRadius: radius,
-          shadows: [
-            BoxShadow(
-              color: end.withValues(alpha: 0.22),
-              blurRadius: 18,
-              spreadRadius: -8,
-              offset: const Offset(0, 6),
-            ),
+      child: GlassSurface(
+        borderRadius: radius,
+        padding: EdgeInsets.zero,
+        borderWidth: 1.2,
+        // The gradient is the fill: the theme tint would mute the green under it.
+        tint: Colors.transparent,
+        tintGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            start.withValues(alpha: alpha),
+            end.withValues(alpha: alpha),
           ],
         ),
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            glass,
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: radius,
-                    border: GradientBoxBorder(
-                      width: 1.2,
-                      gradient: specularRim(
-                        Colors.white.withValues(alpha: 0.8),
-                        end.withValues(alpha: 0.45),
-                      ),
-                    ),
-                  ),
+        highlight: Colors.white.withValues(alpha: 0.42),
+        // The edge lens: light gathering just inside the rim, as it does at the edge of a
+        // drop of water. Brighter than the theme's, because it is read against mint here
+        // rather than against a pale card.
+        edgeLight: Colors.white.withValues(alpha: dark ? 0.38 : 0.55),
+        rimTop: Colors.white.withValues(alpha: 0.85),
+        rimBottom: end.withValues(alpha: 0.5),
+        shadows: [
+          BoxShadow(
+            color: end.withValues(alpha: 0.22),
+            blurRadius: 18,
+            spreadRadius: -8,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        child: const _MicFace(),
+      ),
+    );
+  }
+}
+
+/// What sits inside the glass: the caustics, then the mark.
+class _MicFace extends StatelessWidget {
+  const _MicFace();
+
+  @override
+  Widget build(BuildContext context) {
+    const size = _MicButton.size;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // The specular pool, up and to the left, where the light comes from everywhere
+        // else in the app. A drop is domed, so its brightest point is not its centre.
+        Align(
+          alignment: const Alignment(-0.35, -0.5),
+          child: SizedBox(
+            width: size * 0.46,
+            height: size * 0.32,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0x8CFFFFFF), Color(0x00FFFFFF)],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        // The caustic underneath: light that has passed through the drop and gathered
+        // again at the far side. Faint on purpose; it is a hint of depth, not a second
+        // highlight competing with the first.
+        Align(
+          alignment: const Alignment(0.3, 0.62),
+          child: SizedBox(
+            width: size * 0.55,
+            height: size * 0.22,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    PremiumGreen.start.withValues(alpha: 0.55),
+                    PremiumGreen.start.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Icon(
+          Icons.mic_rounded,
+          size: size * 0.4,
+          color: PremiumGreen.label.withValues(alpha: 0.8),
+        ),
+      ],
     );
   }
 }
