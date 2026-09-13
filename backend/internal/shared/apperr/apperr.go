@@ -72,6 +72,10 @@ const (
 	CodeUnsupportedAudio Code = "UNSUPPORTED_AUDIO_FORMAT"
 	CodeNoSpeechDetected Code = "NO_SPEECH_DETECTED"
 
+	// The learner spoke clearly but said something other than the reference text. Neither
+	// a failure nor silence: the app names what was heard and invites another try.
+	CodeWrongWord Code = "WRONG_WORD_SPOKEN"
+
 	// Catch-all.
 	CodeInternal Code = "INTERNAL_ERROR"
 )

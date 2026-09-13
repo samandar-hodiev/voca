@@ -90,6 +90,8 @@
   "errorAudioFormat": "Bu yozuvni baholab bo‘lmadi. Qaytadan urinib ko‘ring.",
   "errorAssessmentUnavailable": "Baholash hozir ishlamayapti. Birozdan so‘ng urinib ko‘ring.",
   "errorUsageLimit": "Bugungi mashq chegarasiga yetdingiz.",
+  "errorWrongWord": "«{heard}» eshitildi. Berilgan so‘zni ayting.",
+  "errorWrongWordUnknown": "Berilgan so‘z aytilmadi. Qaytadan urinib ko‘ring.",
   "errorGeneric": "Nimadir xato ketdi. Qaytadan urinib ko‘ring.",
   "errorSessionExpired": "Sessiya tugagan. Qaytadan kiring.",
   "errorNoInternet": "Internet aloqasi yo‘q.",

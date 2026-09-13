@@ -298,6 +298,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorUsageLimit => 'Вы достигли сегодняшнего лимита практики.';
 
   @override
+  String errorWrongWord(String heard) {
+    return 'Прозвучало «$heard». Произнесите заданное слово.';
+  }
+
+  @override
+  String get errorWrongWordUnknown => 'Это не то слово. Попробуйте ещё раз.';
+
+  @override
   String get errorGeneric => 'Что-то пошло не так. Попробуйте ещё раз.';
 
   @override

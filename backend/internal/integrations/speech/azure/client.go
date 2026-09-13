@@ -93,7 +93,8 @@ type assessmentConfig struct {
 	PhonemeAlphabet string `json:"PhonemeAlphabet"`
 }
 
-// assess sends one recording and returns the parsed vendor response.
+// assess sends one recording with the reference text attached and returns the scored
+// vendor response.
 func (c *client) assess(
 	ctx context.Context, in pronunciation.AssessmentInput,
 ) (recognitionResponse, error) {
@@ -101,7 +102,31 @@ func (c *client) assess(
 	if err != nil {
 		return recognitionResponse{}, err
 	}
+	return c.call(ctx, in, header)
+}
 
+// recognize asks only what was actually said, with NO reference text attached.
+//
+// This exists because Azure cannot tell us on its own whether a learner was silent or
+// said a completely different word. Measured against the live service, both answer
+// Success with DisplayText ".", every score 0, the reference word marked Omission and no
+// phonemes — byte for byte the same shape (testdata/assessment_silence.json). Without a
+// reference the two separate cleanly: silence comes back with an empty DisplayText, and
+// a wrong word comes back as that word.
+//
+// Only called when the scored pass returned nothing, so the extra request is spent on the
+// rare failure and never on a normal attempt.
+func (c *client) recognize(
+	ctx context.Context, in pronunciation.AssessmentInput,
+) (recognitionResponse, error) {
+	return c.call(ctx, in, "")
+}
+
+// call performs the request, retrying once on a transient failure. An empty header means
+// plain recognition rather than a scored assessment.
+func (c *client) call(
+	ctx context.Context, in pronunciation.AssessmentInput, header string,
+) (recognitionResponse, error) {
 	target, err := requestURL(c.cfg.Endpoint, in.Language)
 	if err != nil {
 		return recognitionResponse{}, err
@@ -140,8 +165,10 @@ func (c *client) send(
 
 	req.Header.Set("Ocp-Apim-Subscription-Key", c.cfg.Key)
 	req.Header.Set("Content-Type", contentType(in.ContentType))
-	req.Header.Set("Pronunciation-Assessment", header)
 	req.Header.Set("Accept", "application/json")
+	if header != "" {
+		req.Header.Set("Pronunciation-Assessment", header)
+	}
 
 	started := time.Now()
 	res, err := c.http.Do(req)

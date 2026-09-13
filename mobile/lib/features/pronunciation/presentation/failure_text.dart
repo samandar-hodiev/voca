@@ -20,6 +20,14 @@ String assessmentFailureMessage(AppLocalizations l, Failure failure) {
       'PAYLOAD_TOO_LARGE' => l.errorAudioTooLong,
       'UNSUPPORTED_AUDIO_FORMAT' => l.errorAudioFormat,
       'NO_SPEECH_DETECTED' => l.errorNoSpeech,
+      // The learner spoke, just not the word they were asked for. Naming what was heard
+      // is the whole point: "wrong word" alone leaves them guessing which part missed.
+      'WRONG_WORD_SPOKEN' => switch (failure.details?['heard']) {
+        final String heard when heard.trim().isNotEmpty => l.errorWrongWord(
+          heard,
+        ),
+        _ => l.errorWrongWordUnknown,
+      },
       'PROVIDER_TIMEOUT' ||
       'PROVIDER_UNAVAILABLE' ||
       'PROVIDER_ERROR' => l.errorAssessmentUnavailable,

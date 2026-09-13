@@ -111,11 +111,23 @@ func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt
 		return Attempt{}, s.providerError(err)
 	}
 
-	// Nothing recognised is not a server fault, and telling somebody "something went
-	// wrong" when they simply did not speak is the wrong message.
-	if len(out.Words) == 0 && strings.TrimSpace(out.RecognizedText) == "" {
-		return Attempt{}, apperr.New(apperr.CodeNoSpeechDetected, http.StatusUnprocessableEntity,
-			"Ovoz eshitilmadi. Mikrofonga yaqinroq gapirib ko‘ring.")
+	// Nothing to score. Two very different things land here and they must not be told
+	// apart by guesswork: somebody who said nothing, and somebody who spoke clearly but
+	// said the wrong word. The provider reports what it heard, and that is the difference.
+	if len(out.Words) == 0 {
+		heard := strings.TrimSpace(out.RecognizedText)
+		if heard == "" {
+			// Telling somebody "something went wrong" when they simply did not speak is
+			// the wrong message.
+			return Attempt{}, apperr.New(apperr.CodeNoSpeechDetected, http.StatusUnprocessableEntity,
+				"Ovoz eshitilmadi. Mikrofonga yaqinroq gapirib ko‘ring.")
+		}
+		// Saying the wrong word is not a failure to hear them, and reporting it as one
+		// sends a learner off to fiddle with their microphone. What they need is the
+		// word they actually said, next to the one they were asked for.
+		return Attempt{}, apperr.New(apperr.CodeWrongWord, http.StatusUnprocessableEntity,
+			"Boshqa so‘z aytildi. Qaytadan urinib ko‘ring.").
+			WithDetails(map[string]any{"heard": heard, "expected": reference})
 	}
 
 	scores := s.scorer.Score(out)

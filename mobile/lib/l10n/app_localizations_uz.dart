@@ -296,6 +296,15 @@ class AppLocalizationsUz extends AppLocalizations {
   String get errorUsageLimit => 'Bugungi mashq chegarasiga yetdingiz.';
 
   @override
+  String errorWrongWord(String heard) {
+    return '«$heard» eshitildi. Berilgan so‘zni ayting.';
+  }
+
+  @override
+  String get errorWrongWordUnknown =>
+      'Berilgan so‘z aytilmadi. Qaytadan urinib ko‘ring.';
+
+  @override
   String get errorGeneric => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.';
 
   @override

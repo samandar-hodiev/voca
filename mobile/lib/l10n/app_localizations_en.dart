@@ -294,6 +294,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorUsageLimit => 'You’ve reached today’s practice limit.';
 
   @override
+  String errorWrongWord(String heard) {
+    return 'That sounded like “$heard”. Say the word you were given.';
+  }
+
+  @override
+  String get errorWrongWordUnknown =>
+      'That wasn’t the word you were given. Try again.';
+
+  @override
   String get errorGeneric => 'Something went wrong. Try again.';
 
   @override

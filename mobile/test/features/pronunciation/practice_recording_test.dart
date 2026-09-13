@@ -127,4 +127,36 @@ void main() {
 
     expect(find.text(uz.micPermissionDenied), findsOneWidget);
   });
+
+  testWidgets('saying the wrong word names what was heard', (tester) async {
+    // Not "we couldn't hear you": the learner spoke perfectly clearly, they just said
+    // something else. Telling them the microphone failed sends them off to fix a
+    // microphone that works.
+    final (app, _) = buildApp(
+      onboardingCompleted: true,
+      signedIn: true,
+      recorder: FakeRecorder(),
+      pronunciationRepository: FakeRepository(
+        () => const Err(
+          ApiFailure(
+            code: 'WRONG_WORD_SPOKEN',
+            message: 'Boshqa so‘z aytildi.',
+            details: {'heard': 'World', 'expected': 'think'},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(app);
+    await frames(tester, 30);
+    await openWord(tester);
+
+    await tester.tap(mic);
+    await frames(tester, 4);
+    await tester.tap(mic);
+    await frames(tester, 12);
+
+    expect(find.text(uz.errorWrongWord('World')), findsOneWidget);
+    // And emphatically not the silence message.
+    expect(find.text(uz.errorNoSpeech), findsNothing);
+  });
 }

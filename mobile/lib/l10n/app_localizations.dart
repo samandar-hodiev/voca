@@ -640,6 +640,18 @@ abstract class AppLocalizations {
   /// **'You’ve reached today’s practice limit.'**
   String get errorUsageLimit;
 
+  /// No description provided for @errorWrongWord.
+  ///
+  /// In en, this message translates to:
+  /// **'That sounded like “{heard}”. Say the word you were given.'**
+  String errorWrongWord(String heard);
+
+  /// No description provided for @errorWrongWordUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'That wasn’t the word you were given. Try again.'**
+  String get errorWrongWordUnknown;
+
   /// No description provided for @errorGeneric.
   ///
   /// In en, this message translates to:
