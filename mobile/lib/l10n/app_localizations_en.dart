@@ -275,6 +275,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorValidation => 'Some of the details aren’t right.';
 
   @override
+  String get errorNoSpeech =>
+      'We couldn’t hear any speech. Try again somewhere quieter.';
+
+  @override
+  String get errorAudioTooLong =>
+      'That recording was too long. Just say the word.';
+
+  @override
+  String get errorAudioFormat =>
+      'That recording couldn’t be assessed. Try again.';
+
+  @override
+  String get errorAssessmentUnavailable =>
+      'Scoring isn’t available right now. Try again in a moment.';
+
+  @override
+  String get errorUsageLimit => 'You’ve reached today’s practice limit.';
+
+  @override
   String get errorGeneric => 'Something went wrong. Try again.';
 
   @override
@@ -340,6 +359,109 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get emailNotEditable =>
       'Your email is how you sign in, so it cannot be changed here.';
+
+  @override
+  String get micTapToRecord => 'Tap to record';
+
+  @override
+  String get micRecording => 'Recording… tap to stop';
+
+  @override
+  String get micAssessing => 'Assessing your pronunciation…';
+
+  @override
+  String get micPermissionDenied =>
+      'Voca needs the microphone to score your pronunciation. You can allow it in Settings.';
+
+  @override
+  String get recordingTooShort => 'That was too short. Say the whole word.';
+
+  @override
+  String get recordingFailed => 'Couldn’t record. Try again.';
+
+  @override
+  String get yourPronunciation => 'Your pronunciation';
+
+  @override
+  String get scoreAccuracy => 'Accuracy';
+
+  @override
+  String get scoreFluency => 'Fluency';
+
+  @override
+  String get scoreCompleteness => 'Completeness';
+
+  @override
+  String get soundsToWorkOn => 'Sounds to work on';
+
+  @override
+  String feedbackMispronunciation(String word) {
+    return 'The sound in “$word” wasn’t quite right.';
+  }
+
+  @override
+  String feedbackOmission(String word) {
+    return 'You left out part of “$word”.';
+  }
+
+  @override
+  String feedbackInsertion(String word) {
+    return 'You added an extra sound to “$word”.';
+  }
+
+  @override
+  String feedbackUnexpectedBreak(String word) {
+    return 'You paused in the middle of “$word”.';
+  }
+
+  @override
+  String feedbackMissingBreak(String word) {
+    return 'Say “$word” as its own word, with a short pause.';
+  }
+
+  @override
+  String feedbackMonotone(String word) {
+    return 'Try “$word” with more rise and fall.';
+  }
+
+  @override
+  String get tipTongueBetweenTeeth =>
+      'Put your tongue tip lightly between your teeth and blow — no voice.';
+
+  @override
+  String get tipTongueBetweenTeethVoiced =>
+      'Tongue tip between your teeth, and add your voice.';
+
+  @override
+  String get tipRoundLips =>
+      'Round your lips into a small circle before the sound.';
+
+  @override
+  String get tipTeethOnLip =>
+      'Rest your top teeth on your lower lip and let it buzz.';
+
+  @override
+  String get tipCurlTongueBack =>
+      'Curl your tongue back, and don’t let it touch the roof.';
+
+  @override
+  String get tipTongueTipToRidge =>
+      'Touch your tongue tip to the ridge behind your top teeth.';
+
+  @override
+  String get tipBackOfTongue =>
+      'Let the back of your tongue close, and send the air through your nose.';
+
+  @override
+  String get tipOpenJawWide => 'Open your jaw wider and spread your lips.';
+
+  @override
+  String get tipShortRelaxedVowel =>
+      'Keep it short and relaxed — don’t stretch it.';
+
+  @override
+  String get tipLongTenseVowel =>
+      'Hold it longer and smile slightly as you say it.';
 
   @override
   String get signOut => 'Sign out';

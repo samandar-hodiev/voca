@@ -4,6 +4,11 @@
          RELEASE build would ship with no network access at all. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Recording a learner saying a word is the product. The permission is requested at
+         the moment the microphone is first used, not at launch, so the ask arrives with a
+         reason the person can see. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
     <application
         android:label="voca"
         android:name="${applicationName}"

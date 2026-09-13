@@ -1,21 +1,32 @@
-/// The sheet a word opens into: the word itself, and where recording will happen.
+/// The sheet a word opens into: the word, the microphone, and the score that comes back.
 ///
-/// Recording and scoring are the pronunciation assessment feature, which is not built yet.
-/// The control is shown, disabled, and says so. A button that does nothing when tapped is
-/// worse than one that is honestly unavailable.
+/// The whole loop happens here rather than on a pushed page. Saying a word takes about a
+/// second; sending a learner to another screen and back for that would cost more attention
+/// than the attempt itself. The sheet swaps its lower half between the control and the
+/// result, and the word stays on screen throughout so there is never a score without the
+/// thing it is a score of.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/glass_surface.dart';
 import '../../../../core/widgets/sound_symbol.dart';
-import '../../domain/entities/practice_item.dart';
 import '../../domain/entities/word.dart';
 import '../../../../core/widgets/liquid_drop.dart';
+import '../../../pronunciation/domain/entities/pronunciation_result.dart';
+import '../../../pronunciation/presentation/controllers/recording_controller.dart';
+import '../../../pronunciation/presentation/failure_text.dart';
+import '../../../pronunciation/presentation/feedback_text.dart';
+import '../../../pronunciation/presentation/widgets/feedback_tip.dart';
+import '../../../pronunciation/presentation/widgets/phoneme_chip.dart';
+import '../../../pronunciation/presentation/widgets/score_ring.dart';
+import '../../../pronunciation/presentation/widgets/word_score_row.dart';
 import '../../../../l10n/l10n.dart';
 
 Future<void> showWordPracticeSheet(BuildContext context, Word word) {
@@ -30,20 +41,20 @@ Future<void> showWordPracticeSheet(BuildContext context, Word word) {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _WordPracticeSheet(attempt: PracticeAttempt(word: word)),
+    builder: (_) => _WordPracticeSheet(word: word),
   );
 }
 
-class _WordPracticeSheet extends StatelessWidget {
-  const _WordPracticeSheet({required this.attempt});
+class _WordPracticeSheet extends ConsumerWidget {
+  const _WordPracticeSheet({required this.word});
 
-  final PracticeAttempt attempt;
+  final Word word;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.vocaColors;
     final text = context.vocaText;
-    final word = attempt.word;
+    final state = ref.watch(attemptControllerProvider);
 
     return Padding(
       padding: const EdgeInsets.all(VocaSpacing.md),
@@ -94,18 +105,12 @@ class _WordPracticeSheet extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: VocaSpacing.xl),
-              Semantics(
-                button: true,
-                enabled: false,
-                label: context.l10n.recordingUnavailable,
-                child: const ExcludeSemantics(child: _MicButton()),
-              ),
-              const SizedBox(height: VocaSpacing.sm),
-              Text(
-                context.l10n.scoringComingNext,
-                style: text.caption.copyWith(color: colors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
+
+              if (state.status == AttemptStatus.scored)
+                _Result(result: state.result!)
+              else
+                _Recorder(word: word, state: state),
+
               const SizedBox(height: VocaSpacing.lg),
               SecondaryButton(
                 label: context.l10n.close,
@@ -113,6 +118,200 @@ class _WordPracticeSheet extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The control half: the microphone, what it is doing, and anything that went wrong.
+class _Recorder extends ConsumerWidget {
+  const _Recorder({required this.word, required this.state});
+
+  final Word word;
+  final AttemptState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.vocaColors;
+    final text = context.vocaText;
+    final l10n = context.l10n;
+
+    final caption = switch (state.status) {
+      AttemptStatus.recording => l10n.micRecording,
+      AttemptStatus.assessing => l10n.micAssessing,
+      _ => l10n.micTapToRecord,
+    };
+
+    // A failure is shown above the button, and the button stays live: the way out of
+    // every one of these is to say it again.
+    final problem = state.problem;
+    final failure = state.failure;
+    final error = problem != null
+        ? recordingProblemMessage(l10n, problem)
+        : failure != null
+        ? assessmentFailureMessage(l10n, failure)
+        : null;
+
+    return Column(
+      children: [
+        if (error != null) ...[
+          Semantics(
+            liveRegion: true,
+            child: GlassSurface(
+              blur: false,
+              showShadow: false,
+              tint: colors.errorMuted,
+              borderRadius: VocaRadius.mediumAll,
+              padding: const EdgeInsets.all(VocaSpacing.sm),
+              child: Text(
+                error,
+                style: text.bodyMedium.copyWith(color: colors.onErrorMuted),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          const SizedBox(height: VocaSpacing.md),
+        ],
+        Semantics(
+          button: true,
+          enabled: state.status != AttemptStatus.assessing,
+          label: caption,
+          child: ExcludeSemantics(
+            // Keyed because the floating bar's Practice tab wears the same microphone
+            // icon, and so does the try-again button: an icon finder would be ambiguous.
+            child: _MicButton(
+              key: const ValueKey('mic-button'),
+              status: state.status,
+              onTap: state.status == AttemptStatus.assessing
+                  ? null
+                  : () => ref
+                        .read(attemptControllerProvider.notifier)
+                        .toggle(word.text),
+            ),
+          ),
+        ),
+        const SizedBox(height: VocaSpacing.sm),
+        Text(
+          caption,
+          style: text.caption.copyWith(color: colors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+/// The result half: the verdict, then what to do about it.
+class _Result extends ConsumerWidget {
+  const _Result({required this.result});
+
+  final PronunciationResult result;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final text = context.vocaText;
+    final colors = context.vocaColors;
+    final l10n = context.l10n;
+    final weak = result.weakestSounds;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: ScoreRing(
+            score: result.scores.overall,
+            label: l10n.yourPronunciation,
+          ),
+        ),
+        const SizedBox(height: VocaSpacing.md),
+        Row(
+          children: [
+            _MiniScore(
+              label: l10n.scoreAccuracy,
+              value: result.scores.accuracy,
+            ),
+            _MiniScore(label: l10n.scoreFluency, value: result.scores.fluency),
+            _MiniScore(
+              label: l10n.scoreCompleteness,
+              value: result.scores.completeness,
+            ),
+          ],
+        ),
+
+        // The sounds first: they are what the next attempt should change.
+        if (weak.isNotEmpty) ...[
+          const SizedBox(height: VocaSpacing.lg),
+          Text(
+            l10n.soundsToWorkOn,
+            style: text.subtitle.copyWith(color: colors.textPrimary),
+          ),
+          const SizedBox(height: VocaSpacing.xs),
+          Wrap(
+            spacing: VocaSpacing.xs,
+            runSpacing: VocaSpacing.xxs,
+            children: [
+              for (final p in weak)
+                PhonemeChip(phoneme: p.phoneme, accuracy: p.accuracy),
+            ],
+          ),
+        ],
+
+        // Per-word breakdown only when there is more than one word: for a single word the
+        // ring above already said it, and repeating the number is noise.
+        if (result.words.length > 1) ...[
+          const SizedBox(height: VocaSpacing.md),
+          for (final w in result.words) WordScoreRow(result: w),
+        ],
+
+        if (result.feedback.isNotEmpty) ...[
+          const SizedBox(height: VocaSpacing.md),
+          for (final f in result.feedback)
+            if (feedbackMessage(l10n, f.messageKey, f.word ?? '') case final m?)
+              FeedbackTip(message: m, tip: feedbackTip(l10n, f.tipKey)),
+        ],
+
+        const SizedBox(height: VocaSpacing.md),
+        PrimaryButton(
+          label: l10n.retry,
+          icon: Icons.mic_rounded,
+          onPressed: () => ref.read(attemptControllerProvider.notifier).reset(),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniScore extends StatelessWidget {
+  const _MiniScore({required this.label, required this.value});
+
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.vocaColors;
+    final text = context.vocaText;
+
+    return Expanded(
+      child: Semantics(
+        label: '$label: ${value.round()}',
+        excludeSemantics: true,
+        child: Column(
+          children: [
+            Text(
+              '${value.round()}',
+              style: text.subtitle.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              label,
+              style: text.caption.copyWith(color: colors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -131,21 +330,20 @@ class _WordPracticeSheet extends StatelessWidget {
 /// inside of the rim, and the specular rim itself. On top of that sits the one thing a
 /// flat pane does not need — a caustic, the pool of light that gathers inside a drop and
 /// is what makes a circle read as domed rather than printed.
-///
-/// Disabled until pronunciation scoring exists, and it says so three ways that do not rely
-/// on colour: the semantics mark the button disabled, the caption underneath says the
-/// feature is coming, and the glass carries less colour than an enabled control.
 class _MicButton extends StatelessWidget {
-  const _MicButton();
+  const _MicButton({super.key, required this.status, this.onTap});
 
-  /// Big enough to be the thing the sheet is about, and to stay a comfortable target once
-  /// it can actually be pressed.
+  final AttemptStatus status;
+  final VoidCallback? onTap;
+
+  /// Big enough to be the thing the sheet is about, and a comfortable target.
   static const size = 88.0;
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(size / 2);
+    final recording = status == AttemptStatus.recording;
 
     // The light mint pair in both themes. The primary button drops to deeper greens in
     // dark because a white label has to sit on it, but nothing is written on this disc,
@@ -153,43 +351,47 @@ class _MicButton extends StatelessWidget {
     const start = PremiumGreen.start;
     const end = PremiumGreen.end;
 
-    // Thinner than the primary button in light, because the control cannot be used yet
-    // and should read as green glass waiting rather than as a call to action. Thicker in
-    // dark, because thinning a colour over black darkens it instead of lightening it.
-    final alpha = dark ? 0.70 : PremiumGreen.alphaLight * 0.72;
+    // Thicker in dark, because thinning a colour over black darkens it instead of
+    // lightening it. Fuller while recording, so the state reads across the room and not
+    // only from the caption.
+    final base = dark ? 0.70 : PremiumGreen.alphaLight * 0.72;
+    final alpha = recording ? (base + 0.18).clamp(0.0, 1.0) : base;
 
-    return SizedBox.square(
-      dimension: size,
-      child: GlassSurface(
-        borderRadius: radius,
-        padding: EdgeInsets.zero,
-        borderWidth: 1.2,
-        // The gradient is the fill: the theme tint would mute the green under it.
-        tint: Colors.transparent,
-        tintGradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            start.withValues(alpha: alpha),
-            end.withValues(alpha: alpha),
-          ],
-        ),
-        highlight: Colors.white.withValues(alpha: 0.42),
-        // The edge lens: light gathering just inside the rim, as it does at the edge of a
-        // drop of water. Brighter than the theme's, because it is read against mint here
-        // rather than against a pale card.
-        edgeLight: Colors.white.withValues(alpha: dark ? 0.38 : 0.55),
-        rimTop: Colors.white.withValues(alpha: 0.85),
-        rimBottom: end.withValues(alpha: 0.5),
-        shadows: [
-          BoxShadow(
-            color: end.withValues(alpha: 0.22),
-            blurRadius: 18,
-            spreadRadius: -8,
-            offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox.square(
+        dimension: size,
+        child: GlassSurface(
+          borderRadius: radius,
+          padding: EdgeInsets.zero,
+          borderWidth: 1.2,
+          // The gradient is the fill: the theme tint would mute the green under it.
+          tint: Colors.transparent,
+          tintGradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              start.withValues(alpha: alpha),
+              end.withValues(alpha: alpha),
+            ],
           ),
-        ],
-        child: const _MicFace(),
+          highlight: Colors.white.withValues(alpha: 0.42),
+          // The edge lens: light gathering just inside the rim, as it does at the edge of
+          // a drop of water. Brighter than the theme's, because it is read against mint
+          // here rather than against a pale card.
+          edgeLight: Colors.white.withValues(alpha: dark ? 0.38 : 0.55),
+          rimTop: Colors.white.withValues(alpha: 0.85),
+          rimBottom: end.withValues(alpha: 0.5),
+          shadows: [
+            BoxShadow(
+              color: end.withValues(alpha: recording ? 0.34 : 0.22),
+              blurRadius: recording ? 26 : 18,
+              spreadRadius: -8,
+              offset: const Offset(0, 6),
+            ),
+          ],
+          child: _MicFace(status: status),
+        ),
       ),
     );
   }
@@ -197,7 +399,9 @@ class _MicButton extends StatelessWidget {
 
 /// What sits inside the glass: the caustics, then the mark.
 class _MicFace extends StatelessWidget {
-  const _MicFace();
+  const _MicFace({required this.status});
+
+  final AttemptStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -244,11 +448,22 @@ class _MicFace extends StatelessWidget {
             ),
           ),
         ),
-        Icon(
-          Icons.mic_rounded,
-          size: size * 0.4,
-          color: PremiumGreen.label.withValues(alpha: 0.8),
-        ),
+        if (status == AttemptStatus.assessing)
+          SizedBox.square(
+            dimension: size * 0.4,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: PremiumGreen.label.withValues(alpha: 0.8),
+            ),
+          )
+        else
+          Icon(
+            status == AttemptStatus.recording
+                ? Icons.stop_rounded
+                : Icons.mic_rounded,
+            size: size * 0.4,
+            color: PremiumGreen.label.withValues(alpha: 0.8),
+          ),
       ],
     );
   }

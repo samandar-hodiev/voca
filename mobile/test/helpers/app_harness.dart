@@ -25,6 +25,9 @@ import 'package:voca/features/profile/presentation/controllers/profile_controlle
 import 'package:voca/features/progress/data/repositories/progress_repository_impl.dart';
 import 'package:voca/features/progress/domain/repositories/progress_repository.dart';
 import 'package:voca/features/progress/presentation/controllers/progress_controller.dart';
+import 'package:voca/core/audio/audio_recorder.dart';
+import 'package:voca/features/pronunciation/domain/repositories/pronunciation_repository.dart';
+import 'package:voca/features/pronunciation/presentation/controllers/recording_controller.dart';
 
 /// Returns the widget to pump and the container, so a test can read providers directly.
 ///
@@ -43,6 +46,10 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
   HomeRepository? homeRepository,
   PracticeRepository? practiceRepository,
   ProgressRepository? progressRepository,
+  // The microphone and the assessment endpoint. A test that exercises the record loop
+  // supplies both; no test may reach either for real.
+  Recorder? recorder,
+  PronunciationRepository? pronunciationRepository,
 }) {
   // A stored session is what the startup state machine checks, so seeding the tokens is
   // how a test says "this person is already signed in".
@@ -85,6 +92,11 @@ import 'package:voca/features/progress/presentation/controllers/progress_control
       progressRepositoryProvider.overrideWithValue(
         progressRepository ?? MockProgressRepository(latency: Duration.zero),
       ),
+      if (recorder != null) recorderProvider.overrideWithValue(recorder),
+      if (pronunciationRepository != null)
+        pronunciationRepositoryProvider.overrideWithValue(
+          pronunciationRepository,
+        ),
     ],
   );
 

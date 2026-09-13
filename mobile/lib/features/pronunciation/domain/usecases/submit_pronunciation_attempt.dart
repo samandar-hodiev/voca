@@ -1,3 +1,24 @@
-// pronunciation/domain: THE CORE USE CASE. Uploads audio to POST /api/v1/pronunciation/attempts with an Idempotency-Key so a repeated submit returns the original result instead of consuming quota twice (ARCHITECTURE.md 6.5).
-//
-// Layer rules: ARCHITECTURE.md 4.2 (what belongs in each layer), 31.1 (dependencies).
+/// Sends one recording for assessment.
+library;
+
+import '../../../auth/domain/repositories/auth_repository.dart';
+import '../entities/pronunciation_result.dart';
+import '../repositories/pronunciation_repository.dart';
+
+class SubmitPronunciationAttempt {
+  const SubmitPronunciationAttempt(this._repository);
+
+  final PronunciationRepository _repository;
+
+  Future<Result<PronunciationResult>> call({
+    required String audioPath,
+    required String referenceText,
+    required String language,
+    required int durationMs,
+  }) => _repository.submitAttempt(
+    audioPath: audioPath,
+    referenceText: referenceText,
+    language: language,
+    durationMs: durationMs,
+  );
+}

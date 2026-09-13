@@ -280,6 +280,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorValidation => 'В данных есть ошибка.';
 
   @override
+  String get errorNoSpeech => 'Речь не слышна. Попробуйте в более тихом месте.';
+
+  @override
+  String get errorAudioTooLong =>
+      'Запись слишком длинная. Произнесите только слово.';
+
+  @override
+  String get errorAudioFormat =>
+      'Эту запись не удалось оценить. Попробуйте ещё раз.';
+
+  @override
+  String get errorAssessmentUnavailable =>
+      'Оценка сейчас недоступна. Повторите чуть позже.';
+
+  @override
+  String get errorUsageLimit => 'Вы достигли сегодняшнего лимита практики.';
+
+  @override
   String get errorGeneric => 'Что-то пошло не так. Попробуйте ещё раз.';
 
   @override
@@ -344,6 +362,106 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get emailNotEditable =>
       'Почта — это ваш вход в аккаунт, поэтому изменить её здесь нельзя.';
+
+  @override
+  String get micTapToRecord => 'Нажмите, чтобы записать';
+
+  @override
+  String get micRecording => 'Идёт запись… нажмите, чтобы остановить';
+
+  @override
+  String get micAssessing => 'Оцениваем ваше произношение…';
+
+  @override
+  String get micPermissionDenied =>
+      'Для оценки произношения нужен микрофон. Разрешите его в настройках.';
+
+  @override
+  String get recordingTooShort => 'Слишком коротко. Произнесите слово целиком.';
+
+  @override
+  String get recordingFailed => 'Не удалось записать. Попробуйте ещё раз.';
+
+  @override
+  String get yourPronunciation => 'Ваше произношение';
+
+  @override
+  String get scoreAccuracy => 'Точность';
+
+  @override
+  String get scoreFluency => 'Беглость';
+
+  @override
+  String get scoreCompleteness => 'Полнота';
+
+  @override
+  String get soundsToWorkOn => 'Звуки, над которыми стоит поработать';
+
+  @override
+  String feedbackMispronunciation(String word) {
+    return 'Звук в слове «$word» вышел не совсем верно.';
+  }
+
+  @override
+  String feedbackOmission(String word) {
+    return 'Вы пропустили часть слова «$word».';
+  }
+
+  @override
+  String feedbackInsertion(String word) {
+    return 'Вы добавили лишний звук в слово «$word».';
+  }
+
+  @override
+  String feedbackUnexpectedBreak(String word) {
+    return 'Вы сделали паузу в середине слова «$word».';
+  }
+
+  @override
+  String feedbackMissingBreak(String word) {
+    return 'Произнесите «$word» как отдельное слово, с короткой паузой.';
+  }
+
+  @override
+  String feedbackMonotone(String word) {
+    return 'Произнесите «$word» с большей интонацией.';
+  }
+
+  @override
+  String get tipTongueBetweenTeeth =>
+      'Слегка положите кончик языка между зубами и выдохните — без голоса.';
+
+  @override
+  String get tipTongueBetweenTeethVoiced =>
+      'Кончик языка между зубами, и добавьте голос.';
+
+  @override
+  String get tipRoundLips => 'Округлите губы в маленький кружок перед звуком.';
+
+  @override
+  String get tipTeethOnLip =>
+      'Поставьте верхние зубы на нижнюю губу и дайте ей завибрировать.';
+
+  @override
+  String get tipCurlTongueBack => 'Загните язык назад, не касаясь нёба.';
+
+  @override
+  String get tipTongueTipToRidge =>
+      'Коснитесь кончиком языка бугорка за верхними зубами.';
+
+  @override
+  String get tipBackOfTongue =>
+      'Сомкните заднюю часть языка и направьте воздух через нос.';
+
+  @override
+  String get tipOpenJawWide => 'Шире откройте челюсть и растяните губы.';
+
+  @override
+  String get tipShortRelaxedVowel => 'Коротко и расслабленно — не тяните.';
+
+  @override
+  String get tipLongTenseVowel =>
+      'Держите дольше и слегка улыбнитесь при произнесении.';
 
   @override
   String get signOut => 'Выйти из аккаунта';

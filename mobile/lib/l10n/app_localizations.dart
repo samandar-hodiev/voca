@@ -610,6 +610,36 @@ abstract class AppLocalizations {
   /// **'Some of the details aren’t right.'**
   String get errorValidation;
 
+  /// No description provided for @errorNoSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t hear any speech. Try again somewhere quieter.'**
+  String get errorNoSpeech;
+
+  /// No description provided for @errorAudioTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'That recording was too long. Just say the word.'**
+  String get errorAudioTooLong;
+
+  /// No description provided for @errorAudioFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'That recording couldn’t be assessed. Try again.'**
+  String get errorAudioFormat;
+
+  /// No description provided for @errorAssessmentUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Scoring isn’t available right now. Try again in a moment.'**
+  String get errorAssessmentUnavailable;
+
+  /// No description provided for @errorUsageLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ve reached today’s practice limit.'**
+  String get errorUsageLimit;
+
   /// No description provided for @errorGeneric.
   ///
   /// In en, this message translates to:
@@ -729,6 +759,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your email is how you sign in, so it cannot be changed here.'**
   String get emailNotEditable;
+
+  /// No description provided for @micTapToRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to record'**
+  String get micTapToRecord;
+
+  /// No description provided for @micRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording… tap to stop'**
+  String get micRecording;
+
+  /// No description provided for @micAssessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessing your pronunciation…'**
+  String get micAssessing;
+
+  /// No description provided for @micPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Voca needs the microphone to score your pronunciation. You can allow it in Settings.'**
+  String get micPermissionDenied;
+
+  /// No description provided for @recordingTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'That was too short. Say the whole word.'**
+  String get recordingTooShort;
+
+  /// No description provided for @recordingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t record. Try again.'**
+  String get recordingFailed;
+
+  /// No description provided for @yourPronunciation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pronunciation'**
+  String get yourPronunciation;
+
+  /// No description provided for @scoreAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Accuracy'**
+  String get scoreAccuracy;
+
+  /// No description provided for @scoreFluency.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluency'**
+  String get scoreFluency;
+
+  /// No description provided for @scoreCompleteness.
+  ///
+  /// In en, this message translates to:
+  /// **'Completeness'**
+  String get scoreCompleteness;
+
+  /// No description provided for @soundsToWorkOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sounds to work on'**
+  String get soundsToWorkOn;
+
+  /// No description provided for @feedbackMispronunciation.
+  ///
+  /// In en, this message translates to:
+  /// **'The sound in “{word}” wasn’t quite right.'**
+  String feedbackMispronunciation(String word);
+
+  /// No description provided for @feedbackOmission.
+  ///
+  /// In en, this message translates to:
+  /// **'You left out part of “{word}”.'**
+  String feedbackOmission(String word);
+
+  /// No description provided for @feedbackInsertion.
+  ///
+  /// In en, this message translates to:
+  /// **'You added an extra sound to “{word}”.'**
+  String feedbackInsertion(String word);
+
+  /// No description provided for @feedbackUnexpectedBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'You paused in the middle of “{word}”.'**
+  String feedbackUnexpectedBreak(String word);
+
+  /// No description provided for @feedbackMissingBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Say “{word}” as its own word, with a short pause.'**
+  String feedbackMissingBreak(String word);
+
+  /// No description provided for @feedbackMonotone.
+  ///
+  /// In en, this message translates to:
+  /// **'Try “{word}” with more rise and fall.'**
+  String feedbackMonotone(String word);
+
+  /// No description provided for @tipTongueBetweenTeeth.
+  ///
+  /// In en, this message translates to:
+  /// **'Put your tongue tip lightly between your teeth and blow — no voice.'**
+  String get tipTongueBetweenTeeth;
+
+  /// No description provided for @tipTongueBetweenTeethVoiced.
+  ///
+  /// In en, this message translates to:
+  /// **'Tongue tip between your teeth, and add your voice.'**
+  String get tipTongueBetweenTeethVoiced;
+
+  /// No description provided for @tipRoundLips.
+  ///
+  /// In en, this message translates to:
+  /// **'Round your lips into a small circle before the sound.'**
+  String get tipRoundLips;
+
+  /// No description provided for @tipTeethOnLip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest your top teeth on your lower lip and let it buzz.'**
+  String get tipTeethOnLip;
+
+  /// No description provided for @tipCurlTongueBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Curl your tongue back, and don’t let it touch the roof.'**
+  String get tipCurlTongueBack;
+
+  /// No description provided for @tipTongueTipToRidge.
+  ///
+  /// In en, this message translates to:
+  /// **'Touch your tongue tip to the ridge behind your top teeth.'**
+  String get tipTongueTipToRidge;
+
+  /// No description provided for @tipBackOfTongue.
+  ///
+  /// In en, this message translates to:
+  /// **'Let the back of your tongue close, and send the air through your nose.'**
+  String get tipBackOfTongue;
+
+  /// No description provided for @tipOpenJawWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your jaw wider and spread your lips.'**
+  String get tipOpenJawWide;
+
+  /// No description provided for @tipShortRelaxedVowel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it short and relaxed — don’t stretch it.'**
+  String get tipShortRelaxedVowel;
+
+  /// No description provided for @tipLongTenseVowel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold it longer and smile slightly as you say it.'**
+  String get tipLongTenseVowel;
 
   /// No description provided for @signOut.
   ///

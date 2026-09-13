@@ -277,6 +277,25 @@ class AppLocalizationsUz extends AppLocalizations {
   String get errorValidation => 'Kiritilgan ma’lumotlarda xatolik bor.';
 
   @override
+  String get errorNoSpeech =>
+      'Ovoz eshitilmadi. Tinchroq joyda qayta urinib ko‘ring.';
+
+  @override
+  String get errorAudioTooLong =>
+      'Yozuv juda uzun bo‘ldi. Faqat so‘zning o‘zini ayting.';
+
+  @override
+  String get errorAudioFormat =>
+      'Bu yozuvni baholab bo‘lmadi. Qaytadan urinib ko‘ring.';
+
+  @override
+  String get errorAssessmentUnavailable =>
+      'Baholash hozir ishlamayapti. Birozdan so‘ng urinib ko‘ring.';
+
+  @override
+  String get errorUsageLimit => 'Bugungi mashq chegarasiga yetdingiz.';
+
+  @override
   String get errorGeneric => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.';
 
   @override
@@ -342,6 +361,108 @@ class AppLocalizationsUz extends AppLocalizations {
   @override
   String get emailNotEditable =>
       'Pochta orqali tizimga kirasiz, shuning uchun uni bu yerdan o‘zgartirib bo‘lmaydi.';
+
+  @override
+  String get micTapToRecord => 'Yozish uchun bosing';
+
+  @override
+  String get micRecording => 'Yozilmoqda… to‘xtatish uchun bosing';
+
+  @override
+  String get micAssessing => 'Talaffuzingiz baholanmoqda…';
+
+  @override
+  String get micPermissionDenied =>
+      'Talaffuzni baholash uchun mikrofon kerak. Uni Sozlamalardan ruxsat berishingiz mumkin.';
+
+  @override
+  String get recordingTooShort => 'Juda qisqa bo‘ldi. So‘zni to‘liq ayting.';
+
+  @override
+  String get recordingFailed => 'Yozib bo‘lmadi. Qaytadan urinib ko‘ring.';
+
+  @override
+  String get yourPronunciation => 'Sizning talaffuzingiz';
+
+  @override
+  String get scoreAccuracy => 'Aniqlik';
+
+  @override
+  String get scoreFluency => 'Ravonlik';
+
+  @override
+  String get scoreCompleteness => 'To‘liqlik';
+
+  @override
+  String get soundsToWorkOn => 'Ustida ishlash kerak bo‘lgan tovushlar';
+
+  @override
+  String feedbackMispronunciation(String word) {
+    return '“$word” so‘zidagi tovush unchalik to‘g‘ri chiqmadi.';
+  }
+
+  @override
+  String feedbackOmission(String word) {
+    return '“$word” so‘zining bir qismini tushirib qoldirdingiz.';
+  }
+
+  @override
+  String feedbackInsertion(String word) {
+    return '“$word” so‘ziga ortiqcha tovush qo‘shdingiz.';
+  }
+
+  @override
+  String feedbackUnexpectedBreak(String word) {
+    return '“$word” so‘zining o‘rtasida to‘xtab qoldingiz.';
+  }
+
+  @override
+  String feedbackMissingBreak(String word) {
+    return '“$word” ni alohida so‘z sifatida, qisqa pauza bilan ayting.';
+  }
+
+  @override
+  String feedbackMonotone(String word) {
+    return '“$word” ni ohangni ko‘tarib-tushirib ayting.';
+  }
+
+  @override
+  String get tipTongueBetweenTeeth =>
+      'Til uchini tishlar orasiga yengil qo‘yib puflang — ovoz chiqarmang.';
+
+  @override
+  String get tipTongueBetweenTeethVoiced =>
+      'Til uchi tishlar orasida, endi ovozni ham qo‘shing.';
+
+  @override
+  String get tipRoundLips =>
+      'Tovushdan oldin lablarni kichkina doira qilib yumaloqlang.';
+
+  @override
+  String get tipTeethOnLip =>
+      'Yuqori tishlarni pastki labga tekkizib, jiringlatib chiqaring.';
+
+  @override
+  String get tipCurlTongueBack =>
+      'Tilni orqaga buking, ammo tanglayga tegmasin.';
+
+  @override
+  String get tipTongueTipToRidge =>
+      'Til uchini yuqori tishlar ortidagi do‘nglikka tekkizing.';
+
+  @override
+  String get tipBackOfTongue =>
+      'Til orqasini yoping va havoni burun orqali chiqaring.';
+
+  @override
+  String get tipOpenJawWide => 'Jag‘ni kengroq oching va lablarni yoying.';
+
+  @override
+  String get tipShortRelaxedVowel => 'Qisqa va bo‘sh ayting — cho‘zmang.';
+
+  @override
+  String get tipLongTenseVowel =>
+      'Uzunroq ushlang va aytayotganda biroz tabassum qiling.';
 
   @override
   String get signOut => 'Hisobdan chiqish';

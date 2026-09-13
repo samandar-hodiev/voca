@@ -18,6 +18,9 @@ import 'package:voca/features/progress/domain/repositories/progress_repository.d
 
 import '../helpers/app_harness.dart';
 import '../helpers/pump_app.dart';
+import 'package:voca/features/auth/domain/repositories/auth_repository.dart';
+import 'package:voca/features/pronunciation/presentation/controllers/recording_controller.dart';
+import '../helpers/pronunciation_fakes.dart';
 
 /// A fixed number of frames rather than pumpAndSettle: the tab drop and the reveal both
 /// run on entry, and a test should say how long it lets them run.
@@ -183,6 +186,14 @@ void main() {
         ),
       ),
       surfaceSize: const Size(320, 420),
+      // The sheet now owns the record loop, so it reaches for a microphone and an
+      // assessment endpoint. Neither exists in a test, and this case is about layout.
+      overrides: [
+        recorderProvider.overrideWithValue(FakeRecorder()),
+        pronunciationRepositoryProvider.overrideWithValue(
+          FakeRepository(() => Ok(sampleResult())),
+        ),
+      ],
     );
 
     await tester.tap(find.text('open'));

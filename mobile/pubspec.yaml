@@ -47,6 +47,7 @@ dependencies:
   # where users, sessions and every business rule actually live (ADR-019).
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
+  record: ^7.1.1
 
 dev_dependencies:
   integration_test:
