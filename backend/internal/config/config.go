@@ -94,6 +94,11 @@ type Config struct {
 	// default so a fresh checkout runs the whole pipeline with no vendor account.
 	SpeechProvider string
 
+	// Credentials for the Azure Speech resource. Read here and passed to the adapter;
+	// the key never leaves the backend and is never logged.
+	AzureSpeechKey    string
+	AzureSpeechRegion string
+
 	// Bounds on an uploaded recording, enforced before any provider call so a bad upload
 	// costs nothing.
 	MaxAudioBytes      int
@@ -138,6 +143,8 @@ func Load() (Config, error) {
 		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
 		FirebaseProjectID:   strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID")),
 		SpeechProvider:      strings.ToLower(getEnv("SPEECH_PROVIDER", "mock")),
+		AzureSpeechKey:      strings.TrimSpace(os.Getenv("AZURE_SPEECH_KEY")),
+		AzureSpeechRegion:   strings.ToLower(strings.TrimSpace(os.Getenv("AZURE_SPEECH_REGION"))),
 		MaxAudioBytes:       getEnvInt("MAX_AUDIO_SIZE_BYTES", 2*1024*1024),
 		MaxAudioDurationMS:  getEnvInt("MAX_AUDIO_DURATION_MS", 15_000),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),

@@ -21,6 +21,7 @@ import (
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
 	firebaseauth "github.com/samandar-hodiev/voca/backend/internal/integrations/firebase"
+	speechazure "github.com/samandar-hodiev/voca/backend/internal/integrations/speech/azure"
 	speechmock "github.com/samandar-hodiev/voca/backend/internal/integrations/speech/mock"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
@@ -177,10 +178,22 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 	var speechProvider pronunciation.SpeechProvider = speechmock.New()
 	switch cfg.SpeechProvider {
 	case "azure":
-		// The Azure adapter lands once a Speech resource exists. Until then, saying so
-		// beats silently scoring every learner with a fake.
-		log.Warn("speech_provider_azure_not_implemented_using_mock",
-			slog.String("hint", "set SPEECH_PROVIDER=mock, or wait for the Azure adapter"))
+		// A missing key or region is caught here, at startup, rather than on the first
+		// learner's recording. Falling back to the mock keeps the server up, and the
+		// warning says plainly that scores are no longer real.
+		azureProvider, err := speechazure.New(speechazure.Config{
+			Key:    cfg.AzureSpeechKey,
+			Region: cfg.AzureSpeechRegion,
+		}, log)
+		if err != nil {
+			log.Warn("speech_provider_azure_unavailable_using_mock",
+				slog.String("error", err.Error()))
+			break
+		}
+		speechProvider = azureProvider
+		log.Info("speech_provider_selected",
+			slog.String("provider", "azure"),
+			slog.String("region", cfg.AzureSpeechRegion))
 	default:
 		log.Info("speech_provider_selected", slog.String("provider", "mock"))
 	}
