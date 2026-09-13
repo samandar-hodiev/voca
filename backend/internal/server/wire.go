@@ -10,6 +10,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/samandar-hodiev/voca/backend/internal/auth"
 	"github.com/samandar-hodiev/voca/backend/internal/config"
 	"github.com/samandar-hodiev/voca/backend/internal/database"
@@ -31,6 +33,7 @@ import (
 	pronfeedback "github.com/samandar-hodiev/voca/backend/internal/pronunciation/feedback"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/scoring"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/validation"
+	"github.com/samandar-hodiev/voca/backend/internal/subscription"
 	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
 )
 
@@ -198,6 +201,19 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		log.Info("speech_provider_selected", slog.String("provider", "mock"))
 	}
 
+	// The daily quota. Policy lives in subscription; the counting stays inside
+	// pronunciation, against its own table (ARCHITECTURE.md 9.4, 5.5).
+	usageLimiter := subscription.NewUsageLimiter(
+		accountsFromAuth{svc: authService},
+		cfg.FreeDailyAssessmentLimit,
+		cfg.UnlimitedAssessmentEmails,
+		cfg.AppTimezone,
+		log,
+	)
+	log.Info("usage_limit_configured",
+		slog.Int("daily_limit", cfg.FreeDailyAssessmentLimit),
+		slog.Int("unlimited_accounts", len(cfg.UnlimitedAssessmentEmails)))
+
 	pronunciationService := pronunciation.NewService(
 		pronunciation.NewRepository(pool.Pool),
 		speechProvider,
@@ -209,6 +225,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 			MinDurationMS: validation.DefaultLimits().MinDurationMS,
 			MaxDurationMS: cfg.MaxAudioDurationMS,
 		},
+		entitlementsFromSubscription{limiter: usageLimiter},
 		log,
 	)
 
@@ -247,4 +264,41 @@ type jwtVerifier struct{ issuer *jwt.Issuer }
 
 func (v jwtVerifier) VerifyAccessToken(_ context.Context, raw string) (string, error) {
 	return v.issuer.Verify(raw)
+}
+
+// accountsFromAuth lets the usage limiter ask for a person's address without reaching into
+// the auth module's storage. It goes through that module's SERVICE, which is the only
+// surface another module may use (ARCHITECTURE.md 5.5).
+type accountsFromAuth struct{ svc *auth.Service }
+
+func (a accountsFromAuth) EmailByID(ctx context.Context, userID uuid.UUID) (string, error) {
+	me, err := a.svc.Me(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	if me.User.Email == nil {
+		// A guest has no address, and therefore no exemption. Not an error.
+		return "", nil
+	}
+	return *me.User.Email, nil
+}
+
+// entitlementsFromSubscription converts the subscription module's answer into the shape
+// the pronunciation module declared for itself. Neither module names the other; this
+// composition root is the one place they meet.
+type entitlementsFromSubscription struct{ limiter *subscription.UsageLimiter }
+
+func (e entitlementsFromSubscription) Allowance(
+	ctx context.Context, userID uuid.UUID,
+) (pronunciation.Allowance, error) {
+	a, err := e.limiter.Allowance(ctx, userID)
+	if err != nil {
+		return pronunciation.Allowance{}, err
+	}
+	return pronunciation.Allowance{
+		Unlimited:  a.Unlimited,
+		DailyLimit: a.DailyLimit,
+		Since:      a.Since,
+		ResetsAt:   a.ResetsAt,
+	}, nil
 }

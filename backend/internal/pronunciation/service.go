@@ -19,6 +19,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -55,6 +56,10 @@ type Service struct {
 	feedback *feedback.Generator
 	limits   validation.Limits
 	log      *slog.Logger
+
+	// Nil means no limit is enforced, which is what local development and every test
+	// that is not about quota get.
+	entitlements Entitlements
 }
 
 func NewService(
@@ -64,16 +69,18 @@ func NewService(
 	analyzer *analysis.Analyzer,
 	generator *feedback.Generator,
 	limits validation.Limits,
+	entitlements Entitlements,
 	log *slog.Logger,
 ) *Service {
 	return &Service{
-		repo:     repo,
-		provider: provider,
-		scorer:   scorer,
-		analyzer: analyzer,
-		feedback: generator,
-		limits:   limits,
-		log:      log,
+		repo:         repo,
+		provider:     provider,
+		scorer:       scorer,
+		analyzer:     analyzer,
+		feedback:     generator,
+		limits:       limits,
+		entitlements: entitlements,
+		log:          log,
 	}
 }
 
@@ -91,10 +98,11 @@ func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt
 		language = defaultLanguage
 	}
 
-	// Entitlement and the free-tier usage limit belong here, before the provider call, so
-	// a blocked request costs no provider money (ARCHITECTURE.md 6.1 step 2). The
-	// subscription module is not built yet; when it is, its check goes at this point and
-	// nothing else in this pipeline changes.
+	// The free-tier limit is enforced here, before the provider call, so a blocked
+	// request costs no provider money (ARCHITECTURE.md 6.1 step 2).
+	if err := s.checkAllowance(ctx, cmd.UserID); err != nil {
+		return Attempt{}, err
+	}
 
 	audio, err := validation.Validate(cmd.Audio, cmd.ContentType, cmd.DeclaredDurationMS, s.limits)
 	if err != nil {
@@ -158,6 +166,47 @@ func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt
 	attempt.CreatedAt = createdAt
 
 	return attempt, nil
+}
+
+// checkAllowance blocks an attempt that would exceed the account's daily quota.
+//
+// The policy comes from the entitlements port; the counting is done here, against this
+// module's own table. Because only assessed attempts are ever stored, a failed one is
+// invisible to this count — we do not charge somebody for our own outage.
+func (s *Service) checkAllowance(ctx context.Context, userID uuid.UUID) error {
+	if s.entitlements == nil {
+		return nil
+	}
+
+	allowance, err := s.entitlements.Allowance(ctx, userID)
+	if err != nil {
+		return apperr.Internal(err)
+	}
+	if allowance.Unlimited || allowance.DailyLimit <= 0 {
+		return nil
+	}
+
+	used, err := s.repo.CountAttemptsSince(ctx, userID, allowance.Since)
+	if err != nil {
+		return apperr.Internal(err)
+	}
+	if used < allowance.DailyLimit {
+		return nil
+	}
+
+	s.log.Info("usage_limit_reached",
+		slog.String("user_id", userID.String()),
+		slog.Int("limit", allowance.DailyLimit))
+
+	// resets_at is what the app turns into "come back tomorrow at": the client reads it
+	// out of details rather than guessing a rollover hour of its own.
+	return apperr.New(apperr.CodeUsageLimit, http.StatusTooManyRequests,
+		"Bugungi mashq chegarasiga yetdingiz. Ertaga davom ettirasiz.").
+		WithDetails(map[string]any{
+			"resets_at": allowance.ResetsAt.UTC().Format(time.RFC3339),
+			"limit":     allowance.DailyLimit,
+			"used":      used,
+		})
 }
 
 // History is the learner's own recent attempts.

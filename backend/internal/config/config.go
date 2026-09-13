@@ -104,6 +104,19 @@ type Config struct {
 	MaxAudioBytes      int
 	MaxAudioDurationMS int
 
+	// FreeDailyAssessmentLimit is how many assessed attempts one account gets per day.
+	// Configuration rather than a literal, so a pricing experiment does not need a
+	// release (ARCHITECTURE.md 9.4).
+	FreeDailyAssessmentLimit int
+
+	// UnlimitedAssessmentEmails never hit that limit. Intended for the accounts used to
+	// test the product itself, which would otherwise lock themselves out mid-session.
+	UnlimitedAssessmentEmails []string
+
+	// AppTimezone decides when "today" ends for the daily limit. A learner in Tashkent
+	// should get a fresh day at their midnight, not at UTC's.
+	AppTimezone string
+
 	// AvatarDir is where uploaded profile pictures are written. A local directory is the
 	// MVP store; object storage replaces it behind the same port.
 	AvatarDir string
@@ -134,39 +147,44 @@ func Load() (Config, error) {
 	loadDotEnv("backend/.env")
 
 	cfg := Config{
-		AppEnv:              getEnv("APP_ENV", defaultAppEnv),
-		Port:                getEnv("PORT", defaultPort),
-		LogLevel:            getEnv("LOG_LEVEL", defaultLogLevel),
-		DatabaseURL:         getEnv("DATABASE_URL", defaultDatabaseURL),
-		DatabaseMaxConns:    int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
-		JWTSecret:           os.Getenv("JWT_SECRET"),
-		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
-		FirebaseProjectID:   strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID")),
-		SpeechProvider:      strings.ToLower(getEnv("SPEECH_PROVIDER", "mock")),
-		AzureSpeechKey:      strings.TrimSpace(os.Getenv("AZURE_SPEECH_KEY")),
-		AzureSpeechRegion:   strings.ToLower(strings.TrimSpace(os.Getenv("AZURE_SPEECH_REGION"))),
-		MaxAudioBytes:       getEnvInt("MAX_AUDIO_SIZE_BYTES", 2*1024*1024),
-		MaxAudioDurationMS:  getEnvInt("MAX_AUDIO_DURATION_MS", 15_000),
-		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
-		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
-		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),
-		BrevoAPIKey:         strings.TrimSpace(os.Getenv("BREVO_API_KEY")),
-		BrevoFrom:           strings.TrimSpace(os.Getenv("BREVO_FROM")),
-		BrevoFromName:       getEnv("BREVO_FROM_NAME", "Voca"),
-		ResendAPIKey:        strings.TrimSpace(os.Getenv("RESEND_API_KEY")),
-		ResendFrom:          strings.TrimSpace(os.Getenv("RESEND_FROM")),
-		ResendFromName:      getEnv("RESEND_FROM_NAME", "Voca"),
-		SMTPHost:            strings.TrimSpace(os.Getenv("SMTP_HOST")),
-		SMTPPort:            getEnvInt("SMTP_PORT", 587),
-		SMTPUsername:        strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
-		SMTPPassword:        os.Getenv("SMTP_PASSWORD"),
-		SMTPFrom:            strings.TrimSpace(os.Getenv("SMTP_FROM")),
-		SMTPFromName:        strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
-		EmailOutboxDir:      strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
-		TrustedProxies:      splitAndTrim(os.Getenv("TRUSTED_PROXIES")),
-		AuthRateLimitPerMin: getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 20),
-		AvatarDir:           getEnv("AVATAR_DIR", "tmp/avatars"),
-		CORSAllowedOrigins:  splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
+		AppEnv:             getEnv("APP_ENV", defaultAppEnv),
+		Port:               getEnv("PORT", defaultPort),
+		LogLevel:           getEnv("LOG_LEVEL", defaultLogLevel),
+		DatabaseURL:        getEnv("DATABASE_URL", defaultDatabaseURL),
+		DatabaseMaxConns:   int32(getEnvInt("DATABASE_MAX_CONNS", 20)),
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		JWTAccessTTL:       getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
+		FirebaseProjectID:  strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID")),
+		SpeechProvider:     strings.ToLower(getEnv("SPEECH_PROVIDER", "mock")),
+		AzureSpeechKey:     strings.TrimSpace(os.Getenv("AZURE_SPEECH_KEY")),
+		AzureSpeechRegion:  strings.ToLower(strings.TrimSpace(os.Getenv("AZURE_SPEECH_REGION"))),
+		MaxAudioBytes:      getEnvInt("MAX_AUDIO_SIZE_BYTES", 2*1024*1024),
+		MaxAudioDurationMS: getEnvInt("MAX_AUDIO_DURATION_MS", 15_000),
+		// 30 attempts a day is roughly 90 seconds of audio per learner, which keeps a
+		// month of ordinary practice inside the Azure free tier's five hours.
+		FreeDailyAssessmentLimit:  getEnvInt("FREE_DAILY_ASSESSMENT_LIMIT", 30),
+		UnlimitedAssessmentEmails: splitAndTrim(os.Getenv("UNLIMITED_ASSESSMENT_EMAILS")),
+		AppTimezone:               getEnv("APP_TIMEZONE", "Asia/Tashkent"),
+		GitHubWebhookSecret:       os.Getenv("GITHUB_WEBHOOK_SECRET"),
+		TelegramBotToken:          os.Getenv("TELEGRAM_BOT_TOKEN"),
+		TelegramChatID:            os.Getenv("TELEGRAM_CHAT_ID"),
+		BrevoAPIKey:               strings.TrimSpace(os.Getenv("BREVO_API_KEY")),
+		BrevoFrom:                 strings.TrimSpace(os.Getenv("BREVO_FROM")),
+		BrevoFromName:             getEnv("BREVO_FROM_NAME", "Voca"),
+		ResendAPIKey:              strings.TrimSpace(os.Getenv("RESEND_API_KEY")),
+		ResendFrom:                strings.TrimSpace(os.Getenv("RESEND_FROM")),
+		ResendFromName:            getEnv("RESEND_FROM_NAME", "Voca"),
+		SMTPHost:                  strings.TrimSpace(os.Getenv("SMTP_HOST")),
+		SMTPPort:                  getEnvInt("SMTP_PORT", 587),
+		SMTPUsername:              strings.TrimSpace(os.Getenv("SMTP_USERNAME")),
+		SMTPPassword:              os.Getenv("SMTP_PASSWORD"),
+		SMTPFrom:                  strings.TrimSpace(os.Getenv("SMTP_FROM")),
+		SMTPFromName:              strings.TrimSpace(os.Getenv("SMTP_FROM_NAME")),
+		EmailOutboxDir:            strings.TrimSpace(os.Getenv("EMAIL_OUTBOX_DIR")),
+		TrustedProxies:            splitAndTrim(os.Getenv("TRUSTED_PROXIES")),
+		AuthRateLimitPerMin:       getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 20),
+		AvatarDir:                 getEnv("AVATAR_DIR", "tmp/avatars"),
+		CORSAllowedOrigins:        splitAndTrim(os.Getenv("CORS_ALLOWED_ORIGINS")),
 	}
 
 	if err := cfg.validate(); err != nil {

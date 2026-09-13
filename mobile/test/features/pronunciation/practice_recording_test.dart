@@ -159,4 +159,35 @@ void main() {
     // And emphatically not the silence message.
     expect(find.text(uz.errorNoSpeech), findsNothing);
   });
+
+  testWidgets('the daily limit is explained, not blamed on the microphone', (
+    tester,
+  ) async {
+    // Running out of practice for the day is a normal thing to hit, and it is the one
+    // failure here that no amount of trying again will clear. It has to read as a limit.
+    final (app, _) = buildApp(
+      onboardingCompleted: true,
+      signedIn: true,
+      recorder: FakeRecorder(),
+      pronunciationRepository: FakeRepository(
+        () => Err(
+          UsageLimitFailure(
+            message: 'limit reached',
+            resetsAt: DateTime.now().add(const Duration(hours: 3)),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(app);
+    await frames(tester, 30);
+    await openWord(tester);
+
+    await tester.tap(mic);
+    await frames(tester, 4);
+    await tester.tap(mic);
+    await frames(tester, 12);
+
+    expect(find.text(uz.errorUsageLimit), findsOneWidget);
+    expect(find.text(uz.errorNoSpeech), findsNothing);
+  });
 }

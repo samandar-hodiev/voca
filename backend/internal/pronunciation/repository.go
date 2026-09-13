@@ -31,6 +31,12 @@ type Repository interface {
 
 	// RecentAttempts is the learner's own history, newest first.
 	RecentAttempts(ctx context.Context, userID uuid.UUID, limit int) ([]Attempt, error)
+
+	// CountAttemptsSince is how many attempts this account has had inside the current
+	// quota window. Only stored attempts are counted, and an attempt is only stored once
+	// it has been assessed — so a provider outage never spends somebody's quota
+	// (ARCHITECTURE.md 9.4).
+	CountAttemptsSince(ctx context.Context, userID uuid.UUID, since time.Time) (int, error)
 }
 
 type repository struct{ pool *pgxpool.Pool }
@@ -96,6 +102,20 @@ func (r *repository) SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, tim
 		return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: commit: %w", err)
 	}
 	return id, createdAt, nil
+}
+
+func (r *repository) CountAttemptsSince(
+	ctx context.Context, userID uuid.UUID, since time.Time,
+) (int, error) {
+	var n int
+	// Served by pronunciation_attempts_user_idx (user_id, created_at DESC).
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM pronunciation_attempts
+		  WHERE user_id = $1 AND created_at >= $2`, userID, since).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("pronunciation: count attempts: %w", err)
+	}
+	return n, nil
 }
 
 func (r *repository) RecentAttempts(
