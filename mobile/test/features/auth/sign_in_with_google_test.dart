@@ -44,24 +44,29 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> signOut() async => signOutCalls++;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} is not used by these tests');
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError(
+    '${invocation.memberName} is not used by these tests',
+  );
 }
 
 AuthSession session() => const AuthSession(
-      user: AuthUser(
-        id: 'u1',
-        email: 'learner@example.com',
-        emailVerified: true,
-        provider: 'google',
-        isGuest: false,
-      ),
-      accessToken: 'access',
-      refreshToken: 'refresh',
-    );
+  user: AuthUser(
+    id: 'u1',
+    email: 'learner@example.com',
+    emailVerified: true,
+    provider: 'google',
+    isGuest: false,
+  ),
+  accessToken: 'access',
+  refreshToken: 'refresh',
+);
 
 void main() {
-  const answers = OnboardingAnswers(level: 'B1', goal: 'confidence', dailyGoalWords: 10);
+  const answers = OnboardingAnswers(
+    level: 'B1',
+    goal: 'confidence',
+    dailyGoalWords: 10,
+  );
 
   test('a successful sign-in forwards the token and returns the session', () async {
     final tokens = FakeTokens(token: 'firebase-id-token');
@@ -70,29 +75,46 @@ void main() {
     final result = await SignInWithGoogle(tokens, repo)(answers);
 
     expect(result, isA<Ok<AuthSession>>());
-    expect(repo.receivedToken, 'firebase-id-token',
-        reason: 'the token from the identity provider should reach the backend unchanged');
-    expect(repo.receivedAnswers, answers,
-        reason: 'onboarding answers are preferences and should travel with the sign-in');
+    expect(
+      repo.receivedToken,
+      'firebase-id-token',
+      reason:
+          'the token from the identity provider should reach the backend unchanged',
+    );
+    expect(
+      repo.receivedAnswers,
+      answers,
+      reason:
+          'onboarding answers are preferences and should travel with the sign-in',
+    );
   });
 
   // Closing the picker is not an error, and must not produce a message.
-  test('cancelling produces a silent failure and never calls the backend', () async {
-    final tokens = FakeTokens(token: null);
-    final repo = FakeAuthRepository();
+  test(
+    'cancelling produces a silent failure and never calls the backend',
+    () async {
+      final tokens = FakeTokens(token: null);
+      final repo = FakeAuthRepository();
 
-    final result = await SignInWithGoogle(tokens, repo)(answers);
+      final result = await SignInWithGoogle(tokens, repo)(answers);
 
-    expect(result, isA<Err<AuthSession>>());
-    expect((result as Err<AuthSession>).failure, isA<CancelledFailure>());
-    expect(result.failure.message, isEmpty);
-    expect(repo.receivedToken, isNull, reason: 'nothing should be sent when cancelled');
-  });
+      expect(result, isA<Err<AuthSession>>());
+      expect((result as Err<AuthSession>).failure, isA<CancelledFailure>());
+      expect(result.failure.message, isEmpty);
+      expect(
+        repo.receivedToken,
+        isNull,
+        reason: 'nothing should be sent when cancelled',
+      );
+    },
+  );
 
   // Whatever Firebase or the picker throws, the person sees one calm message and never a
   // vendor's internal state.
   test('a provider error becomes a readable failure', () async {
-    final tokens = FakeTokens(throws: StateError('PlatformException(sign_in_failed)'));
+    final tokens = FakeTokens(
+      throws: StateError('PlatformException(sign_in_failed)'),
+    );
     final repo = FakeAuthRepository();
 
     final result = await SignInWithGoogle(tokens, repo)(answers);
@@ -135,7 +157,11 @@ void main() {
 
     await SignOut(repo, tokens)();
 
-    expect(repo.signOutCalls, 1,
-        reason: 'somebody who asked to sign out must be signed out locally regardless');
+    expect(
+      repo.signOutCalls,
+      1,
+      reason:
+          'somebody who asked to sign out must be signed out locally regardless',
+    );
   });
 }

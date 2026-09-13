@@ -20,7 +20,9 @@ extension PumpApp on WidgetTester {
     List<Override> overrides = const [],
   }) async {
     Widget app = MaterialApp(
-      theme: brightness == Brightness.light ? VocaTheme.light() : VocaTheme.dark(),
+      theme: brightness == Brightness.light
+          ? VocaTheme.light()
+          : VocaTheme.dark(),
       home: Scaffold(body: widget),
     );
 

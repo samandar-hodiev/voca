@@ -14,7 +14,8 @@ class RequestSignOutCode {
 
   final AuthRepository _repository;
 
-  Future<Result<void>> call(String email) => _repository.requestSignOutCode(email);
+  Future<Result<void>> call(String email) =>
+      _repository.requestSignOutCode(email);
 }
 
 class ConfirmSignOut {

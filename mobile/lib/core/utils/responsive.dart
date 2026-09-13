@@ -28,10 +28,10 @@ extension ResponsiveX on BuildContext {
   /// Horizontal page inset, tightened on the narrowest phones so content does not get
   /// squeezed into a thin column.
   double get pageInset => switch (screenSize) {
-        ScreenSize.compact => VocaSpacing.md,
-        ScreenSize.medium => VocaSpacing.lg,
-        ScreenSize.expanded => VocaSpacing.xl,
-      };
+    ScreenSize.compact => VocaSpacing.md,
+    ScreenSize.medium => VocaSpacing.lg,
+    ScreenSize.expanded => VocaSpacing.xl,
+  };
 
   /// Picks a value for the current width class.
   T responsive<T>({required T compact, T? medium, T? expanded}) =>
@@ -64,8 +64,8 @@ class PageContainer extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
-          padding: padding ??
-              EdgeInsets.symmetric(horizontal: context.pageInset),
+          padding:
+              padding ?? EdgeInsets.symmetric(horizontal: context.pageInset),
           child: child,
         ),
       ),

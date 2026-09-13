@@ -32,7 +32,9 @@ class ThemeModeController extends Notifier<ThemeMode> {
   }
 
   Future<void> _restore() async {
-    final stored = await ref.read(keyValueStoreProvider).getString(themeModeStorageKey);
+    final stored = await ref
+        .read(keyValueStoreProvider)
+        .getString(themeModeStorageKey);
     final restored = _parse(stored);
     if (restored != null) state = restored;
   }
@@ -40,24 +42,27 @@ class ThemeModeController extends Notifier<ThemeMode> {
   /// Records a choice and applies it immediately.
   Future<void> select(ThemeMode mode) async {
     state = mode;
-    await ref.read(keyValueStoreProvider).setString(themeModeStorageKey, _name(mode));
+    await ref
+        .read(keyValueStoreProvider)
+        .setString(themeModeStorageKey, _name(mode));
   }
 
   static String _name(ThemeMode mode) => switch (mode) {
-        ThemeMode.light => 'light',
-        ThemeMode.dark => 'dark',
-        ThemeMode.system => 'system',
-      };
+    ThemeMode.light => 'light',
+    ThemeMode.dark => 'dark',
+    ThemeMode.system => 'system',
+  };
 
   /// Returns null for anything unrecognised, so a corrupted value falls back to the
   /// system setting instead of throwing on launch.
   static ThemeMode? _parse(String? raw) => switch (raw) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        'system' => ThemeMode.system,
-        _ => null,
-      };
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    'system' => ThemeMode.system,
+    _ => null,
+  };
 }
 
-final themeModeProvider =
-    NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
+final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(
+  ThemeModeController.new,
+);

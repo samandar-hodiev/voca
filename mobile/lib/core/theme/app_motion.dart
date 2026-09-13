@@ -45,7 +45,10 @@ abstract final class VocaMotion {
   /// Returns [duration], or [Duration.zero] when the viewer has asked for reduced motion.
   ///
   /// Accessibility outranks visual effect, so every animation goes through here.
-  static Duration respectReducedMotion(BuildContext context, Duration duration) {
+  static Duration respectReducedMotion(
+    BuildContext context,
+    Duration duration,
+  ) {
     return MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
   }
 }

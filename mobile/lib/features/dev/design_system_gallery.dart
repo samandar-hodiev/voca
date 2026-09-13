@@ -128,7 +128,10 @@ class DesignSystemGallery extends StatelessWidget {
               const SizedBox(height: VocaSpacing.xl),
 
               const SectionHeader(title: 'States'),
-              const SizedBox(height: 120, child: LoadingView(message: 'Loading')),
+              const SizedBox(
+                height: 120,
+                child: LoadingView(message: 'Loading'),
+              ),
               const AppDivider(),
               SizedBox(
                 height: 240,

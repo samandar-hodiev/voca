@@ -27,8 +27,8 @@ import 'core/storage/secure_storage.dart';
 void bootstrap(Flavor flavor) {
   // runZonedGuarded catches asynchronous errors that escape the framework's own handler.
   // Together the two cover every uncaught error in the app.
-  unawaited(runZonedGuarded(
-    () async {
+  unawaited(
+    runZonedGuarded(() async {
       WidgetsFlutterBinding.ensureInitialized();
 
       // Framework errors: widget build failures, layout overflows, gesture errors.
@@ -44,9 +44,8 @@ void bootstrap(Flavor flavor) {
       };
 
       runApp(await buildApp(flavor));
-    },
-    (error, stack) => _report(error, stack, source: 'zone'),
-  ));
+    }, (error, stack) => _report(error, stack, source: 'zone')),
+  );
 }
 
 /// Builds the configured application widget.

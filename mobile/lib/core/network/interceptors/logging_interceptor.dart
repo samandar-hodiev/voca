@@ -15,15 +15,16 @@ class LoggingInterceptor extends Interceptor {
 
   final bool enabled;
 
-  static const _redactedHeaders = {'authorization', 'cookie', 'x-hub-signature-256'};
+  static const _redactedHeaders = {
+    'authorization',
+    'cookie',
+    'x-hub-signature-256',
+  };
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (enabled) {
-      developer.log(
-        '-> ${options.method} ${options.uri}',
-        name: 'voca.http',
-      );
+      developer.log('-> ${options.method} ${options.uri}', name: 'voca.http');
       final safeHeaders = Map<String, dynamic>.from(options.headers)
         ..removeWhere((k, _) => _redactedHeaders.contains(k.toLowerCase()));
       developer.log('   headers: $safeHeaders', name: 'voca.http');
@@ -32,7 +33,10 @@ class LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     if (enabled) {
       developer.log(
         '<- ${response.statusCode} ${response.requestOptions.uri}',

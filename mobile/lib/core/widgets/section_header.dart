@@ -34,15 +34,14 @@ class SectionHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Marked as a heading so screen readers can navigate between sections.
-                Semantics(
-                  header: true,
-                  child: Text(title, style: text.title),
-                ),
+                Semantics(header: true, child: Text(title, style: text.title)),
                 if (subtitle != null) ...[
                   const SizedBox(height: VocaSpacing.xxs),
                   Text(
                     subtitle!,
-                    style: text.bodyMedium.copyWith(color: colors.textSecondary),
+                    style: text.bodyMedium.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ],

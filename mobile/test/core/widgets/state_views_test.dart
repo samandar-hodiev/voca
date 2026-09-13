@@ -9,7 +9,9 @@ import 'package:voca/core/widgets/loading_view.dart';
 import '../../helpers/pump_app.dart';
 
 void main() {
-  testWidgets('LoadingView shows a spinner and an optional message', (tester) async {
+  testWidgets('LoadingView shows a spinner and an optional message', (
+    tester,
+  ) async {
     await tester.pumpWithTheme(const LoadingView(message: 'Assessing'));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -34,12 +36,16 @@ void main() {
     // Retry must be absent when it cannot help; an action that does nothing is worse
     // than no action.
     testWidgets('offers no retry when none was given', (tester) async {
-      await tester.pumpWithTheme(const ErrorView(message: 'Not available here.'));
+      await tester.pumpWithTheme(
+        const ErrorView(message: 'Not available here.'),
+      );
 
       expect(find.text('Retry'), findsNothing);
     });
 
-    testWidgets('shows the request ID when present, so it can be quoted', (tester) async {
+    testWidgets('shows the request ID when present, so it can be quoted', (
+      tester,
+    ) async {
       await tester.pumpWithTheme(
         const ErrorView(message: 'Failed.', requestId: 'req_abc123'),
       );

@@ -42,12 +42,16 @@ class OnboardingAnswers {
 
   final int? dailyGoalWords;
 
-  OnboardingAnswers copyWith({String? level, String? goal, int? dailyGoalWords}) =>
-      OnboardingAnswers(
-        level: level ?? this.level,
-        goal: goal ?? this.goal,
-        dailyGoalWords: dailyGoalWords ?? this.dailyGoalWords,
-      );
+  OnboardingAnswers copyWith({
+    String? level,
+    String? goal,
+    int? dailyGoalWords,
+  }) => OnboardingAnswers(
+    level: level ?? this.level,
+    goal: goal ?? this.goal,
+    dailyGoalWords: dailyGoalWords ?? this.dailyGoalWords,
+  );
 
-  bool get isComplete => level != null && goal != null && dailyGoalWords != null;
+  bool get isComplete =>
+      level != null && goal != null && dailyGoalWords != null;
 }

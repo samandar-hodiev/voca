@@ -20,7 +20,9 @@ class ApiEnvelope<T> {
     final meta = json['meta'];
     return ApiEnvelope<T>(
       data: fromJson(json['data']),
-      requestId: meta is Map<String, dynamic> ? meta['request_id'] as String? : null,
+      requestId: meta is Map<String, dynamic>
+          ? meta['request_id'] as String?
+          : null,
     );
   }
 }

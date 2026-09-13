@@ -33,20 +33,26 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('shows a progress indicator instead of the label while loading',
-        (tester) async {
-      await tester.pumpWithTheme(
-        PrimaryButton(label: 'Submit', isLoading: true, onPressed: () {}),
-      );
+    testWidgets(
+      'shows a progress indicator instead of the label while loading',
+      (tester) async {
+        await tester.pumpWithTheme(
+          PrimaryButton(label: 'Submit', isLoading: true, onPressed: () {}),
+        );
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('Submit'), findsNothing);
-    });
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Submit'), findsNothing);
+      },
+    );
 
     testWidgets('does not fire while loading', (tester) async {
       var taps = 0;
       await tester.pumpWithTheme(
-        PrimaryButton(label: 'Submit', isLoading: true, onPressed: () => taps++),
+        PrimaryButton(
+          label: 'Submit',
+          isLoading: true,
+          onPressed: () => taps++,
+        ),
       );
 
       await tester.tap(find.byType(PrimaryButton));

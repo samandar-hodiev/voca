@@ -22,12 +22,16 @@ class AuthState {
   /// The address being verified, carried between the email, code and profile screens.
   final String? email;
 
-  AuthState copyWith({bool? isBusy, Failure? failure, String? email, bool clearFailure = false}) =>
-      AuthState(
-        isBusy: isBusy ?? this.isBusy,
-        failure: clearFailure ? null : (failure ?? this.failure),
-        email: email ?? this.email,
-      );
+  AuthState copyWith({
+    bool? isBusy,
+    Failure? failure,
+    String? email,
+    bool clearFailure = false,
+  }) => AuthState(
+    isBusy: isBusy ?? this.isBusy,
+    failure: clearFailure ? null : (failure ?? this.failure),
+    email: email ?? this.email,
+  );
 }
 
 class AuthNotifier extends Notifier<AuthState> {
@@ -44,7 +48,10 @@ class AuthNotifier extends Notifier<AuthState> {
   ///
   /// Returns true on success, so a screen can decide whether to navigate without
   /// inspecting the state again.
-  Future<bool> _run(Future<Result<dynamic>> Function() op, {String? email}) async {
+  Future<bool> _run(
+    Future<Result<dynamic>> Function() op, {
+    String? email,
+  }) async {
     state = state.copyWith(isBusy: true, clearFailure: true, email: email);
     final result = await op();
     switch (result) {
@@ -60,8 +67,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> startEmailVerification(String email) =>
       _run(() => _repo.startEmailVerification(email), email: email);
 
-  Future<bool> resendCode() =>
-      _run(() => _repo.resendCode(state.email ?? ''));
+  Future<bool> resendCode() => _run(() => _repo.resendCode(state.email ?? ''));
 
   Future<bool> verifyEmail(String code) =>
       _run(() => _repo.verifyEmail(state.email ?? '', code));
@@ -71,15 +77,16 @@ class AuthNotifier extends Notifier<AuthState> {
     required String firstName,
     required String lastName,
     String? phone,
-  }) =>
-      _run(() => _repo.register(
-            email: state.email ?? '',
-            password: password,
-            firstName: firstName,
-            lastName: lastName,
-            phone: phone,
-            answers: _answers,
-          ));
+  }) => _run(
+    () => _repo.register(
+      email: state.email ?? '',
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      answers: _answers,
+    ),
+  );
 
   Future<bool> login(String email, String password) =>
       _run(() => _repo.login(email, password), email: email);
@@ -107,5 +114,6 @@ class AuthNotifier extends Notifier<AuthState> {
       _run(() => _repo.resetPassword(state.email ?? '', password));
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authControllerProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);

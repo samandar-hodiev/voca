@@ -8,10 +8,10 @@ enum Flavor { dev, staging, prod }
 
 extension FlavorX on Flavor {
   String get label => switch (this) {
-        Flavor.dev => 'dev',
-        Flavor.staging => 'staging',
-        Flavor.prod => 'prod',
-      };
+    Flavor.dev => 'dev',
+    Flavor.staging => 'staging',
+    Flavor.prod => 'prod',
+  };
 
   /// Whether this build should surface diagnostics such as the request ID on error
   /// screens and verbose network logging.

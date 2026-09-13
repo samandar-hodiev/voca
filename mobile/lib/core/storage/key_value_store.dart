@@ -43,7 +43,8 @@ class SharedPreferencesStore implements KeyValueStore {
   Future<String?> getString(String key) async => _prefs.getString(key);
 
   @override
-  Future<void> setString(String key, String value) => _prefs.setString(key, value);
+  Future<void> setString(String key, String value) =>
+      _prefs.setString(key, value);
 
   @override
   Future<void> remove(String key) => _prefs.remove(key);
@@ -52,8 +53,7 @@ class SharedPreferencesStore implements KeyValueStore {
 /// An in-memory implementation for tests and for any code path that must work before the
 /// real store has been opened.
 class InMemoryKeyValueStore implements KeyValueStore {
-  InMemoryKeyValueStore([Map<String, Object>? seed])
-      : _values = {...?seed};
+  InMemoryKeyValueStore([Map<String, Object>? seed]) : _values = {...?seed};
 
   final Map<String, Object> _values;
 
@@ -67,7 +67,8 @@ class InMemoryKeyValueStore implements KeyValueStore {
   Future<String?> getString(String key) async => _values[key] as String?;
 
   @override
-  Future<void> setString(String key, String value) async => _values[key] = value;
+  Future<void> setString(String key, String value) async =>
+      _values[key] = value;
 
   @override
   Future<void> remove(String key) async => _values.remove(key);

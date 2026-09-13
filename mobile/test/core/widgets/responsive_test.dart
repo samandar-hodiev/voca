@@ -24,7 +24,9 @@ void main() {
     return result;
   }
 
-  testWidgets('classifies widths into compact, medium and expanded', (tester) async {
+  testWidgets('classifies widths into compact, medium and expanded', (
+    tester,
+  ) async {
     expect(await sizeAt(tester, const Size(320, 640)), ScreenSize.compact);
     expect(await sizeAt(tester, const Size(390, 844)), ScreenSize.medium);
     expect(await sizeAt(tester, const Size(834, 1112)), ScreenSize.expanded);
@@ -35,17 +37,21 @@ void main() {
     late double wide;
 
     await tester.pumpWithTheme(
-      Builder(builder: (c) {
-        narrow = c.pageInset;
-        return const SizedBox.shrink();
-      }),
+      Builder(
+        builder: (c) {
+          narrow = c.pageInset;
+          return const SizedBox.shrink();
+        },
+      ),
       surfaceSize: const Size(320, 640),
     );
     await tester.pumpWithTheme(
-      Builder(builder: (c) {
-        wide = c.pageInset;
-        return const SizedBox.shrink();
-      }),
+      Builder(
+        builder: (c) {
+          wide = c.pageInset;
+          return const SizedBox.shrink();
+        },
+      ),
       surfaceSize: const Size(834, 1112),
     );
 
@@ -53,17 +59,21 @@ void main() {
   });
 
   // On a tablet a line of text must not stretch to an unreadable length.
-  testWidgets('PageContainer caps content width on a wide screen', (tester) async {
+  testWidgets('PageContainer caps content width on a wide screen', (
+    tester,
+  ) async {
     await tester.pumpWithTheme(
       const PageContainer(child: SizedBox(height: 10)),
       surfaceSize: const Size(1200, 800),
     );
 
     final box = tester.getSize(
-      find.descendant(
-        of: find.byType(PageContainer),
-        matching: find.byType(ConstrainedBox),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(PageContainer),
+            matching: find.byType(ConstrainedBox),
+          )
+          .first,
     );
     expect(box.width, lessThanOrEqualTo(560));
   });
@@ -81,7 +91,11 @@ void main() {
         builder: (context) {
           inset = context.pageInset;
           return const PageContainer(
-            child: SizedBox(key: contentKey, height: 10, width: double.infinity),
+            child: SizedBox(
+              key: contentKey,
+              height: 10,
+              width: double.infinity,
+            ),
           );
         },
       ),

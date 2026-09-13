@@ -5,10 +5,7 @@
 library;
 
 class OnboardingSlide {
-  const OnboardingSlide({
-    required this.title,
-    required this.body,
-  });
+  const OnboardingSlide({required this.title, required this.body});
 
   final String title;
   final String body;

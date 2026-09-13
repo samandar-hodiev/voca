@@ -30,7 +30,12 @@ class _GooglePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height).deflate(size.width * 0.08);
+    final rect = Rect.fromLTWH(
+      0,
+      0,
+      size.width,
+      size.height,
+    ).deflate(size.width * 0.08);
     final stroke = size.width * 0.22;
 
     final paint = Paint()

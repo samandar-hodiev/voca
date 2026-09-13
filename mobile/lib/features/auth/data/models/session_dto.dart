@@ -18,16 +18,16 @@ class SessionDto {
   final String refreshToken;
 
   factory SessionDto.fromJson(Map<String, dynamic> json) => SessionDto(
-        user: UserDto.fromJson(json['user'] as Map<String, dynamic>),
-        accessToken: json['access_token'] as String,
-        refreshToken: json['refresh_token'] as String,
-      );
+    user: UserDto.fromJson(json['user'] as Map<String, dynamic>),
+    accessToken: json['access_token'] as String,
+    refreshToken: json['refresh_token'] as String,
+  );
 
   AuthSession toDomain() => AuthSession(
-        user: user.toDomain(),
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      );
+    user: user.toDomain(),
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  );
 }
 
 class UserDto {
@@ -46,20 +46,20 @@ class UserDto {
   final bool isGuest;
 
   factory UserDto.fromJson(Map<String, dynamic> json) => UserDto(
-        id: json['id'] as String,
-        email: json['email'] as String?,
-        // Unknown or missing values default rather than throw: the contract is
-        // additive-only, so an older app must tolerate a newer server (ADR-009).
-        emailVerified: json['email_verified'] as bool? ?? false,
-        provider: json['provider'] as String? ?? 'email',
-        isGuest: json['is_guest'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    email: json['email'] as String?,
+    // Unknown or missing values default rather than throw: the contract is
+    // additive-only, so an older app must tolerate a newer server (ADR-009).
+    emailVerified: json['email_verified'] as bool? ?? false,
+    provider: json['provider'] as String? ?? 'email',
+    isGuest: json['is_guest'] as bool? ?? false,
+  );
 
   AuthUser toDomain() => AuthUser(
-        id: id,
-        email: email,
-        emailVerified: emailVerified,
-        provider: provider,
-        isGuest: isGuest,
-      );
+    id: id,
+    email: email,
+    emailVerified: emailVerified,
+    provider: provider,
+    isGuest: isGuest,
+  );
 }

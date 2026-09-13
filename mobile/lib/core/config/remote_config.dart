@@ -17,9 +17,9 @@ class Capabilities {
   final bool appleSignIn;
 
   factory Capabilities.fromJson(Map<String, dynamic> json) => Capabilities(
-        googleSignIn: json['google_sign_in'] as bool? ?? false,
-        appleSignIn: json['apple_sign_in'] as bool? ?? false,
-      );
+    googleSignIn: json['google_sign_in'] as bool? ?? false,
+    appleSignIn: json['apple_sign_in'] as bool? ?? false,
+  );
 }
 
 /// What the server says is available.

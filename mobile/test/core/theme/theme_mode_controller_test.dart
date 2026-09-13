@@ -51,7 +51,11 @@ void main() {
       // happen before the wait rather than after it.
       reopened.read(themeModeProvider);
       await Future<void>.delayed(Duration.zero);
-      expect(reopened.read(themeModeProvider), mode, reason: '$mode did not survive');
+      expect(
+        reopened.read(themeModeProvider),
+        mode,
+        reason: '$mode did not survive',
+      );
     }
   });
 

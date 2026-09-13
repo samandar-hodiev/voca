@@ -21,7 +21,8 @@ DioException _badResponse(Map<String, dynamic> body, {int status = 400}) {
   );
 }
 
-Map<String, dynamic> _envelope(String code, {Map<String, dynamic>? details}) => {
+Map<String, dynamic> _envelope(String code, {Map<String, dynamic>? details}) =>
+    {
       'error': {
         'code': code,
         'message': 'Message from server',
@@ -40,7 +41,10 @@ void main() {
     ]) {
       test('$type becomes a NetworkFailure', () {
         final failure = ErrorMapper.fromDioException(
-          DioException(requestOptions: RequestOptions(path: '/x'), type: type),
+          DioException(
+            requestOptions: RequestOptions(path: '/x'),
+            type: type,
+          ),
         );
         expect(failure, isA<NetworkFailure>());
       });
@@ -49,42 +53,58 @@ void main() {
 
   group('API errors', () {
     test('UNAUTHENTICATED becomes UnauthenticatedFailure', () {
-      final f = ErrorMapper.fromDioException(_badResponse(_envelope('UNAUTHENTICATED')));
+      final f = ErrorMapper.fromDioException(
+        _badResponse(_envelope('UNAUTHENTICATED')),
+      );
       expect(f, isA<UnauthenticatedFailure>());
       expect(f.requestId, 'req_123');
     });
 
     // These two drive different screens and must never collapse into one another
     // (ARCHITECTURE.md 19.2).
-    test('PREMIUM_REQUIRED and USAGE_LIMIT_REACHED map to distinct failures', () {
-      final premium = ErrorMapper.fromDioException(
-        _badResponse(_envelope('PREMIUM_REQUIRED'), status: 403),
-      );
-      final quota = ErrorMapper.fromDioException(
-        _badResponse(_envelope('USAGE_LIMIT_REACHED'), status: 429),
-      );
+    test(
+      'PREMIUM_REQUIRED and USAGE_LIMIT_REACHED map to distinct failures',
+      () {
+        final premium = ErrorMapper.fromDioException(
+          _badResponse(_envelope('PREMIUM_REQUIRED'), status: 403),
+        );
+        final quota = ErrorMapper.fromDioException(
+          _badResponse(_envelope('USAGE_LIMIT_REACHED'), status: 429),
+        );
 
-      expect(premium, isA<PremiumRequiredFailure>());
-      expect(quota, isA<UsageLimitFailure>());
-      expect(premium.runtimeType, isNot(quota.runtimeType));
-    });
+        expect(premium, isA<PremiumRequiredFailure>());
+        expect(quota, isA<UsageLimitFailure>());
+        expect(premium.runtimeType, isNot(quota.runtimeType));
+      },
+    );
 
     test('USAGE_LIMIT_REACHED reads resets_at from details', () {
-      final f = ErrorMapper.fromDioException(
-        _badResponse(
-          _envelope('USAGE_LIMIT_REACHED', details: {'resets_at': '2026-09-11T00:00:00Z'}),
-          status: 429,
-        ),
-      ) as UsageLimitFailure;
+      final f =
+          ErrorMapper.fromDioException(
+                _badResponse(
+                  _envelope(
+                    'USAGE_LIMIT_REACHED',
+                    details: {'resets_at': '2026-09-11T00:00:00Z'},
+                  ),
+                  status: 429,
+                ),
+              )
+              as UsageLimitFailure;
 
       expect(f.resetsAt, isNotNull);
       expect(f.resetsAt!.year, 2026);
     });
 
     test('provider codes become ProviderFailure', () {
-      for (final code in ['PROVIDER_ERROR', 'PROVIDER_UNAVAILABLE', 'PROVIDER_TIMEOUT']) {
+      for (final code in [
+        'PROVIDER_ERROR',
+        'PROVIDER_UNAVAILABLE',
+        'PROVIDER_TIMEOUT',
+      ]) {
         expect(
-          ErrorMapper.fromDioException(_badResponse(_envelope(code), status: 503)),
+          ErrorMapper.fromDioException(
+            _badResponse(_envelope(code), status: 503),
+          ),
           isA<ProviderFailure>(),
           reason: code,
         );
@@ -92,9 +112,9 @@ void main() {
     });
 
     test('an unrecognised code stays an ApiFailure carrying the code', () {
-      final f = ErrorMapper.fromDioException(
-        _badResponse(_envelope('SOMETHING_NEW')),
-      ) as ApiFailure;
+      final f =
+          ErrorMapper.fromDioException(_badResponse(_envelope('SOMETHING_NEW')))
+              as ApiFailure;
 
       expect(f.code, 'SOMETHING_NEW');
     });
