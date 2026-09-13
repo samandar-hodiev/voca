@@ -23,6 +23,9 @@ type Thresholds struct {
 	WordProblem float64
 	// PhonemeProblem is the accuracy below which a single sound is called out.
 	PhonemeProblem float64
+	// PhonemeAlways is the accuracy below which a sound is called out even when the word
+	// around it scored well. See phonemeErrors for why the two bars differ.
+	PhonemeAlways float64
 	// Severe and Moderate split how bad a problem is.
 	Severe   float64
 	Moderate float64
@@ -31,10 +34,19 @@ type Thresholds struct {
 	MaxPhonemeErrors int
 }
 
+// DefaultThresholds puts the bar for "needs work" at 80.
+//
+// It used to be 60, which meant a learner could finish an attempt scoring 72 and be told
+// nothing at all — a number with no lesson attached. 80 is the same line the app already
+// draws when it colours a score green, so the advice and the colour now agree.
+//
+// The severity bands stay where they were: below 40 is severe, 40 to 60 moderate, and the
+// new 60-to-80 range is minor. A word at 72 is worth a note, not an alarm.
 func DefaultThresholds() Thresholds {
 	return Thresholds{
-		WordProblem:      60,
-		PhonemeProblem:   60,
+		WordProblem:      80,
+		PhonemeProblem:   80,
+		PhonemeAlways:    40,
 		Severe:           40,
 		Moderate:         60,
 		MaxPhonemeErrors: 3,
@@ -76,9 +88,16 @@ func (a *Analyzer) Analyze(out domain.AssessmentOutput) []domain.PronunciationEr
 
 // phonemeErrors finds the individual sounds that went wrong, worst first.
 //
-// Only sounds inside a word that already has a problem are reported: a single low phoneme
-// in an otherwise well-pronounced word is usually the model being uncertain, not the
-// learner being wrong, and chasing it teaches nothing.
+// Two bars, not one. A merely weak sound is reported only inside a word that already has
+// a problem: a 74 in a word that scored 92 is usually the model being uncertain rather
+// than the learner being wrong, and chasing it teaches nothing. Measured evidence for
+// that caution — a correctly spoken "think" came back with its final k at 31 purely
+// because the recording clipped.
+//
+// But silence has a cost too. A sound scoring in the thirties inside a word that passed
+// is the one thing a learner would most want to know, and refusing to mention it is how
+// somebody keeps making the same mistake at 85. So anything below PhonemeAlways is
+// reported whatever the word did.
 func (a *Analyzer) phonemeErrors(out domain.AssessmentOutput) []domain.PronunciationError {
 	type candidate struct {
 		err      domain.PronunciationError
@@ -89,11 +108,11 @@ func (a *Analyzer) phonemeErrors(out domain.AssessmentOutput) []domain.Pronuncia
 	for _, w := range out.Words {
 		wordHasProblem := w.Accuracy < a.t.WordProblem ||
 			(w.Error != domain.ErrorNone && w.Error != "")
-		if !wordHasProblem {
-			continue
-		}
 		for _, p := range w.Phonemes {
 			if p.Accuracy >= a.t.PhonemeProblem {
+				continue
+			}
+			if !wordHasProblem && p.Accuracy >= a.t.PhonemeAlways {
 				continue
 			}
 			found = append(found, candidate{

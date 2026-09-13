@@ -91,7 +91,7 @@ PronunciationResult sampleResult() => const PronunciationResult(
       error: 'mispronunciation',
       phonemes: [
         PhonemeResult(phoneme: 'θ', accuracy: 41),
-        PhonemeResult(phoneme: 'ɪ', accuracy: 88),
+        PhonemeResult(phoneme: 'ɪ', accuracy: 72),
       ],
     ),
   ],

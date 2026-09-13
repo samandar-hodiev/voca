@@ -75,6 +75,12 @@ void main() {
       find.descendant(of: find.byType(PhonemeChip), matching: find.text('/θ/')),
       findsOneWidget,
     );
+    // A sound in the seventies counts now. Under the old bar of 60 this chip was absent
+    // and the learner was told nothing about it.
+    expect(
+      find.descendant(of: find.byType(PhonemeChip), matching: find.text('/ɪ/')),
+      findsOneWidget,
+    );
     expect(find.text(uz.feedbackMispronunciation('think')), findsOneWidget);
     expect(find.text(uz.tipTongueBetweenTeeth), findsOneWidget);
 

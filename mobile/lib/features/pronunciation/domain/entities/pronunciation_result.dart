@@ -41,9 +41,13 @@ class PronunciationResult {
   final int audioDurationMs;
 
   /// The sounds worth practising next: the lowest-scoring phonemes, worst first.
+  ///
+  /// 80 is the same bar the backend's analyzer uses to decide a sound needs work, and the
+  /// same one [bandFor] uses to colour a score green. Three lines drawn in three places
+  /// have to agree, or the ring says "good" while the advice says otherwise.
   List<PhonemeResult> get weakestSounds {
     final all = [for (final w in words) ...w.phonemes]
       ..sort((a, b) => a.accuracy.compareTo(b.accuracy));
-    return all.where((p) => p.accuracy < 60).take(3).toList();
+    return all.where((p) => p.accuracy < 80).take(3).toList();
   }
 }

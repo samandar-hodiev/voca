@@ -25,8 +25,8 @@ class WordScoreRow extends StatelessWidget {
     final band = bandFor(result.accuracy);
 
     // Only the sounds that need work. Listing every phoneme of a word scored 98 buries
-    // the one chip that matters on the words that did not.
-    final weak = result.phonemes.where((p) => p.accuracy < 60).toList();
+    // the one chip that matters on the words that did not. 80 is the backend's bar too.
+    final weak = result.phonemes.where((p) => p.accuracy < 80).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: VocaSpacing.xs),
