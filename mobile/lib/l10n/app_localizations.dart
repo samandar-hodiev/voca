@@ -652,6 +652,12 @@ abstract class AppLocalizations {
   /// **'That wasn’t the word you were given. Try again.'**
   String get errorWrongWordUnknown;
 
+  /// No description provided for @dayNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {n}'**
+  String dayNumber(int n);
+
   /// No description provided for @errorGeneric.
   ///
   /// In en, this message translates to:

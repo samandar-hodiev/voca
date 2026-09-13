@@ -306,6 +306,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorWrongWordUnknown => 'Это не то слово. Попробуйте ещё раз.';
 
   @override
+  String dayNumber(int n) {
+    return 'День $n';
+  }
+
+  @override
   String get errorGeneric => 'Что-то пошло не так. Попробуйте ещё раз.';
 
   @override

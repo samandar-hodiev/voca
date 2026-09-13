@@ -98,6 +98,9 @@ func newService(repo Repository, provider SpeechProvider, ent Entitlements) *Ser
 		feedback.New(),
 		validation.DefaultLimits(),
 		ent,
+		// No practice tracker: these tests are about the quota, and an attempt that
+		// advances no daily set is a perfectly ordinary attempt.
+		nil,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 }

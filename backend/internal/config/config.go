@@ -117,6 +117,11 @@ type Config struct {
 	// should get a fresh day at their midnight, not at UTC's.
 	AppTimezone string
 
+	// DailyPassScore is the average a day's practice must reach before the next day
+	// unlocks. Configuration rather than a literal: the right bar is a product question
+	// that will be argued about, and arguing about it should not need a release.
+	DailyPassScore float64
+
 	// AvatarDir is where uploaded profile pictures are written. A local directory is the
 	// MVP store; object storage replaces it behind the same port.
 	AvatarDir string
@@ -165,6 +170,7 @@ func Load() (Config, error) {
 		FreeDailyAssessmentLimit:  getEnvInt("FREE_DAILY_ASSESSMENT_LIMIT", 30),
 		UnlimitedAssessmentEmails: splitAndTrim(os.Getenv("UNLIMITED_ASSESSMENT_EMAILS")),
 		AppTimezone:               getEnv("APP_TIMEZONE", "Asia/Tashkent"),
+		DailyPassScore:            getEnvFloat("DAILY_PASS_SCORE", 80),
 		GitHubWebhookSecret:       os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:          os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:            os.Getenv("TELEGRAM_CHAT_ID"),
@@ -316,6 +322,18 @@ func getEnvBool(key string, fallback bool) bool {
 }
 
 // getEnvInt reads an integer setting, falling back when unset or unparseable.
+func getEnvFloat(key string, fallback float64) float64 {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return fallback
+	}
+	return v
+}
+
 func getEnvInt(key string, fallback int) int {
 	raw := strings.TrimSpace(os.Getenv(key))
 	if raw == "" {

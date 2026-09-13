@@ -22,6 +22,7 @@ import '../../../../core/widgets/reveal.dart';
 import '../../../../core/widgets/tab_scaffold.dart';
 import '../../domain/entities/word.dart';
 import '../controllers/practice_controller.dart';
+import '../widgets/week_strip.dart';
 import '../widgets/word_card.dart';
 import '../widgets/word_practice_sheet.dart';
 import '../../../../core/widgets/glass_surface.dart';
@@ -45,6 +46,7 @@ class PracticePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final words = ref.watch(filteredPracticeSetProvider);
     final level = ref.watch(practiceLevelFilterProvider);
+    final week = ref.watch(practiceWeekProvider);
 
     void setLevel(String? l) =>
         ref.read(practiceLevelFilterProvider.notifier).state = l;
@@ -56,6 +58,7 @@ class PracticePage extends ConsumerWidget {
         subtitle: context.l10n.practiceSubtitle,
         onRefresh: () async {
           ref.invalidate(dailyPracticeSetProvider);
+          ref.invalidate(practiceWeekProvider);
           try {
             await ref.read(dailyPracticeSetProvider.future);
           } catch (_) {
@@ -63,6 +66,19 @@ class PracticePage extends ConsumerWidget {
           }
         },
         children: [
+          // The week comes first because it is the frame the day sits in: one open square
+          // and six locked ones is the reason to finish today. It renders only once it has
+          // loaded — a failed week must not take the word list down with it, since the
+          // words are what the screen is for.
+          ...week.maybeWhen(
+            data: (days) => days.isEmpty
+                ? const <Widget>[]
+                : [
+                    WeekStrip(days: days),
+                    const SizedBox(height: VocaSpacing.lg),
+                  ],
+            orElse: () => const <Widget>[],
+          ),
           _LevelFilter(levels: _levels, selected: level, onChanged: setLevel),
           const SizedBox(height: VocaSpacing.lg),
           ...words.when(

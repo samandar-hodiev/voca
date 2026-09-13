@@ -60,6 +60,21 @@ type Service struct {
 	// Nil means no limit is enforced, which is what local development and every test
 	// that is not about quota get.
 	entitlements Entitlements
+
+	// Nil means attempts are scored but do not advance a daily set.
+	practice PracticeTracker
+}
+
+// PracticeTracker is the port onto the practice module: an assessed attempt advances the
+// day's set. Declared here, by the consumer, so this module names no other module
+// (ARCHITECTURE.md 5.5).
+//
+// Reporting is BEST EFFORT. The attempt is already scored and stored by the time this is
+// called; failing the whole request because a counter did not move would throw away work
+// the learner has done and money we have spent.
+type PracticeTracker interface {
+	RecordResult(ctx context.Context, userID uuid.UUID, wordText string,
+		attemptID uuid.UUID, score float64) error
 }
 
 func NewService(
@@ -70,6 +85,7 @@ func NewService(
 	generator *feedback.Generator,
 	limits validation.Limits,
 	entitlements Entitlements,
+	tracker PracticeTracker,
 	log *slog.Logger,
 ) *Service {
 	return &Service{
@@ -80,6 +96,7 @@ func NewService(
 		feedback:     generator,
 		limits:       limits,
 		entitlements: entitlements,
+		practice:     tracker,
 		log:          log,
 	}
 }
@@ -164,6 +181,17 @@ func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt
 	// Read back rather than stamped here: the response then carries the time the row
 	// actually has, instead of Go's zero date, which is what the app was being sent.
 	attempt.CreatedAt = createdAt
+
+	// Advance the day's set, if this word is in one. Best effort by design: the score is
+	// already saved, and a bookkeeping failure must not lose it.
+	if s.practice != nil {
+		if err := s.practice.RecordResult(ctx, cmd.UserID, reference, id,
+			scores.Overall); err != nil {
+			s.log.Warn("practice_progress_not_recorded",
+				slog.String("user_id", cmd.UserID.String()),
+				slog.String("error", err.Error()))
+		}
+	}
 
 	return attempt, nil
 }

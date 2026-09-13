@@ -119,6 +119,8 @@
   "errorWrongWord": "That sounded like “{heard}”. Say the word you were given.",
   "@errorWrongWord": {"placeholders": {"heard": {"type": "String"}}},
   "errorWrongWordUnknown": "That wasn’t the word you were given. Try again.",
+  "dayNumber": "Day {n}",
+  "@dayNumber": {"placeholders": {"n": {"type": "int"}}},
   "errorGeneric": "Something went wrong. Try again.",
   "errorSessionExpired": "Your session has ended. Sign in again.",
   "errorNoInternet": "No internet connection.",

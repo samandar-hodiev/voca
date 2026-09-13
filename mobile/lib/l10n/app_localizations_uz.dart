@@ -305,6 +305,11 @@ class AppLocalizationsUz extends AppLocalizations {
       'Berilgan so‘z aytilmadi. Qaytadan urinib ko‘ring.';
 
   @override
+  String dayNumber(int n) {
+    return '$n-kun';
+  }
+
+  @override
   String get errorGeneric => 'Nimadir xato ketdi. Qaytadan urinib ko‘ring.';
 
   @override

@@ -21,6 +21,7 @@ import '../helpers/pump_app.dart';
 import 'package:voca/features/auth/domain/repositories/auth_repository.dart';
 import 'package:voca/features/pronunciation/presentation/controllers/recording_controller.dart';
 import '../helpers/pronunciation_fakes.dart';
+import 'package:voca/features/practice/domain/entities/practice_session.dart';
 
 /// A fixed number of frames rather than pumpAndSettle: the tab drop and the reveal both
 /// run on entry, and a test should say how long it lets them run.
@@ -63,6 +64,27 @@ class _FakeHomeRepository implements HomeRepository {
 }
 
 class _EmptyPracticeRepository implements PracticeRepository {
+  // The interface grew a session, a week and a completion. This fake is about empty and
+  // overflowing lists, so it answers the shape and nothing more.
+  @override
+  Future<PracticeSession> currentSession() async => PracticeSession(
+    id: 'test',
+    status: 'in_progress',
+    itemCount: 0,
+    completedItemCount: 0,
+    averageScore: null,
+    passScore: 80,
+    passed: false,
+    day: DateTime.now(),
+    words: await dailySet(),
+  );
+
+  @override
+  Future<List<PracticeDay>> week() async => const [];
+
+  @override
+  Future<PracticeSession> complete(String sessionId) => currentSession();
+
   const _EmptyPracticeRepository();
 
   @override

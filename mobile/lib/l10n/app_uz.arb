@@ -92,6 +92,7 @@
   "errorUsageLimit": "Bugungi mashq chegarasiga yetdingiz.",
   "errorWrongWord": "«{heard}» eshitildi. Berilgan so‘zni ayting.",
   "errorWrongWordUnknown": "Berilgan so‘z aytilmadi. Qaytadan urinib ko‘ring.",
+  "dayNumber": "{n}-kun",
   "errorGeneric": "Nimadir xato ketdi. Qaytadan urinib ko‘ring.",
   "errorSessionExpired": "Sessiya tugagan. Qaytadan kiring.",
   "errorNoInternet": "Internet aloqasi yo‘q.",

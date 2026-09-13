@@ -16,9 +16,11 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/internal/practice"
 	"github.com/samandar-hodiev/voca/backend/internal/progress"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation"
 	"github.com/samandar-hodiev/voca/backend/internal/shared/httpx"
+	"github.com/samandar-hodiev/voca/backend/internal/word"
 )
 
 // Dependencies is the set of built modules the router mounts.
@@ -35,6 +37,10 @@ type Dependencies struct {
 	// ProgressHandler follows the same rule: nil until wired, and its routes are skipped
 	// rather than panicking.
 	ProgressHandler *progress.Handler
+
+	// Content and the daily practice set, under the same nil guard.
+	WordHandler     *word.Handler
+	PracticeHandler *practice.Handler
 
 	Capabilities  Capabilities
 	RequireAuth   gin.HandlerFunc
@@ -113,6 +119,12 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	}
 	if deps.ProgressHandler != nil {
 		progress.RegisterRoutes(v1, deps.ProgressHandler, deps.RequireAuth)
+	}
+	if deps.WordHandler != nil {
+		word.RegisterRoutes(v1, deps.WordHandler, deps.RequireAuth)
+	}
+	if deps.PracticeHandler != nil {
+		practice.RegisterRoutes(v1, deps.PracticeHandler, deps.RequireAuth)
 	}
 
 	// Remote configuration: feature availability the client cannot know on its own.

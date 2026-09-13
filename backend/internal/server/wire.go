@@ -28,6 +28,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/internal/practice"
 	"github.com/samandar-hodiev/voca/backend/internal/progress"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/analysis"
@@ -35,6 +36,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/scoring"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/validation"
 	"github.com/samandar-hodiev/voca/backend/internal/subscription"
+	"github.com/samandar-hodiev/voca/backend/internal/word"
 	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
 )
 
@@ -175,6 +177,20 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		notifier = devhook.NewLogNotifier(log)
 	}
 
+	// Content, and the daily set built from it. The selector reads words through the word
+	// module's SERVICE, never its tables, which is what keeps personalization a swap of
+	// one implementation rather than a rewrite (ARCHITECTURE.md 13.2, 5.5).
+	wordService := word.NewService(word.NewRepository(pool.Pool), log)
+	practiceService := practice.NewService(
+		practice.NewRepository(pool.Pool),
+		practice.NewLevelSelector(wordService),
+		learnersFromAuth{svc: authService},
+		cfg.DailyPassScore,
+		cfg.AppTimezone,
+		log,
+	)
+	log.Info("daily_practice_configured", slog.Float64("pass_score", cfg.DailyPassScore))
+
 	// Speech provider selection happens here and nowhere else. The mock is the default so
 	// a fresh checkout runs the entire assessment pipeline — scoring, analysis, feedback,
 	// persistence and the result screen — with no vendor account and no spend
@@ -227,6 +243,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 			MaxDurationMS: cfg.MaxAudioDurationMS,
 		},
 		entitlementsFromSubscription{limiter: usageLimiter},
+		practiceService,
 		log,
 	)
 
@@ -252,6 +269,8 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		AuthHandler:          auth.NewHandler(authService),
 		PronunciationHandler: pronunciation.NewHandler(pronunciationService),
 		ProgressHandler:      progressHandler,
+		WordHandler:          word.NewHandler(wordService, log),
+		PracticeHandler:      practice.NewHandler(practiceService, log),
 		RequireAuth:          middleware.RequireAuth(jwtVerifier{issuer}),
 		TrustedProxies:       cfg.TrustedProxies,
 		AuthRateLimit: middleware.RateLimit(middleware.RateLimitConfig{
@@ -328,4 +347,21 @@ func (l learnersFromAuth) DailyGoal(
 		return 0, "", err
 	}
 	return prefs.DailyGoalWords, prefs.Timezone, nil
+}
+
+// Settings answers the practice module's questions: which level to draw words from, how
+// many a day, and whose midnight ends the day. Same adapter as the progress module uses,
+// because it is the same underlying preferences row read through the same service.
+func (l learnersFromAuth) Settings(
+	ctx context.Context, userID uuid.UUID,
+) (string, int, string, error) {
+	prefs, err := l.svc.Preferences(ctx, userID)
+	if err != nil {
+		return "", 0, "", err
+	}
+	level := ""
+	if prefs.CEFRLevel != nil {
+		level = *prefs.CEFRLevel
+	}
+	return level, prefs.DailyGoalWords, prefs.Timezone, nil
 }

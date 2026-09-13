@@ -303,6 +303,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'That wasn’t the word you were given. Try again.';
 
   @override
+  String dayNumber(int n) {
+    return 'Day $n';
+  }
+
+  @override
   String get errorGeneric => 'Something went wrong. Try again.';
 
   @override
