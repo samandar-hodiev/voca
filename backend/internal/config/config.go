@@ -89,6 +89,16 @@ type Config struct {
 	// addresses and learn who is a customer.
 	AuthRateLimitPerMin int
 
+	// SpeechProvider selects the pronunciation assessment adapter at startup: "mock" for
+	// local development and CI, "azure" once a Speech resource exists. The mock is the
+	// default so a fresh checkout runs the whole pipeline with no vendor account.
+	SpeechProvider string
+
+	// Bounds on an uploaded recording, enforced before any provider call so a bad upload
+	// costs nothing.
+	MaxAudioBytes      int
+	MaxAudioDurationMS int
+
 	// AvatarDir is where uploaded profile pictures are written. A local directory is the
 	// MVP store; object storage replaces it behind the same port.
 	AvatarDir string
@@ -127,6 +137,9 @@ func Load() (Config, error) {
 		JWTSecret:           os.Getenv("JWT_SECRET"),
 		JWTAccessTTL:        getEnvDuration("JWT_ACCESS_TTL", 15*time.Minute),
 		FirebaseProjectID:   strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID")),
+		SpeechProvider:      strings.ToLower(getEnv("SPEECH_PROVIDER", "mock")),
+		MaxAudioBytes:       getEnvInt("MAX_AUDIO_SIZE_BYTES", 2*1024*1024),
+		MaxAudioDurationMS:  getEnvInt("MAX_AUDIO_DURATION_MS", 15_000),
 		GitHubWebhookSecret: os.Getenv("GITHUB_WEBHOOK_SECRET"),
 		TelegramBotToken:    os.Getenv("TELEGRAM_BOT_TOKEN"),
 		TelegramChatID:      os.Getenv("TELEGRAM_CHAT_ID"),

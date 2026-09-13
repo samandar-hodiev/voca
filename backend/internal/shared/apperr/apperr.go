@@ -64,6 +64,14 @@ const (
 	// CodeEmailMismatch: the address typed to confirm a sign-out is not the account's.
 	CodeEmailMismatch Code = "EMAIL_MISMATCH"
 
+	// Audio upload and assessment. Rejections are specific so the app can say what to
+	// do about it rather than "something went wrong".
+	CodeAudioTooLarge    Code = "AUDIO_TOO_LARGE"
+	CodeAudioTooLong     Code = "AUDIO_TOO_LONG"
+	CodeAudioTooShort    Code = "AUDIO_TOO_SHORT"
+	CodeUnsupportedAudio Code = "UNSUPPORTED_AUDIO_FORMAT"
+	CodeNoSpeechDetected Code = "NO_SPEECH_DETECTED"
+
 	// Catch-all.
 	CodeInternal Code = "INTERNAL_ERROR"
 )

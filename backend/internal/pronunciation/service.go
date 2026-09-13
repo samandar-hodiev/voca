@@ -1,13 +1,171 @@
-// pronunciation: business logic / use cases. THE CORE MODULE. Orchestrates the assessment pipeline end to end.
+// pronunciation: business logic / use cases. THE CORE MODULE.
 //
-// Responsibility: all business rules for this module, resource-ownership checks,
-// orchestration across repositories and provider ports, and transaction boundaries.
+// Orchestrates the assessment pipeline end to end (ARCHITECTURE.md 6.1):
 //
-// This is the module's PUBLIC SURFACE. Other modules may call this service interface and
-// nothing else — never this module's repository, models, or tables (ARCHITECTURE.md 5.5).
+//	validate audio -> assess via SpeechProvider -> score -> analyse -> feedback -> persist
 //
-// MUST NOT import: gin, pgx or sql types, or any vendor SDK.
+// Validation comes BEFORE the provider call on purpose: a bad upload must cost us nothing.
+//
+// MUST NOT import gin, pgx or any vendor SDK. It talks to a Repository interface and a
+// SpeechProvider port, both of which this module owns.
 //
 // See ARCHITECTURE.md 6, 5.3, 5.5.
 
 package pronunciation
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
+
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/analysis"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/feedback"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/scoring"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/validation"
+	"github.com/samandar-hodiev/voca/backend/internal/shared/apperr"
+)
+
+// SubmitCommand is one attempt at saying something, as it arrives from the app.
+type SubmitCommand struct {
+	UserID uuid.UUID
+
+	Audio       []byte
+	ContentType string
+
+	// ReferenceText is what the learner was asked to say. Required: this is a scripted
+	// assessment, and without it there is nothing to score against.
+	ReferenceText string
+
+	Language string
+
+	// DeclaredDurationMS is what the client says it recorded, or 0. Checked against the
+	// audio header rather than trusted.
+	DeclaredDurationMS int
+}
+
+type Service struct {
+	repo     Repository
+	provider SpeechProvider
+	scorer   *scoring.Engine
+	analyzer *analysis.Analyzer
+	feedback *feedback.Generator
+	limits   validation.Limits
+	log      *slog.Logger
+}
+
+func NewService(
+	repo Repository,
+	provider SpeechProvider,
+	scorer *scoring.Engine,
+	analyzer *analysis.Analyzer,
+	generator *feedback.Generator,
+	limits validation.Limits,
+	log *slog.Logger,
+) *Service {
+	return &Service{
+		repo:     repo,
+		provider: provider,
+		scorer:   scorer,
+		analyzer: analyzer,
+		feedback: generator,
+		limits:   limits,
+		log:      log,
+	}
+}
+
+const defaultLanguage = "en-US"
+
+// SubmitAttempt runs the pipeline and returns the stored result.
+func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt, error) {
+	reference := strings.TrimSpace(cmd.ReferenceText)
+	if reference == "" {
+		return Attempt{}, apperr.Validation("Qaysi so‘z aytilishi kerakligi yuborilmadi.")
+	}
+
+	language := strings.TrimSpace(cmd.Language)
+	if language == "" {
+		language = defaultLanguage
+	}
+
+	// Entitlement and the free-tier usage limit belong here, before the provider call, so
+	// a blocked request costs no provider money (ARCHITECTURE.md 6.1 step 2). The
+	// subscription module is not built yet; when it is, its check goes at this point and
+	// nothing else in this pipeline changes.
+
+	audio, err := validation.Validate(cmd.Audio, cmd.ContentType, cmd.DeclaredDurationMS, s.limits)
+	if err != nil {
+		return Attempt{}, err
+	}
+
+	out, err := s.provider.AssessPronunciation(ctx, AssessmentInput{
+		Audio:         cmd.Audio,
+		ContentType:   cmd.ContentType,
+		ReferenceText: reference,
+		Language:      language,
+	})
+	if err != nil {
+		return Attempt{}, s.providerError(err)
+	}
+
+	// Nothing recognised is not a server fault, and telling somebody "something went
+	// wrong" when they simply did not speak is the wrong message.
+	if len(out.Words) == 0 && strings.TrimSpace(out.RecognizedText) == "" {
+		return Attempt{}, apperr.New(apperr.CodeNoSpeechDetected, http.StatusUnprocessableEntity,
+			"Ovoz eshitilmadi. Mikrofonga yaqinroq gapirib ko‘ring.")
+	}
+
+	scores := s.scorer.Score(out)
+	problems := s.analyzer.Analyze(out)
+	advice := s.feedback.Generate(problems)
+
+	attempt := Attempt{
+		UserID:          cmd.UserID,
+		ReferenceText:   reference,
+		Language:        language,
+		Provider:        out.Provider,
+		ScoringVersion:  s.scorer.Version(),
+		Status:          "scored",
+		Scores:          scores,
+		RecognizedText:  out.RecognizedText,
+		Words:           out.Words,
+		Feedback:        advice,
+		AudioDurationMS: audio.DurationMS,
+	}
+
+	id, err := s.repo.SaveAttempt(ctx, attempt)
+	if err != nil {
+		return Attempt{}, apperr.Internal(err)
+	}
+	attempt.ID = id
+
+	return attempt, nil
+}
+
+// History is the learner's own recent attempts.
+func (s *Service) History(ctx context.Context, userID uuid.UUID, limit int) ([]Attempt, error) {
+	attempts, err := s.repo.RecentAttempts(ctx, userID, limit)
+	if err != nil {
+		return nil, apperr.Internal(err)
+	}
+	return attempts, nil
+}
+
+// providerError turns a vendor failure into something the app can act on.
+//
+// A timeout and an outage are different to a learner: one is worth retrying immediately,
+// the other is not. Neither is the learner's fault, so neither is reported as one.
+func (s *Service) providerError(err error) error {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		s.log.Warn("speech_provider_timeout", slog.String("provider", s.provider.Name()))
+		return apperr.New(apperr.CodeProviderTimeout, http.StatusGatewayTimeout,
+			"Baholash juda uzoq davom etdi. Qaytadan urinib ko‘ring.")
+	}
+	s.log.Error("speech_provider_failed",
+		slog.String("provider", s.provider.Name()),
+		slog.String("error", err.Error()))
+	return apperr.ProviderUnavailable("Baholash xizmati hozir ishlamayapti. Birozdan so‘ng urinib ko‘ring.")
+}

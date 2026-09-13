@@ -21,9 +21,15 @@ import (
 	emailresend "github.com/samandar-hodiev/voca/backend/internal/integrations/email/resend"
 	emailsmtp "github.com/samandar-hodiev/voca/backend/internal/integrations/email/smtp"
 	firebaseauth "github.com/samandar-hodiev/voca/backend/internal/integrations/firebase"
+	speechmock "github.com/samandar-hodiev/voca/backend/internal/integrations/speech/mock"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/analysis"
+	pronfeedback "github.com/samandar-hodiev/voca/backend/internal/pronunciation/feedback"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/scoring"
+	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/validation"
 	"github.com/samandar-hodiev/voca/backend/pkg/jwt"
 )
 
@@ -164,18 +170,48 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		notifier = devhook.NewLogNotifier(log)
 	}
 
+	// Speech provider selection happens here and nowhere else. The mock is the default so
+	// a fresh checkout runs the entire assessment pipeline — scoring, analysis, feedback,
+	// persistence and the result screen — with no vendor account and no spend
+	// (ARCHITECTURE.md 37, step 8).
+	var speechProvider pronunciation.SpeechProvider = speechmock.New()
+	switch cfg.SpeechProvider {
+	case "azure":
+		// The Azure adapter lands once a Speech resource exists. Until then, saying so
+		// beats silently scoring every learner with a fake.
+		log.Warn("speech_provider_azure_not_implemented_using_mock",
+			slog.String("hint", "set SPEECH_PROVIDER=mock, or wait for the Azure adapter"))
+	default:
+		log.Info("speech_provider_selected", slog.String("provider", "mock"))
+	}
+
+	pronunciationService := pronunciation.NewService(
+		pronunciation.NewRepository(pool.Pool),
+		speechProvider,
+		scoring.New(scoring.DefaultWeights()),
+		analysis.New(analysis.DefaultThresholds()),
+		pronfeedback.New(),
+		validation.Limits{
+			MaxBytes:      cfg.MaxAudioBytes,
+			MinDurationMS: validation.DefaultLimits().MinDurationMS,
+			MaxDurationMS: cfg.MaxAudioDurationMS,
+		},
+		log,
+	)
+
 	devhookService := devhook.NewService(notifier, log)
 	devhookHandler := devhook.NewHandler(devhookService, cfg.GitHubWebhookSecret, log)
 
 	return Dependencies{
-		Logger:         log,
-		AvatarDir:      avatarStore.Dir(),
-		AvatarPrefix:   avatarStore.PublicPrefix(),
-		CORS:           middleware.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
-		DevhookHandler: devhookHandler,
-		AuthHandler:    auth.NewHandler(authService),
-		RequireAuth:    middleware.RequireAuth(jwtVerifier{issuer}),
-		TrustedProxies: cfg.TrustedProxies,
+		Logger:               log,
+		AvatarDir:            avatarStore.Dir(),
+		AvatarPrefix:         avatarStore.PublicPrefix(),
+		CORS:                 middleware.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
+		DevhookHandler:       devhookHandler,
+		AuthHandler:          auth.NewHandler(authService),
+		PronunciationHandler: pronunciation.NewHandler(pronunciationService),
+		RequireAuth:          middleware.RequireAuth(jwtVerifier{issuer}),
+		TrustedProxies:       cfg.TrustedProxies,
 		AuthRateLimit: middleware.RateLimit(middleware.RateLimitConfig{
 			Requests: cfg.AuthRateLimitPerMin,
 			Window:   time.Minute,
