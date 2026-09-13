@@ -24,8 +24,10 @@ import (
 
 type Repository interface {
 	// SaveAttempt writes the attempt, its phoneme results and its feedback in one
-	// transaction, and returns the new attempt's ID.
-	SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, error)
+	// transaction, and returns the new attempt's ID and the time the database stamped
+	// on it. The timestamp is read back rather than generated here so the value the app
+	// is shown is the value that was stored, in the database's clock.
+	SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, time.Time, error)
 
 	// RecentAttempts is the learner's own history, newest first.
 	RecentAttempts(ctx context.Context, userID uuid.UUID, limit int) ([]Attempt, error)
@@ -35,32 +37,33 @@ type repository struct{ pool *pgxpool.Pool }
 
 func NewRepository(pool *pgxpool.Pool) Repository { return &repository{pool: pool} }
 
-func (r *repository) SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, error) {
+func (r *repository) SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, time.Time, error) {
 	words, err := json.Marshal(a.Words)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("pronunciation: encode word results: %w", err)
+		return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: encode word results: %w", err)
 	}
 
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("pronunciation: begin: %w", err)
+		return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: begin: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	var id uuid.UUID
+	var createdAt time.Time
 	err = tx.QueryRow(ctx,
 		`INSERT INTO pronunciation_attempts
 		   (user_id, reference_text, language, provider, scoring_version, status,
 		    accuracy_score, fluency_score, completeness_score, overall_score,
 		    recognized_text, word_results, audio_duration_ms)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-		 RETURNING id`,
+		 RETURNING id, created_at`,
 		a.UserID, a.ReferenceText, a.Language, a.Provider, a.ScoringVersion, a.Status,
 		a.Scores.Accuracy, a.Scores.Fluency, a.Scores.Completeness, a.Scores.Overall,
 		a.RecognizedText, words, a.AudioDurationMS,
-	).Scan(&id)
+	).Scan(&id, &createdAt)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("pronunciation: insert attempt: %w", err)
+		return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: insert attempt: %w", err)
 	}
 
 	// Phonemes are a real table because the weak-sound service aggregates them across
@@ -73,7 +76,7 @@ func (r *repository) SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, err
 				 VALUES ($1, $2, $3, $4, $5)`,
 				id, a.UserID, p.Phoneme, w.Word, p.Accuracy,
 			); err != nil {
-				return uuid.Nil, fmt.Errorf("pronunciation: insert phoneme: %w", err)
+				return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: insert phoneme: %w", err)
 			}
 		}
 	}
@@ -85,14 +88,14 @@ func (r *repository) SaveAttempt(ctx context.Context, a Attempt) (uuid.UUID, err
 			id, a.UserID, f.MessageKey, nullable(f.TipKey), nullable(f.Word),
 			nullable(f.Phoneme), f.Priority,
 		); err != nil {
-			return uuid.Nil, fmt.Errorf("pronunciation: insert feedback: %w", err)
+			return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: insert feedback: %w", err)
 		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return uuid.Nil, fmt.Errorf("pronunciation: commit: %w", err)
+		return uuid.Nil, time.Time{}, fmt.Errorf("pronunciation: commit: %w", err)
 	}
-	return id, nil
+	return id, createdAt, nil
 }
 
 func (r *repository) RecentAttempts(

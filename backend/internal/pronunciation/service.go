@@ -136,11 +136,14 @@ func (s *Service) SubmitAttempt(ctx context.Context, cmd SubmitCommand) (Attempt
 		AudioDurationMS: audio.DurationMS,
 	}
 
-	id, err := s.repo.SaveAttempt(ctx, attempt)
+	id, createdAt, err := s.repo.SaveAttempt(ctx, attempt)
 	if err != nil {
 		return Attempt{}, apperr.Internal(err)
 	}
 	attempt.ID = id
+	// Read back rather than stamped here: the response then carries the time the row
+	// actually has, instead of Go's zero date, which is what the app was being sent.
+	attempt.CreatedAt = createdAt
 
 	return attempt, nil
 }
