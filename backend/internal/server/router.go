@@ -16,6 +16,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/database"
 	"github.com/samandar-hodiev/voca/backend/internal/devhook"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/internal/progress"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation"
 	"github.com/samandar-hodiev/voca/backend/internal/shared/httpx"
 )
@@ -30,9 +31,14 @@ type Dependencies struct {
 	// PronunciationHandler is nil until the module is wired; the router skips its routes
 	// rather than panicking, so a partially configured build still serves everything else.
 	PronunciationHandler *pronunciation.Handler
-	Capabilities         Capabilities
-	RequireAuth          gin.HandlerFunc
-	AuthRateLimit        gin.HandlerFunc
+
+	// ProgressHandler follows the same rule: nil until wired, and its routes are skipped
+	// rather than panicking.
+	ProgressHandler *progress.Handler
+
+	Capabilities  Capabilities
+	RequireAuth   gin.HandlerFunc
+	AuthRateLimit gin.HandlerFunc
 
 	// TrustedProxies are the only addresses whose X-Forwarded-For is believed. Nil
 	// trusts none.
@@ -104,6 +110,9 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		// this endpoint is the free-tier usage limit, which arrives with the subscription
 		// module (ARCHITECTURE.md 6.1 step 2).
 		pronunciation.RegisterRoutes(v1, deps.PronunciationHandler, deps.RequireAuth, nil)
+	}
+	if deps.ProgressHandler != nil {
+		progress.RegisterRoutes(v1, deps.ProgressHandler, deps.RequireAuth)
 	}
 
 	// Remote configuration: feature availability the client cannot know on its own.

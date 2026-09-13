@@ -1,13 +1,16 @@
-/// Progress data from a local mock.
+/// Where the Progress dashboard gets its numbers.
 ///
-/// Stands in for the progress endpoint, which does not exist yet. The dates are computed
-/// from today so the week always looks current.
+/// Two implementations live here on purpose. The real one reads the endpoint; the mock is
+/// what every widget test uses, so no test needs a server and none of them depend on a
+/// learner having practised anything.
 library;
 
 import '../../domain/entities/daily_progress.dart';
 import '../../domain/entities/progress_summary.dart';
 import '../../domain/entities/weak_sound.dart';
 import '../../domain/repositories/progress_repository.dart';
+import '../datasources/progress_remote_data_source.dart';
+import '../models/progress_summary_dto.dart';
 
 class MockProgressRepository implements ProgressRepository {
   MockProgressRepository({
@@ -67,5 +70,21 @@ class MockProgressRepository implements ProgressRepository {
         ),
       ],
     );
+  }
+}
+
+/// The real dashboard, computed by the server from this learner's own attempts.
+///
+/// Deliberately no fallback to the mock when the request fails: inventing a streak
+/// somebody has not earned is worse than an error they can retry.
+class ProgressRepositoryImpl implements ProgressRepository {
+  const ProgressRepositoryImpl(this._remote);
+
+  final ProgressRemoteDataSource _remote;
+
+  @override
+  Future<ProgressSummary> summary() async {
+    final json = await _remote.summary();
+    return ProgressSummaryDto.fromJson(json).toDomain();
   }
 }

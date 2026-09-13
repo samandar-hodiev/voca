@@ -95,6 +95,19 @@ class ProgressPage extends ConsumerWidget {
                 subtitle: context.l10n.byAccuracy,
               ),
             ),
+            // Having none is the good outcome, and it is a common one now that a sound
+            // has to score below 80 to be listed at all. A bare heading over empty space
+            // reads as a screen that failed to load.
+            if (s.weakSounds.isEmpty)
+              Reveal(
+                index: 4,
+                child: Text(
+                  context.l10n.noWeakSoundsYet,
+                  style: context.vocaText.body.copyWith(
+                    color: context.vocaColors.textSecondary,
+                  ),
+                ),
+              ),
             for (var i = 0; i < s.weakSounds.length; i++) ...[
               Reveal(
                 index: 4 + i,

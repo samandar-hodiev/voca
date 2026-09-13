@@ -28,6 +28,7 @@ import (
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/storage/localfile"
 	"github.com/samandar-hodiev/voca/backend/internal/integrations/telegram"
 	"github.com/samandar-hodiev/voca/backend/internal/middleware"
+	"github.com/samandar-hodiev/voca/backend/internal/progress"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation"
 	"github.com/samandar-hodiev/voca/backend/internal/pronunciation/analysis"
 	pronfeedback "github.com/samandar-hodiev/voca/backend/internal/pronunciation/feedback"
@@ -229,6 +230,16 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		log,
 	)
 
+	// The dashboard is derived from the attempts table rather than stored, so it needs no
+	// migration and cannot drift from what it summarises.
+	progressService := progress.NewService(
+		progress.NewRepository(pool.Pool),
+		learnersFromAuth{svc: authService},
+		cfg.AppTimezone,
+		log,
+	)
+	progressHandler := progress.NewHandler(progressService, log)
+
 	devhookService := devhook.NewService(notifier, log)
 	devhookHandler := devhook.NewHandler(devhookService, cfg.GitHubWebhookSecret, log)
 
@@ -240,6 +251,7 @@ func Build(ctx context.Context, cfg config.Config, log *slog.Logger) (Dependenci
 		DevhookHandler:       devhookHandler,
 		AuthHandler:          auth.NewHandler(authService),
 		PronunciationHandler: pronunciation.NewHandler(pronunciationService),
+		ProgressHandler:      progressHandler,
 		RequireAuth:          middleware.RequireAuth(jwtVerifier{issuer}),
 		TrustedProxies:       cfg.TrustedProxies,
 		AuthRateLimit: middleware.RateLimit(middleware.RateLimitConfig{
@@ -301,4 +313,19 @@ func (e entitlementsFromSubscription) Allowance(
 		Since:      a.Since,
 		ResetsAt:   a.ResetsAt,
 	}, nil
+}
+
+// learnersFromAuth answers the progress module's questions about a person — the daily word
+// goal and which midnight is theirs — through the auth module's service rather than its
+// storage (ARCHITECTURE.md 5.5).
+type learnersFromAuth struct{ svc *auth.Service }
+
+func (l learnersFromAuth) DailyGoal(
+	ctx context.Context, userID uuid.UUID,
+) (int, string, error) {
+	prefs, err := l.svc.Preferences(ctx, userID)
+	if err != nil {
+		return 0, "", err
+	}
+	return prefs.DailyGoalWords, prefs.Timezone, nil
 }
