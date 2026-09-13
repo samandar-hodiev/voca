@@ -225,17 +225,27 @@ class _Result extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: VocaSpacing.md),
+        // Only accuracy says anything about a single word. Fluency measures rhythm and
+        // pauses, of which one word has none, and completeness measures coverage, which
+        // is either all or nothing here — both sit at 100 whatever was actually said.
+        // They stopped counting towards the score in scoring v2; showing them anyway was
+        // exactly what made a wrong word look like a good attempt.
         Row(
           children: [
             _MiniScore(
               label: l10n.scoreAccuracy,
               value: result.scores.accuracy,
             ),
-            _MiniScore(label: l10n.scoreFluency, value: result.scores.fluency),
-            _MiniScore(
-              label: l10n.scoreCompleteness,
-              value: result.scores.completeness,
-            ),
+            if (result.words.length > 1) ...[
+              _MiniScore(
+                label: l10n.scoreFluency,
+                value: result.scores.fluency,
+              ),
+              _MiniScore(
+                label: l10n.scoreCompleteness,
+                value: result.scores.completeness,
+              ),
+            ],
           ],
         ),
 
